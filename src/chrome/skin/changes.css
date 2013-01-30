@@ -1,0 +1,76 @@
+#mapaPlusChangesWindow
+{
+	padding: 0;
+}
+#mapaPlusChangesWindow,
+#mapaPlusChangesWindow *
+{
+	-moz-user-select: text;
+}
+#mapaPlusChangesLog
+{
+	margin: 0;
+	border: 0;
+	border-top: 1px solid ThreeDDarkShadow;
+	font-family: 'courier new', 'times new roman', fixed, monospace;
+	padding: 0.5em;
+	overflow: auto;
+}
+#mapaPlusChangesLog,
+#mapaPlusChangesLog *
+{
+	-moz-user-focus: normal;
+	cursor: text;
+}
+#mapaPlusChangesLog *
+{
+	padding: 0;
+	margin: 0;
+	white-space: pre;
+	text-align: left;
+}
+
+.title
+{
+	font-weight: bold;
+	font-size: 1em;
+}
+.link
+{
+	margin:0;
+}
+#mapaPlusSupport
+{
+	min-width: 19em;
+}
+#mapaPlusSupport,
+#mapaPlusSupport *
+{
+	font-style: italic;
+}
+.type
+{
+/*
+	font-weight: bold;
+*/
+}
+#mapaPlusChangesLog[highlight="2"] .added,
+#mapaPlusChangesLog[highlight="1"] description.added
+{
+	background-color: #C9F5C9;
+}
+#mapaPlusChangesLog[highlight="2"] .removed,
+#mapaPlusChangesLog[highlight="1"] description.removed
+{
+	background-color: #FFBFBF;
+}
+#mapaPlusChangesLog[highlight="2"] .changed,
+#mapaPlusChangesLog[highlight="1"] description.changed
+{
+	background-color: #BFEEFF;
+}
+#mapaPlusChangesLog[highlight="2"] .fixed,
+#mapaPlusChangesLog[highlight="1"] description.fixed
+{
+	background-color: #FFFFBF;
+}

@@ -1,0 +1,341 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://mapaplus/skin/changes.css" type="text/css"?>
+
+<!DOCTYPE bindings [
+	<!ENTITY % mapaPlusAboutDTD SYSTEM "chrome://mapaplus/locale/masterpasswordplusAbout.dtd" >
+	%mapaPlusAboutDTD;
+	<!ENTITY % textcontextDTD SYSTEM "chrome://global/locale/textcontext.dtd" >
+	%textcontextDTD;
+]>
+
+<dialog	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+				id="mapaPlusChangesWindow"
+				title=""
+				onload="mapaPlus.onload()"
+				buttons="accept"
+				buttoniconaccept="close"
+				width="520"
+				height="400"
+				flex="1"
+>
+	<hbox align="center">
+		<label id="mapaPlusTitle" value="&mapaPlus.about.changes;" class="title"/>
+		<vbox id="mapaPlusSupport" flex="1" align="start" pack="center">
+			<description flex="1" align="start" pack="center">
+				&mapaPlus.about.support;
+				<label	class="text-link link"
+								href="http://goo.gl/65ef6"
+								link="http://goo.gl/65ef6"
+								tooltiptext="http://goo.gl/65ef6"
+								onclick="return mapaPlus.click(this, event)"
+								context="mapaPlusLink"
+								onmouseover="mapaPlus.mouseOver(event)"
+								onmouseout="mapaPlus.mouseOut(event)"
+				>
+					&mapaPlus.about.support.website;
+				</label>
+				&mapaPlus.about.support.via;
+				<label	class="text-link link"
+								href="mailto:support.master-password-plus.unique8402@vano.org?subject=Master%20Password%2B%20support&amp;body=%0A%0aOS:{OS}%0AApp:{APP}%0AMP%2B:{VER}"
+								link="support.master-password-plus.unique8402@vano.org"
+								tooltiptext="support.master-password-plus.unique8402@vano.org"
+								onclick="return mapaPlus.click(this, event)"
+								context="mapaPlusLink"
+								onmouseover="mapaPlus.mouseOver(event)"
+								onmouseout="mapaPlus.mouseOut(event)"
+				>
+					&mapaPlus.about.support.email;
+				</label>
+			</description>
+		</vbox>
+		<hbox flex="1" pack="end">
+			<checkbox id="mapaPlusHightlight" label="Hightlight" value="1" persist="value" oncommand="mapaPlus.highlight(event);"/>
+		</hbox>
+	</hbox>
+	<vbox id="mapaPlusChangesLog" flex="1" context="mapaPlusContext"/>
+	<popupset>
+		<menupopup id="mapaPlusLink" oncommand="mapaPlus.copy(event);">
+			<menuitem label="&copyCmd.label;" accesskey="&copyCmd.accesskey;"/>
+		</menupopup>
+		<menupopup id="mapaPlusContext" oncommand="mapaPlus.context(event);" onpopupshowing="mapaPlus.popup(event)">
+			<menuitem id="mapaPlusCopy" label="&copyCmd.label;" accesskey="&copyCmd.accesskey;"/>
+			<menuseparator/>
+			<menuitem id="mapaPlusSelectAll" label="&selectAllCmd.label;" accesskey="&selectAllCmd.accesskey;"/>
+		</menupopup>
+	</popupset>
+	<script type="application/javascript" src="chrome://mapaplus/content/masterpasswordplusCommon.js"/>
+	<script type="application/javascript">
+		<![CDATA[
+		mapaPlus.loadCore();
+		document.title = mapaPlus.core.app.name + " " + document.getElementById("mapaPlusTitle").value;
+		document.getElementById("mapaPlusTitle").value = document.title;
+
+		mapaPlus.rootWin =  window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+												.getInterface(Components.interfaces.nsIWebNavigation)
+												.QueryInterface(Components.interfaces.nsIDocShellTreeItem)
+												.rootTreeItem
+												.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+												.getInterface(Components.interfaces.nsIDOMWindow);
+		mapaPlus.rootDoc = mapaPlus.rootWin.document;
+
+		mapaPlus.mouseOver = function(e)
+		{
+			let status = "XULBrowserWindow" in mapaPlus.rootWin ? mapaPlus.rootWin.XULBrowserWindow : null,
+					txt = e.target.getAttribute("link");
+			if (status)
+			{
+				status.overLink = txt;
+				try
+				{
+					mapaPlus.rootWin.LinkTargetDisplay.update();
+				}
+				catch(e)
+				{
+					status.updateStatusField();
+				}
+			}
+			else
+			{
+				status = mapaPlus.rootDoc.getElementById("statusText");
+				if (!status)
+					return;
+				status.setAttribute("label", txt);
+			}
+		}
+		mapaPlus.mouseOut = function(e)
+		{
+			let status = "XULBrowserWindow" in mapaPlus.rootWin ? mapaPlus.rootWin.XULBrowserWindow : null;
+			if (status)
+			{
+				status.overLink = "";
+				try
+				{
+					mapaPlus.rootWin.LinkTargetDisplay.update();
+				}
+				catch(e)
+				{
+					status.updateStatusField();
+				}
+			}
+			else
+			{
+				status = mapaPlus.rootDoc.getElementById("statusText");
+				if (!status)
+					return;
+				status.setAttribute("label", "");
+			}
+		}
+		mapaPlus.copy = function(e)
+		{
+			Components.classes["@mozilla.org/widget/clipboardhelper;1"]
+				.getService(Components.interfaces.nsIClipboardHelper)
+				.copyString(document.popupNode.getAttribute("tooltiptext"));
+		}
+
+		mapaPlus.click = function(obj, e)
+		{
+			let url = obj.getAttribute("href");
+			let email = url.match(/^mailto:/);
+			if (!obj.fixed)
+			{
+				let tags = {
+							OS: mapaPlus.core.appInfo.OS + " (" + mapaPlus.core.appInfo.XPCOMABI + ")",
+							VER: mapaPlus.core.app.version,
+							APP: mapaPlus.core.appInfo.name + " " + mapaPlus.core.appInfo.version,
+						}
+				if (email)
+				{
+					let reg = new RegExp("\{([A-Z]+)\}", "gm");
+					url = url.replace(reg, function(a, b, c, d)
+					{
+						if (b in tags)
+							return " " + tags[b];
+						return a;
+					});
+					obj.setAttribute("href", url);
+					obj.fixed = true;
+				}
+			}
+			if (!mapaPlus.core.isTB || e.button == 2)
+				return true;
+
+			try
+			{
+				if (e.button == 1)
+					mapaPlus.core.openUILinkIn(url);
+				else if (email)
+				{
+					let aURI = Components.classes["@mozilla.org/network/io-service;1"]
+									.getService(Components.interfaces.nsIIOService)
+									.newURI(url, null, null);
+					Components.classes["@mozilla.org/messengercompose;1"]
+						.getService(Components.interfaces.nsIMsgComposeService)
+						.OpenComposeWindowWithURI(null, aURI);
+				}
+				else
+				{
+
+					let tabmail = window.top.document.getElementById("tabmail"),
+							args = {
+								type: "contentTab",
+								contentPage: url,
+								background: false
+							};
+					tabmail.openTab(args.type, args);
+				}
+			}catch(e){}
+			return false;
+		}
+
+		mapaPlus.context = function(e)
+		{
+			let sel = window.getSelection();
+			if (e.originalTarget.id == "mapaPlusCopy")
+			{
+				if (sel.rangeCount > 0)
+				{
+					let txt = sel.getRangeAt(0).toString();
+					Components.classes["@mozilla.org/widget/clipboardhelper;1"]
+					.getService(Components.interfaces.nsIClipboardHelper)
+					.copyString(txt);
+				}
+			}
+			else if (e.originalTarget.id == "mapaPlusSelectAll")
+			{
+				sel.removeAllRanges();
+				document.getElementById("mapaPlusChangesLog").focus();
+				sel.selectAllChildren(document.getElementById("mapaPlusChangesLog"));
+			}
+		}
+
+		mapaPlus.popup = function(e)
+		{
+			let txt = window.getSelection().toString();
+			if (txt)
+				document.getElementById("mapaPlusCopy").removeAttribute("disabled");
+			else
+				document.getElementById("mapaPlusCopy").setAttribute("disabled", true);
+		}
+
+		mapaPlus.highlight = function(e)
+		{
+			let val = Number(document.getElementById("mapaPlusHightlight").getAttribute("value"))+1;
+			if (val > 2 || val < 0)
+				val = 0;
+			document.getElementById("mapaPlusHightlight").setAttribute("value", val);
+			mapaPlus.showHighlight();
+		}
+
+		mapaPlus.showHighlight = function()
+		{
+			let c = document.getElementById("mapaPlusHightlight");
+			let val = c.getAttribute("value");
+			if (val == 1)
+			{
+				c.setAttribute("checked", true);
+				c.setAttribute("indeterminate", true);
+			}
+			else if (val == 2)
+			{
+				c.setAttribute("checked", true);
+				c.removeAttribute("indeterminate");
+			}
+			else
+			{
+				c.removeAttribute("checked");
+				c.removeAttribute("indeterminate");
+			}
+			document.getElementById("mapaPlusChangesLog").setAttribute("highlight", val)
+		}
+
+		mapaPlus.onload = function()
+		{
+			let changesLog = document.getElementById("mapaPlusChangesLog"),
+					aURL = "chrome://mapaplus/content/changes.txt",
+					utf8Converter = Components.classes["@mozilla.org/intl/utf8converterservice;1"]
+														.getService(Components.interfaces.nsIUTF8ConverterService),
+					ioService = Components.classes["@mozilla.org/network/io-service;1"]
+												.getService(Components.interfaces.nsIIOService),
+					scriptableStream = Components.classes["@mozilla.org/scriptableinputstream;1"]
+												.getService(Components.interfaces.nsIScriptableInputStream),
+					channel = ioService.newChannel(aURL,null,null),
+					array,
+					title;
+			changesLog.setAttribute("highlight", document.getElementById("mapaPlusHightlight").getAttribute("value"));
+			let input = channel.open();
+			scriptableStream.init(input);
+			let str = scriptableStream.read(input.available());
+			scriptableStream.close();
+			input.close();
+			str = utf8Converter.convertURISpecToUTF8 (str, "UTF-8");
+			str = str.replace(/\t/g, "  ");
+			title = str.substr(0, str.indexOf("\n")-1);
+			str = str.replace(title, "").replace(/^\s+/g, "");
+			array = str.split("\n");
+			for(let i = 0; i < array.length; i++)
+			{
+				let t = /^(\s*)([+\-*!])/.exec(array[i]),
+						tab = document.createElement("description"),
+						type = document.createElement("description"),
+						label = document.createElement("description"),
+						box = document.createElement("hbox"),
+						txt = 0;
+				if (i > 0)
+					changesLog.appendChild(document.createTextNode("\n"));
+
+				box.setAttribute("flex", "1");
+				type.className = "type";
+				if (t)
+				{
+					tab.textContent = t[1];
+					type.textContent = t[2];
+					let s = "";
+					switch(t[2])
+					{
+						case "+":
+							s = "added";
+							break;
+						case "-":
+							s = "removed";
+							break;
+						case "!":
+							s = "fixed";
+							break;
+						case "*":
+							s = "changed";
+							break;
+					}
+					if (s)
+					{
+//						tab.className = s;
+						type.className += " " + s;
+						box.className = s;
+					}
+					box.appendChild(tab);
+					box.appendChild(type);
+					txt = t[1].length + 1;
+				}
+				else if (array[i].match(/^v[0-9]/))
+					box.className = "title";
+
+				label.className = "";
+				label.textContent = array[i].substr(txt);
+				box.appendChild(label);
+				changesLog.appendChild(box);
+			}
+			changesLog.selectionStart = 0;
+			changesLog.selectionEnd = 0;
+			if (!("arguments" in window) || !window.arguments)
+				document.documentElement._buttons.accept.hidden = true;
+			else
+			{
+				document.documentElement.boxObject.lastChild.insertBefore(document.getElementById("mapaPlusSupport"), document.documentElement.boxObject.lastChild.firstChild);
+				document.getElementById("mapaPlusTitle").parentNode.setAttribute("align", "center");
+			}
+
+			mapaPlus.showHighlight();
+		}
+		]]>
+	</script>
+</dialog>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE overlay SYSTEM "chrome://mapaplus/locale/masterpasswordplusCommonDialog.dtd">
+<overlay id="masterPasswordPlusCommonDialogOverlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	<dialog id="commonDialog"
+					onload="mapaPlus.commonDialogOnLoad();"
+					onunload="mapaPlus.commonDialogOnUnload();"
+					ondialogdisclosure="mapaPlus.commonDialogOptions()"
+					ondialogcancel="mapaPlus.commonDialogCancel()"
+	>
+		<script type="application/javascript" src="chrome://mapaplus/content/masterpasswordplusCommon.js"/>
+		<script type="application/javascript" src="chrome://mapaplus/content/commonDialog.js"/>
+		<script type="application/javascript">
+			mapaPlus.strings = {
+				options: "&mapaPlus.options.label;"
+			};
+		</script>
+		<row id="mapaPlus" collapsed="true">
+			<hbox />
+			<hbox align="center" id="mapaPlusTemp">
+				<button	id="suppresstemp"
+									label="&mapaPlus.options.suppress.temp;"
+									style="margin: 0"
+									oncommand="mapaPlus.commonDialogCancel(1)"
+				/>
+				<textbox size="1" type="number" min="0" id="hours" onchange="mapaPlus.checkTemp()"/>
+				<label value="&mapaPlus.options.suppress.temp.hours;" style="margin: 0"/>
+				<textbox size="1" type="number" min="0" max="59" wraparound="true" id="minutes" onchange="mapaPlus.checkTemp()"/>
+				<label value="&mapaPlus.options.suppress.temp.minutes;" style="margin: 0"/>
+			</hbox>
+			<hbox id="mapaPlusWarning" align="middle" pack="end">
+				<image id="mapaPlusNonLat" src="chrome://global/skin/icons/warning-16.png" collapsed="true" />
+			</hbox>
+		</row>
+	</dialog>
+</overlay>
