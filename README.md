@@ -1,7 +1,6 @@
 <i>Current version has an issue that prevents Firefox from unlocking, nothing happens when it's locked and user click or presses a button.
 As a work around this issue, press CTRL+N to open new window, then you'll be able unlock it.
-As of now I'm struggling to find what causing this. I need your help:
-http://goo.gl/waq6w</i>
+As of now I'm struggling to find what causing this. I need your help issue #85</i>
 
 
 <b> Features:</b>
