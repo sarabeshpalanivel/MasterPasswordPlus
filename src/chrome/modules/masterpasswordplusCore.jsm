@@ -2,6 +2,7 @@ const EXPORTED_SYMBOLS = ["mapaPlusCore"];
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const nsIPKCS11Slot = Ci.nsIPKCS11Slot;
+const PREF_BRANCH = "extensions.masterPasswordPlus."
 
 var mapaPlusCore = {
 
@@ -53,6 +54,7 @@ var mapaPlusCore = {
 	prefShowChangesLog: false,
 	prefCommand: 0,
 	prefCommandLoggedin: 0,
+	prefLockIgnoreFirstKey: false,
 
 	locked: false,
 	lockDo: true,
@@ -73,8 +75,9 @@ var mapaPlusCore = {
 	STARTUP_LOCK: 2,
 
 	lockPrefBackup: null,
+	PREF_BRANCH: PREF_BRANCH,
 	pref: Cc["@mozilla.org/preferences-service;1"]
-				.getService(Ci.nsIPrefService).getBranch("extensions.masterPasswordPlus."),
+				.getService(Ci.nsIPrefService).getBranch(PREF_BRANCH),
 
 //	crypt: Cc["@mozilla.org/security/sdr;1"].getService(Ci.nsISecretDecoderRing),
 
@@ -116,6 +119,10 @@ var mapaPlusCore = {
 	focused: null,
 
 	style: {},
+	
+	strings: {
+		deleteSettings: "Delete all settings?"
+	},
 
 	dump: function (aMessage, obj, tab, parent, c)
 	{
@@ -312,7 +319,7 @@ var mapaPlusCore = {
 	{
 		var t = t || "Window";
 		if (!(t in this.window))
-			return false;
+			return null;
 
 		var w = this.window[t]
 		for(var i = 1; i < w.length; i++)
@@ -322,7 +329,7 @@ var mapaPlusCore = {
 				return i;
 			}
 		}
-		return false;
+		return null;
 	},
 
 	windowFocus: function(t, first)
@@ -334,7 +341,7 @@ var mapaPlusCore = {
 		if (typeof(first) == "undefined")
 			var first = this.windowFirst(t);
 
-		if (first)
+		if (first !== null)
 		{
 			if ("window" in this.window[t][first])
 				this.window[t][first].window.focus();
@@ -1057,13 +1064,14 @@ var mapaPlusCore = {
 			mpc.prefCommand = mpc.pref.getIntPref("command");
 			mpc.prefCommandLoggedin = mpc.pref.getBoolPref("commandloggedin");
 
+			mpc.prefLockIgnoreFirstKey = mpc.pref.getBoolPref("lockignorefirstkey");
 			mpc.prepareHotkey();
 			mpc.windowAction("lockSetTransparent", mpc.pref.getBoolPref("locktransparent"));
 			mpc.windowAction("lockSetBgImage", mpc.pref.getBoolPref("lockbgimage"));
 
 			try
 			{
-				mpc.prefForcePrompt = JSON.parse(mpc.pref.getCharPref("forceprompt"));
+				mpc.prefForcePrompt = JSON.parse(mpc.pref.getComplexValue("forceprompt", Components.interfaces.nsISupportsString).data);
 			}
 			catch(e)
 			{
@@ -1197,7 +1205,8 @@ var mapaPlusCore = {
 	windowListener: {
 		observe: function(aSubject, aTopic, aData)
 		{
-			let window = aSubject.QueryInterface(Components.interfaces.nsIDOMWindow);
+			let window = aSubject.QueryInterface(Components.interfaces.nsIDOMWindow),
+					windowClose = false;
 			if (aTopic == "domwindowopened")
 			{
 				if ("mapaPlus" in window && !window.mapaPlus.noOverlayLoaded)
@@ -1217,52 +1226,73 @@ var mapaPlusCore = {
 				window.addEventListener("mousedown", mapaPlusCore.resetTimer, false);
 				window.addEventListener("DOMMouseScroll", mapaPlusCore.resetTimer, false);
 				window.addEventListener("focus", mapaPlusCore.windowFocused, true);
-				window.addEventListener("load", function(e)
+				window.addEventListener("load", function(event)
 				{
-
 					if (!("mapaPlus" in window) || window.mapaPlus.noOverlayLoaded)
 					{
 						let list = mapaPlusCore.prefForcePrompt;
 						for(let i = 0; i < list.length; i++)
 						{
-							if (("id" in list[i] && window.name && list[i].id == window.name)
-									|| ("url" in list[i] && window.location.href == list[i].url))
+							if (!("enabled" in list[i])
+									|| (!("id" in list[i] && window.name && list[i].id == window.name)
+											&& !("url" in list[i] && window.location.href == list[i].url)))
+								continue;
+							let param = "";
+							if ("param" in list[i])
 							{
-								let loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
-															.getService(Components.interfaces.mozIJSSubScriptLoader);
-								if (!("mapaPlus" in window))
-								{
-									loader.loadSubScript("chrome://mapaplus/content/masterpasswordplusCommon.js", window);
-								}
-								loader.loadSubScript("chrome://mapaplus/content/masterpasswordplusForcePrompt.js", window);
-								break;
+								param = list[i].param.split("|");
 							}
-						}
-						window.document.documentElement.ownerDocument.loadOverlay("chrome://mapaplus/content/masterpasswordplusOverlay.xul", {observe: function(e)
-						{
-							window.mapaPlus.noOverlayLoaded = true;
-							let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
-							timer.init({observe:function()
+							if ((mapaPlusCore.status == 2
+									&& (mapaPlusCore.prefSuppress == 2
+											|| mapaPlusCore.prefSuppressTemp
+											|| (param.indexOf("startup") != -1 && !mapaPlusCore.startupPassed)))
+									|| param.indexOf("always") != -1)
 							{
-								window.mapaPlus.loadedManualy = true;
+								let f = mapaPlusCore.dialogForce, t = mapaPlusCore.dialogTemp, ok = false;
+								mapaPlusCore.dialogForce = true;
+//									mapaPlusCore.dialogTemp = false;
 								try
 								{
-									window.mapaPlus.load();
-								}catch(e){};
-								if ("mapaPlus" in window && (!("mapaPlusEventsAdded" in window) || !window.mapaPlusEventsAdded))
+									mapaPlusCore.tokenDB.login(param.indexOf("always") != -1);
+									ok = true;
+								}catch(e){}
+								mapaPlusCore.dialogForce = f;
+//									mapaPlusCore.dialogTemp = t;
+								if (!ok && param.indexOf("close") != -1)
 								{
-									if (window.mapaPlus.close)
-										window.addEventListener("close", window.mapaPlus.close, true);
-
-									if (window.mapaPlus.mouseDown)
-										window.addEventListener("mousedown", window.mapaPlus.mouseDown, true);
-									window.mapaPlusEventsAdded = true;
+									windowClose = true;
 								}
-							}}, 100, timer.TYPE_ONE_SHOT);
+							}
+							break;
+						}
+						if (!windowClose)
+						{
+							window.document.documentElement.ownerDocument.loadOverlay("chrome://mapaplus/content/masterpasswordplusOverlay.xul", {observe: function(e)
+							{
+								window.mapaPlus.noOverlayLoaded = true;
+								let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+								timer.init({observe:function()
+								{
+									window.mapaPlus.loadedManualy = true;
+									try
+									{
+										window.mapaPlus.load();
+									}catch(e){};
+									if ("mapaPlus" in window && (!("mapaPlusEventsAdded" in window) || !window.mapaPlusEventsAdded))
+									{
+										if (window.mapaPlus.close)
+											window.addEventListener("close", window.mapaPlus.close, true);
 
-						}});
+										if (window.mapaPlus.mouseDown)
+											window.addEventListener("mousedown", window.mapaPlus.mouseDown, true);
+										window.mapaPlusEventsAdded = true;
+									}
+								}}, 100, timer.TYPE_ONE_SHOT);
+
+							}});
+						}
 					}
-					if ("mapaPlus" in window && (!("mapaPlusEventsAdded" in window) || !window.mapaPlusEventsAdded))
+					if (!windowClose && "mapaPlus" in window && (!("mapaPlusEventsAdded" in window) || !window.mapaPlusEventsAdded))
 					{
 						if (window.mapaPlus.close)
 							window.addEventListener("close", window.mapaPlus.close, true);
@@ -1271,7 +1301,10 @@ var mapaPlusCore = {
 							window.addEventListener("mousedown", window.mapaPlus.mouseDown, true);
 					}
 					window.removeEventListener("load", arguments.callee, true);
-				}, true);
+					if (windowClose)
+						window.close();
+
+				}, true); //addEventListener("load")
 			}
 			else if (aTopic == "domwindowclosed")
 			{
@@ -1289,8 +1322,8 @@ var mapaPlusCore = {
 				window.removeEventListener("DOMMouseScroll", mapaPlusCore.resetTimer, false);
 				window.removeEventListener("focus", mapaPlusCore.windowFocused, true);
 			}
-		},
-	},
+		},//windowListener.observe()
+	},//windowListener
 
 	quit: function()
 	{
@@ -1319,8 +1352,6 @@ var mapaPlusCore = {
 			{
 				this.pref.QueryInterface(Ci.nsIPrefBranch2).addObserver('', this.onPrefChange, false);
 			}
-			Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher)
-				.registerNotification(this.windowListener);
 		}
 		this.onPrefChange.do(mapaPlus);
 		if (f || !this.initialized)
@@ -1434,6 +1465,27 @@ mapaPlusCore.dialogForce = false;
 mapaPlusCore.dialogShow = false;
 mapaPlusCore.observer = Cc["@mozilla.org/observer-service;1"].getService(Ci.nsIObserverService).addObserver(mapaPlusCore, "quit-application", false);
 
+mapaPlusCore.deleteSettings = function()
+{
+	let prompts = Cc["@mozilla.org/embedcomp/prompt-service;1"]
+							.getService(Ci.nsIPromptService),
+			flags = prompts.BUTTON_POS_0 * prompts.BUTTON_TITLE_YES +
+							prompts.BUTTON_POS_1 * prompts.BUTTON_TITLE_NO;
+	let button = prompts.confirmEx(null, mapaPlusCore.app.name, mapaPlusCore.strings.deleteSettings.replace("#", mapaPlusCore.app.name), flags, "", "", "", null, {});
+	if (!button)
+	{
+		try
+		{
+			mapaPlusCore.pref.resetBranch('');
+		}
+		catch(e)
+		{
+			let list = mapaPlusCore.pref.getChildList('', {});
+			for(let i = 0; i < list.length; i++)
+				mapaPlusCore.pref.clearUserPref(list[i]);
+		}
+	}
+}
 try
 {
 	let listener = {
@@ -1443,6 +1495,8 @@ try
 			{
 				if (!mapaPlusCore.prompt(true))
 					addon.cancelUninstall();
+				else
+					mapaPlusCore.deleteSettings();
 			}
 		},
 		onDisabling: function(addon, restart)
@@ -1474,53 +1528,56 @@ catch(e)
 		},
 		observe: function(aSubject, aTopic, aData)
 		{
-			if(aTopic == 'em-action-requested')
+			if(aTopic != 'em-action-requested')
+				return;
+
+			aSubject.QueryInterface(Ci.nsIUpdateItem);
+			if(aSubject.id != mapaPlusCore.GUID)
+				return
+
+			if (aData == "item-cancel-action" || aData == "item-disabled")
 			{
-				aSubject.QueryInterface(Ci.nsIUpdateItem);
-				if(aSubject.id == mapaPlusCore.GUID)
-				{
-					if (aData == "item-cancel-action" || aData == "item-disabled")
-					{
-						if (this.uninstalled)
-							this.uninstalled = false;
-						else
-							this.disabled = false;
-					}
-
-					if ((aData != "item-uninstalled" && aData != "item-disabled")
-							|| (aData == "item-disabled" && this.disabled)
-							|| (aData == "items-uninstalled" && this.uninstalled))
-						return;
-
-					var AddonManager = Cc["@mozilla.org/extensions/manager;1"]
-								.getService(Ci.nsIExtensionManager);
-
-					this.uninit();
-					if (aData == "item-disabled")
-						AddonManager.enableItem(mapaPlusCore.GUID);
-					else
-						AddonManager.cancelUninstallItem(mapaPlusCore.GUID);
-
-
-					if (!mapaPlusCore.prompt(true))
-					{
-						this.init();
-						return;
-					}
-
-					if (aData == "item-disabled")
-					{
-						this.disabled = true;
-						AddonManager.disableItem(mapaPlusCore.GUID);
-					}
-					else
-					{
-						this.uninstalled = true;
-						AddonManager.uninstallItem(mapaPlusCore.GUID);
-					}
-					this.init();
-				}
+				if (this.uninstalled)
+					this.uninstalled = false;
+				else
+					this.disabled = false;
 			}
+
+			if ((aData != "item-uninstalled" && aData != "item-disabled")
+					|| (aData == "item-disabled" && this.disabled)
+					|| (aData == "items-uninstalled" && this.uninstalled))
+				return;
+
+			var AddonManager = Cc["@mozilla.org/extensions/manager;1"]
+						.getService(Ci.nsIExtensionManager);
+
+			this.uninit();
+			if (aData == "item-disabled")
+				AddonManager.enableItem(mapaPlusCore.GUID);
+			else
+				AddonManager.cancelUninstallItem(mapaPlusCore.GUID);
+
+			if (!mapaPlusCore.prompt(true))
+			{
+				this.init();
+				return;
+			}
+
+			if (aData == "item-disabled")
+			{
+				this.disabled = true;
+				AddonManager.disableItem(mapaPlusCore.GUID);
+			}
+			else
+			{
+				this.uninstalled = true;
+				mapaPlusCore.deleteSettings();
+				AddonManager.uninstallItem(mapaPlusCore.GUID);
+			}
+			this.init();
 		}
 	}).init();
 }
+
+Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher)
+	.registerNotification(mapaPlusCore.windowListener);

@@ -7,11 +7,21 @@ Legend:
 - = Removed
 ! = Fixed
 
-v1.21.1 (2012--)
+v1.21.2 (2013-03-23)
+	+ hidden option extensions.masterPasswordPlus.lockignorefirstkey, that controls when pressing a key on locked window: should it be passed to the MP prompt or not (controls a feature introduced in v1.20)
+	+ in Firefox/Thunderbird 8.0+ a link at General tab in options window to open all available settings
+	+ prompt to delete all settings when uninstalling MP+
+	! ignored forceprompt setting
+	! in some situations MP+ doesn't work in new windows
+	! error in console on non Vista/W7/W8 systems
+
+v1.21.1 (2013-03-08)
+	+ extensions.masterPasswordPlus.forceprompt setting (for advanced users). Users can now add windows to the list that require MP logined in.
 	! improved the way hotkeys append to non-main windows
 	! window title didn't change on lock in some windows
 	! in some cases on Windows Vista/7 locked window would still show it's content in taskbar preview
 	! locked window on Windows 7 with basic theme would loose all it's buttons
+	! active tab would not correctly load after session restore
 
 v1.21 (2012-11-12)
 	+ option/about window icons

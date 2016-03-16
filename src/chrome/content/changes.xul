@@ -24,10 +24,8 @@
 		<vbox id="mapaPlusSupport" flex="1" align="start" pack="center">
 			<description flex="1" align="start" pack="center">
 				&mapaPlus.about.support;
-				<label	class="text-link link"
-								href="http://goo.gl/65ef6"
-								link="http://goo.gl/65ef6"
-								tooltiptext="http://goo.gl/65ef6"
+				<label	id="supportSite"
+								class="text-link link"
 								onclick="return mapaPlus.click(this, event)"
 								context="mapaPlusLink"
 								onmouseover="mapaPlus.mouseOver(event)"
@@ -36,10 +34,8 @@
 					&mapaPlus.about.support.website;
 				</label>
 				&mapaPlus.about.support.via;
-				<label	class="text-link link"
-								href="mailto:support.master-password-plus.unique8402@vano.org?subject=Master%20Password%2B%20support&amp;body=%0A%0aOS:{OS}%0AApp:{APP}%0AMP%2B:{VER}"
-								link="support.master-password-plus.unique8402@vano.org"
-								tooltiptext="support.master-password-plus.unique8402@vano.org"
+				<label	id="supportEmail"
+								class="text-link link"
 								onclick="return mapaPlus.click(this, event)"
 								context="mapaPlusLink"
 								onmouseover="mapaPlus.mouseOver(event)"
@@ -50,10 +46,21 @@
 			</description>
 		</vbox>
 		<hbox flex="1" pack="end">
-			<checkbox id="mapaPlusHightlight" label="Hightlight" value="1" persist="value" oncommand="mapaPlus.highlight(event);"/>
+			<button type="menu" id="mapaPlusMenu" label="Options">
+				<panel id="mapaPlusOptions" position="after_end">
+					<vbox>
+						<checkbox id="mapaPlusHightlight" label="Hightlight" value="1" persist="value" oncommand="mapaPlus.highlight(event);"/>
+						<checkbox id="mapaPlusWrap" label="Wrap" value="1" persist="value" oncommand="mapaPlus.wrap(event);"/>
+					</vbox>
+				</panel>
+			</button>
 		</hbox>
 	</hbox>
-	<vbox id="mapaPlusChangesLog" flex="1" context="mapaPlusContext"/>
+	<vbox id="mapaPlusChangesLogBox" flex="1">
+		<hbox flex="1">
+			<vbox id="mapaPlusChangesLog" flex="1" context="mapaPlusContext"/>
+		</hbox>
+	</vbox>
 	<popupset>
 		<menupopup id="mapaPlusLink" oncommand="mapaPlus.copy(event);">
 			<menuitem label="&copyCmd.label;" accesskey="&copyCmd.accesskey;"/>
@@ -78,7 +85,14 @@
 												.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
 												.getInterface(Components.interfaces.nsIDOMWindow);
 		mapaPlus.rootDoc = mapaPlus.rootWin.document;
-
+		let sup = document.getElementById("supportSite");
+		sup.setAttribute("href", mapaPlus.SUPPORTSITE);
+		sup.setAttribute("link", mapaPlus.SUPPORTSITE);
+		sup.setAttribute("tooltiptext", mapaPlus.SUPPORTSITE);
+		sup = document.getElementById("supportEmail");
+		sup.setAttribute("href", "mailto:MasterPassword+ support<" + mapaPlus.EMAIL + ">?subject=Master%20Password%2B%20support&body=%0A%0AOS:{OS}%0AApp:{APP}%0AMP%2B:{VER}");
+		sup.setAttribute("link", "MasterPassword+ support<" + mapaPlus.EMAIL + ">");
+		sup.setAttribute("tooltiptext", mapaPlus.EMAIL);
 		mapaPlus.mouseOver = function(e)
 		{
 			let status = "XULBrowserWindow" in mapaPlus.rootWin ? mapaPlus.rootWin.XULBrowserWindow : null,
@@ -130,7 +144,7 @@
 		{
 			Components.classes["@mozilla.org/widget/clipboardhelper;1"]
 				.getService(Components.interfaces.nsIClipboardHelper)
-				.copyString(document.popupNode.getAttribute("tooltiptext"));
+				.copyString(document.popupNode.getAttribute("link"));
 		}
 
 		mapaPlus.click = function(obj, e)
@@ -175,7 +189,6 @@
 				}
 				else
 				{
-
 					let tabmail = window.top.document.getElementById("tabmail"),
 							args = {
 								type: "contentTab",
@@ -184,7 +197,11 @@
 							};
 					tabmail.openTab(args.type, args);
 				}
-			}catch(e){}
+			}
+			catch(e)
+			{
+				try{mapaPlus.core.openUILinkIn(url)}catch(e){};
+			}
 			return false;
 		}
 
@@ -230,7 +247,7 @@
 		mapaPlus.showHighlight = function()
 		{
 			let c = document.getElementById("mapaPlusHightlight");
-			let val = c.getAttribute("value");
+			let val = Number(c.getAttribute("value"));
 			if (val == 1)
 			{
 				c.setAttribute("checked", true);
@@ -249,6 +266,36 @@
 			document.getElementById("mapaPlusChangesLog").setAttribute("highlight", val)
 		}
 
+		mapaPlus.wrap = function(e)
+		{
+			let val = Number(document.getElementById("mapaPlusWrap").getAttribute("value"))+1;
+			if (val > 1 || val < 0)
+				val = 0;
+			document.getElementById("mapaPlusWrap").setAttribute("value", val);
+			mapaPlus.showWrap();
+		}
+
+		mapaPlus.showWrap = function()
+		{
+			let c = document.getElementById("mapaPlusWrap"),
+					b = document.getElementById("mapaPlusChangesLog");
+			let val = Number(c.getAttribute("value"));
+			if (val == 1)
+			{
+				c.setAttribute("checked", true);
+				b.setAttribute("flex", 1);
+				b.parentNode.setAttribute("flex", 1);
+			}
+			else
+			{
+				c.removeAttribute("checked");
+				b.setAttribute("flex", 0);
+				b.parentNode.setAttribute("flex", 0);
+			}
+			document.getElementById("mapaPlusChangesLog").setAttribute("wrap", val)
+			mapaPlus.onResize();
+		}
+
 		mapaPlus.onload = function()
 		{
 			let changesLog = document.getElementById("mapaPlusChangesLog"),
@@ -263,6 +310,7 @@
 					array,
 					title;
 			changesLog.setAttribute("highlight", document.getElementById("mapaPlusHightlight").getAttribute("value"));
+			changesLog.setAttribute("wrap", document.getElementById("mapaPlusWrap").getAttribute("value"));
 			let input = channel.open();
 			scriptableStream.init(input);
 			let str = scriptableStream.read(input.available());
@@ -273,19 +321,25 @@
 			title = str.substr(0, str.indexOf("\n")-1);
 			str = str.replace(title, "").replace(/^\s+/g, "");
 			array = str.split("\n");
+			let prevhbox = null;
 			for(let i = 0; i < array.length; i++)
 			{
 				let t = /^(\s*)([+\-*!])/.exec(array[i]),
 						tab = document.createElement("description"),
 						type = document.createElement("description"),
 						label = document.createElement("description"),
-						box = document.createElement("hbox"),
+						hbox = document.createElement("hbox"),
+						vbox = document.createElement("vbox"),
 						txt = 0;
 				if (i > 0)
 					changesLog.appendChild(document.createTextNode("\n"));
 
-				box.setAttribute("flex", "1");
+				vbox.className = "text";
+				hbox.setAttribute("flex", 0);
+				vbox.setAttribute("flex", 1);
 				type.className = "type";
+				tab.className = "tab";
+				hbox.setAttribute("line", "");
 				if (t)
 				{
 					tab.textContent = t[1];
@@ -310,19 +364,38 @@
 					{
 //						tab.className = s;
 						type.className += " " + s;
-						box.className = s;
+						hbox.className = s;
 					}
-					box.appendChild(tab);
-					box.appendChild(type);
+					hbox.appendChild(tab);
+					hbox.appendChild(type);
 					txt = t[1].length + 1;
+					if (t[1])
+					{
+						type.className += " border";
+						tab.className += " border";
+						label.className += " border";
+					}
 				}
 				else if (array[i].match(/^v[0-9]/))
-					box.className = "title";
+				{
+					if (prevhbox)
+					{
+						prevhbox.className += " last";
+						hbox.className = "titlelog";
+					}
+					else
+					{
+						prevhbox = true;
+						hbox.className = "titlelog";
+					}
+				}
+				if (array[i].length > 1 && prevhbox !== null)
+					prevhbox = hbox;
 
-				label.className = "";
-				label.textContent = array[i].substr(txt);
-				box.appendChild(label);
-				changesLog.appendChild(box);
+				label.textContent = array[i].substr(txt).trim();
+				vbox.appendChild(label)
+				hbox.appendChild(vbox);
+				changesLog.appendChild(hbox);
 			}
 			changesLog.selectionStart = 0;
 			changesLog.selectionEnd = 0;
@@ -332,9 +405,24 @@
 			{
 				document.documentElement.boxObject.lastChild.insertBefore(document.getElementById("mapaPlusSupport"), document.documentElement.boxObject.lastChild.firstChild);
 				document.getElementById("mapaPlusTitle").parentNode.setAttribute("align", "center");
+				document.getElementById("mapaPlusChangesLogBox").setAttribute("window", true);
 			}
 
+			mapaPlus.onResize = function ()
+			{
+				let hbox = document.getElementsByAttribute("line", ""),
+						height = document.getElementById("mapaPlusChangesLog").firstChild.boxObject.height;
+				for(let i = 0; i < hbox.length; i++)
+				{
+					if (hbox[i].boxObject.height - height > height / 2)
+						hbox[i].setAttribute("wrapped", "");
+					else
+						hbox[i].removeAttribute("wrapped")
+				}
+			}
 			mapaPlus.showHighlight();
+			mapaPlus.showWrap();
+			window.addEventListener("resize", mapaPlus.onResize, true);
 		}
 		]]>
 	</script>

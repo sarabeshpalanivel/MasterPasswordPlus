@@ -53,7 +53,30 @@ pref("extensions.masterPasswordPlus.locktransparent", true); //windows vista/7 a
 pref("extensions.masterPasswordPlus.lockbgimage", true); //show locked background image?
 pref("extensions.masterPasswordPlus.hidenewmailalert", true); //hide new email alert box (TB only)
 pref("extensions.masterPasswordPlus.hidenewmailballoon", true); //hide new email balloon popup (TB only)
-pref("extensions.masterPasswordPlus.forceprompt", '[{"name":"PassHash","url":"chrome://passhash/content/passhash-dialog.xul"},{"name":"FireFTP","url":"chrome://fireftp/content/fireftp.xul"},{"name":"SessionManager","url":"chrome://sessionmanager/content/session_prompt.xul"}]'); //force MP login before listed windows opened. separate by space
+pref("extensions.masterPasswordPlus.lockignorefirstkey", false); //when disabled first pressed button will show MP prompt and type in the password field
+
+/*
+force MP login before listed windows opened.
+will only affect when MP is logged and suppression active
+enabled:
+	0 = false
+	1 = true
+name:
+	window.name
+
+url:
+	window.location.href
+
+param:
+	startup = on startup only if MP+ set to ask for password
+	always = force always, even when logged in
+	close = close window on cancel (note, this will not apply to "automatic" prompts)
+
+you can combine parameters by separating them with | "always|close" = force always and close window
+*/
+
+pref("extensions.masterPasswordPlus.forceprompt", '[{"enabled":"1","name":"PassHash","url":"chrome://passhash/content/passhash-dialog.xul","param":""},{"enabled":"1","name":"FireFTP","url":"chrome://fireftp/content/fireftp.xul","param":""},{"enabled":"1","name":"SessionManager","url":"chrome://sessionmanager/content/session_prompt.xul","param":"startup"}]');
+
 
 //internal settings, do not change
 pref("extensions.masterPasswordPlus.locked", false);

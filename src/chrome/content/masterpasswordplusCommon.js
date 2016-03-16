@@ -39,14 +39,18 @@ var mapaPlus = {
 		NUM_LOCK: "NumLock"
 	},
 
+	EMAIL: "support.master-password-plus.unique8402@vano.org",
+	HOMEPAGE: "http://goo.gl/Ipdep",
+	SUPPORTSITE: "http://goo.gl/65ef6",
+
 	dump: function (aMessage, obj, tab, parent, c)
 	{
 	//	return;
-	
+
 		parent = parent || aMessage;
 		c = c || 0;
 		tab = tab || 0;
-	
+
 		let showType = 1,
 				sort = 1, //0 = none, 1 = case sensetive, 2 = case insensitive
 				ret = ret || "",
@@ -63,7 +67,7 @@ var mapaPlus = {
 		}
 		if (showType)
 			tText = " (" + t + ")";
-	
+
 		if (obj && t == "object" && aMessage !== null)
 		{
 			try
@@ -71,7 +75,7 @@ var mapaPlus = {
 				var array = new Array();
 				for(i in aMessage)
 					array.push(i);
-	
+
 				if (sort)
 					if (sort == 2)
 					{
@@ -80,7 +84,7 @@ var mapaPlus = {
 							function chunkify(t)
 							{
 								var tz = [], x = 0, y = -1, n = 0, i, j;
-					
+
 								while ((i = (j = t.charAt(x++)).charCodeAt(0)))
 								{
 									var m = (i == 46 || (i >=48 && i <= 57));
@@ -93,11 +97,11 @@ var mapaPlus = {
 								}
 								return tz;
 							}
-					
+
 							var aa = chunkify(a.toLowerCase()),
 									bb = chunkify(b.toLowerCase()),
 									x, c, d;
-					
+
 							for (x = 0; aa[x] && bb[x]; x++)
 							{
 								if (aa[x] !== bb[x])
@@ -116,7 +120,7 @@ var mapaPlus = {
 					}
 					else
 						array.sort();
-	
+
 				for(var ii = 0; ii < array.length; ii++)
 				{
 					i = array[ii];
@@ -130,7 +134,7 @@ var mapaPlus = {
 					}
 					if (showType)
 						t2Text = " (" + t2 + ")";
-	
+
 					try
 					{
 						let text = aMessage[i];
@@ -141,7 +145,7 @@ var mapaPlus = {
 							text = text.split("\n");
 							for(var l = 1; l < text.length; l++)
 								text[l] = append + text[l];
-	
+
 							text = text.join("\n");
 						}
 						catch(e){}
@@ -165,7 +169,7 @@ var mapaPlus = {
 		}
 		if (tab)
 			return r;
-	
+
 			Components.classes["@mozilla.org/consoleservice;1"]
 				.getService(Components.interfaces.nsIConsoleService)
 				.logStringMessage("mapaPlus: " + tText + ":" + aMessage + (r ? "\n" + r : ""));
@@ -218,12 +222,40 @@ var mapaPlus = {
 		this._openDialog("chrome://mapaplus/content/masterpasswordplusAbout.xul", "mapaPlusAboutWindow", "centerscreen, resizable");
 	},
 
+	openURL: function(url)
+	{
+		if (mapaPlus.core.isTB)
+		{
+//url = "about:addons";
+			try
+			{
+				openContentTab(url, "tab", "addons.mozilla.org");
+			}
+			catch(e){}
+			return
+			let tabmail = document.getElementById("tabmail"),
+					args = {
+						type: "chromeTab",
+						chromePage: url,
+						background: false
+					};
+			function o() tabmail.openTab(args.type, args);
+			if (mapaPlus.locked)
+				mapaPlus.showUnlockArray.push(o);
+			else
+				o();
+		}
+		else
+			switchToTabHavingURI(url, true);
+//			openUILinkIn(url, "tab", false, null, null);
+	},
+
 	setAttribute: function (obj, attr, value, remove, ignore)
 	{
 		ignore = ignore || [];
 		if (typeof(obj) == "string")
 			obj = document.getElementById(obj);
-	
+
 		var c = obj.childNodes;
 		var command = remove ? "removeAttribute" : "setAttribute";
 		if (!obj.id || ignore.indexOf(obj.id) == -1)
@@ -239,7 +271,7 @@ var mapaPlus = {
 				mapaPlus.setAttribute(c[i], attr, value, remove, ignore);
 		}
 	},
-	
+
 	AeroPeek: false,
 }
 

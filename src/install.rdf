@@ -1,15 +1,13 @@
-﻿<?xml version="1.0"?>
-
-<RDF	xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-			xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+<?xml version='1.0' encoding='utf-8'?>
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
 
 	<Description about="urn:mozilla:install-manifest">
 		<em:id>masterpasswordtimeoutplus@vano</em:id>
-		<em:version>1.21.1</em:version>
+		<em:version>1.21.2.1-signed</em:version>
 		<em:type>2</em:type>
 		<em:unpack>true</em:unpack>
 		<em:name>Master Password+</em:name>
-		<em:description>Various enhancements for built-in &quot;Master Password&quot; feature</em:description>
+		<em:description>Various enhancements for built-in "Master Password" feature</em:description>
 		<em:creator>V@no</em:creator>
 		<em:homepageURL>http://goo.gl/Ipdep</em:homepageURL>
 		<em:optionsURL>chrome://mapaplus/content/masterpasswordplusOptions.xul</em:optionsURL>
@@ -24,7 +22,7 @@
 			<Description>
 				<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
 				<em:minVersion>3.6</em:minVersion>
-				<em:maxVersion>19.0a1</em:maxVersion>
+				<em:maxVersion>22.0a1</em:maxVersion>
 			</Description>
 		</em:targetApplication>
 
@@ -33,7 +31,7 @@
 			<Description>
 				<em:id>{3550f703-e582-4d05-9a08-453d09bdfdc6}</em:id>
 				<em:minVersion>3.1</em:minVersion>
-				<em:maxVersion>19.0a1</em:maxVersion>
+				<em:maxVersion>22.0a1</em:maxVersion>
 			</Description>
 		</em:targetApplication>
 
@@ -41,7 +39,7 @@
 			 <Description>
 					<em:locale>zh-CN</em:locale>
 					<em:name>Master Password+</em:name>
-					<em:description>以多种方式增强内建的&quot;主密码&quot;功能</em:description>
+					<em:description>以多种方式增强内建的"主密码"功能</em:description>
 					<em:creator>V@no</em:creator>
 			 </Description>
 		</em:localized>

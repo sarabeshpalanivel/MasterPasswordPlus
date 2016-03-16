@@ -476,6 +476,12 @@ mapaPlus.initCommon = function(id)
 	document.getElementById("mapaPlusStartupFail").setAttribute("prevset", this.core.pref.getIntPref("startupfail"));
 	window.addEventListener("CheckboxStateChange", this.checkboxTriState, false);
 	window.addEventListener("unload", this.closeCommon, false);
+	if (Components.classes["@mozilla.org/xpcom/version-comparator;1"]
+			.getService(Components.interfaces.nsIVersionComparator)
+			.compare(this.core.appInfo.version, "8.0") < 0)
+	{
+		document.getElementById("mapaPlusAllPrefs").collapsed = true;
+	}
 	if ("arguments" in window && window.arguments[0])
 	{
 		var a = window.arguments[0];
@@ -874,6 +880,17 @@ mapaPlus.hotkeySave = function(id, pref)
 	this.core.pref.setCharPref(pref, document.getElementById(id).keys.join(" ").toUpperCase());
 	document.getElementById(id).keysOrig = document.getElementById(id).keys;
 }
+
+mapaPlus.openAllPrefs = function()
+{
+	let first = mapaPlus.core.windowFirst();
+	if (first === null)
+		return;
+
+	mapaPlus.core.window["Window"][first].openURL('about:config?filter=' + mapaPlus.core.PREF_BRANCH);
+	mapaPlus.core.windowFocus();
+}
+
 mapaPlus.loadArgs();
 
 mapaPlus.timer.init();

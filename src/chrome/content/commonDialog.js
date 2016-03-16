@@ -332,7 +332,7 @@ mapaPlus.commonDialogOnLoad = function()
 		}}, 100, timer.TYPE_REPEATING_SLACK);
 		window.addEventListener("unload", timer.cancel, false);
 		mapaPlus.core.dialogSuppressedCount = 0;
-		if (mapaPlus.core.eventKeypress && [13,27].indexOf(mapaPlus.core.eventKeypress.keyCode) == -1)
+		if (!mapaPlus.core.prefLockIgnoreFirstKey && mapaPlus.core.eventKeypress && [13,27].indexOf(mapaPlus.core.eventKeypress.keyCode) == -1)
 		{
 			let sendEvent = function(type)
 			{
@@ -355,7 +355,7 @@ mapaPlus.commonDialogOnLoad = function()
 				}
 				catch(err)
 				{
-					mapaPlus.dump(err);
+					mapaPlus.dump("SendEvent: " + err);
 				}
 			}
 			sendEvent("keypress");

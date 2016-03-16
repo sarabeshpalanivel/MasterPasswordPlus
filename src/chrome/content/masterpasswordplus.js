@@ -481,6 +481,34 @@ mapaPlus.logout = function()
 
 mapaPlus.minimizedLockFix = function(restore)
 {
+	mapaPlus.windowMinimizedForced = true;
+	window.screenX = -32000;
+	window.screenY = -32000;
+	window.restore();
+	if (restore)
+	{
+		window.screenX = mapaPlus.screenX;
+		window.screenY = mapaPlus.screenY;
+		try{this.Win7Features.AeroPeek.onOpenWindow(window)}catch(e){};
+		window.screenX = -32000;
+		window.screenY = -32000;
+	}
+
+	let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+	timer.init({observe:function()
+	{
+		window.minimize();
+		let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+		timer.init({observe:function()
+		{
+			mapaPlus.windowMinimizedForced = false;
+		}}, 0, timer.TYPE_ONE_SHOT);
+	}}, 0, timer.TYPE_ONE_SHOT);
+}
+
+/*
+mapaPlus.minimizedLockFix = function(restore)
+{
 	return;
 	if (!mapaPlus.MinTrayR)
 	{
@@ -503,6 +531,7 @@ mapaPlus.minimizedLockFix = function(restore)
 		mapaPlus.windowMinimizedForced = false;
 	}}, 0, timer.TYPE_ONE_SHOT);
 }
+*/
 
 mapaPlus.extraElements = ["_selector", "_paneDeck", "_buttons", "_wizardButtons", "_deck", "_wizardHeader"];
 
@@ -526,7 +555,7 @@ mapaPlus.showLock = function(delay)
 	this.locked = true;
 	if (this.core.prefLockHideTitle)
 	{
-		
+
 		var title = document.getElementById("masterPasswordPlusUnLockInfo").value;
 		try
 		{
@@ -660,16 +689,16 @@ mapaPlus.showLock = function(delay)
 	{
 		if (this.Win7Features)
 		{
-/*
 			function remove()
 			{
 				try
 				{
 //work around for a bug that doesn't remove taskbar aero preview of minimized windows
 					let windowState = window.windowState;
+/*
 					if (windowState == window.STATE_MINIMIZED || (window.screenX == -32000 && window.screenY == -32000))
 						windowState = window.STATE_MINIMIZED;
-
+*/
 					let min = windowState == window.STATE_MINIMIZED;
 					try{mapaPlus.Win7Features.AeroPeek.onCloseWindow(window)}catch(e){}
 					if (min)
@@ -683,181 +712,11 @@ mapaPlus.showLock = function(delay)
 			}
 			else
 				remove();
-*/
-try{mapaPlus.Win7Features.AeroPeek.onCloseWindow(window)}catch(e){this.dump(e, 1)}
-
-				let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
-				timer.init({observe:function()
-				{
-var taskbar = Components.classes["@mozilla.org/windows-taskbar;1"].getService(Components.interfaces.nsIWinTaskbar);
-
-// Get the docShell for the browser
-mapaPlus.dump("ok");
-var navigator2 = top.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsIWebNavigation);
-var docShell = navigator2.QueryInterface(Components.interfaces.nsIDocShell);
-
-// Get the parent docShell; this is the top-level docShell
-
-var docShellTreeItem = docShell.QueryInterface(Components.interfaces.nsIDocShellTreeItem);
-var ds = docShellTreeItem.QueryInterface(Components.interfaces.nsIDocShell);
-
-// Create the preview
-let preview = taskbar.createTaskbarTabPreview(ds, mapaPlus.taskbarPreview);
-preview.active = true;
-preview.visible = true;
-//mapaPlus.dump(preview, 1);
-mapaPlus.Win7Features.AeroPeek.addPreview(preview);
-}}, 100, timer.TYPE_ONE_SHOT);
 		}
 	}catch(e){this.dump(e, 1)};
 //	document.getElementById('masterPasswordPlusUnLock').focus();
 
 }//showLock()
-
-mapaPlus.taskbarPreview = {
-	drawPreview: function(ctx,b,c)
-	{
-		mapaPlus.dump("drawPreview");
-		mapaPlus.dump(ctx);
-		mapaPlus.dump(b, 1);
-		mapaPlus.dump(c, 1);
-    ctx.drawWindow(window, 0, 0, document.width, document.height, "black");
-		return true;
-	},
-	drawThumbnail: function(a,b,c)
-	{
-		this.updateCanvasPreview();
-		mapaPlus.dump("drawThumbnail");
-		mapaPlus.dump(a);
-		mapaPlus.dump(b, 1);
-		mapaPlus.dump(c, 1);
-		return true;
-	},
-	onActivate: function(a,b,c)
-	{
-		mapaPlus.dump("onActivate");
-		mapaPlus.dump(a);
-		mapaPlus.dump(b, 1);
-		mapaPlus.dump(c, 1);
-		return true;
-	},
-	onClose: function(a,b,c)
-	{
-		mapaPlus.dump("onClose");
-		mapaPlus.dump(a);
-		mapaPlus.dump(b, 1);
-		mapaPlus.dump(c, 1);
-		return true;
-	},
-  onTabPaint: function (rect) {
-    let x = Math.floor(rect.left),
-        y = Math.floor(rect.top),
-        width = Math.ceil(rect.right) - x,
-        height = Math.ceil(rect.bottom) - y;
-    this.dirtyRegion.unionRect(x, y, width, height);
-  },
-  // Updates the controller's canvas with the parts of the <browser> that need
-  // to be redrawn.
-  updateCanvasPreview: function () {
-    let win = window.content;
-    let bx = document.documentElement;
-    // Check for resize
-    if (bx.width != this.canvasPreview.width ||
-        bx.height != this.canvasPreview.height) {
-      // Invalidate the entire area and repaint
-      this.onTabPaint({left:0, top:0, right:win.innerWidth, bottom:win.innerHeight});
-      this.canvasPreview.width = bx.width;
-      this.canvasPreview.height = bx.height;
-    }
-
-    // Draw dirty regions
-    let ctx = this.canvasPreview.getContext("2d");
-    let scale = this.winutils.screenPixelsPerCSSPixel;
-
-    let flags = mapaPlus.canvasPreviewFlags;
-    // The dirty region may include parts that are offscreen so we clip to the
-    // canvas area.
-    this.dirtyRegion.intersectRect(0, 0, win.innerWidth, win.innerHeight);
-    let snapRectAtScale = this.snapRectAtScale;
-    this.dirtyRects().forEach(function (r) {
-      // We need to snap the rectangle to be pixel aligned in the destination
-      // coordinate space. Otherwise natively themed widgets might not draw.
-      snapRectAtScale(r, scale);
-      let x = r.x;
-      let y = r.y;
-      let width = r.width;
-      let height = r.height;
-
-      ctx.save();
-      ctx.scale(scale, scale);
-      ctx.translate(x, y);
-      ctx.drawWindow(win, x, y, width, height, "white", flags);
-      ctx.restore();
-    });
-    this.dirtyRegion.setToRect(0,0,0,0);
-
-    // If we're updating the canvas, then we're in the middle of a peek so
-    // don't discard the cache of previews.
-    mapaPlus.Win7Features.AeroPeek.resetCacheTimer();
-  },
-  snapRectAtScale: function(r, scale) {
-	  let x = Math.floor(r.x * scale);
-	  let y = Math.floor(r.y * scale);
-	  let width = Math.ceil((r.x + r.width) * scale) - x;
-	  let height = Math.ceil((r.y + r.height) * scale) - y;
-	
-	  r.x = x / scale;
-	  r.y = y / scale;
-	  r.width = width / scale;
-	  r.height = height / scale;
-	},
-	dirtyRects: function()
-	{
-    let rectstream = this.dirtyRegion.getRects();
-    if (!rectstream)
-      return [];
-    let rects = [];
-    for (let i = 0; i < rectstream.length; i+= 4) {
-      let r = {x:      rectstream[i],
-               y:      rectstream[i+1],
-               width:  rectstream[i+2],
-               height: rectstream[i+3]};
-      rects.push(r);
-    }
-    return rects;
-  },
-}
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyGetter(mapaPlus.taskbarPreview, "canvasPreview", function () {
-  let canvas = document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
-  canvas.mozOpaque = true;
-  return canvas;
-});
-XPCOMUtils.defineLazyGetter(mapaPlus.taskbarPreview, "dirtyRegion",
-  function () {
-    let dirtyRegion = Cc["@mozilla.org/gfx/region;1"]
-                     .createInstance(Ci.nsIScriptableRegion);
-    dirtyRegion.init();
-    return dirtyRegion;
-  });
-
-XPCOMUtils.defineLazyGetter(mapaPlus.taskbarPreview, "winutils",
-  function () {
-    let win = window.content;
-    return win.QueryInterface(Ci.nsIInterfaceRequestor)
-              .getInterface(Ci.nsIDOMWindowUtils);
-});
-
-
-
-
-
-
-
-
-
-
-
 
 mapaPlus.showUnlock = function(f)
 {
@@ -979,14 +838,16 @@ mapaPlus.showUnlock = function(f)
 	if (this.Win7Features)
 	{
 		let windowState = window.windowState;
+/*
 		if (windowState == window.STATE_MINIMIZED || (window.screenX == -32000 && window.screenY == -32000))
 			windowState = window.STATE_MINIMIZED;
-
+*/
 		let min = windowState == window.STATE_MINIMIZED;
 
 		if (min)
 			mapaPlus.minimizedLockFix(1);
-try{this.Win7Features.AeroPeek.onOpenWindow(window)}catch(e){};
+
+		try{this.Win7Features.AeroPeek.onOpenWindow(window)}catch(e){};
 
 	}
 	if (this.showUnlockArray.length)
@@ -1369,23 +1230,7 @@ mapaPlus.openChanges = function()
 {
 	if (mapaPlus.core.prefShowChangesLog)
 	{
-		var url = "chrome://mapaplus/content/changes.xul";
-		if (mapaPlus.core.isTB)
-		{
-			var tabmail = document.getElementById("tabmail");
-			var args = {
-				type: "chromeTab",
-				chromePage: url,
-				background: false
-			};
-			function o() tabmail.openTab(args.type, args);
-			if (mapaPlus.locked)
-				mapaPlus.showUnlockArray.push(o);
-			else
-				o();
-		}
-		else
-			openUILinkIn(url, "tab", false, null, null);
+		mapaPlus.openURL("chrome://mapaplus/content/changes.xul");
 	}
 }
 
@@ -1443,7 +1288,7 @@ mapaPlus.onLoadAdd = function(func)
 		if (func)
 			mapaPlus.onLoadArray.push(func);
 
-		for (let [, func] in Iterator(mapaPlus.onLoadArray)) try{func && func()}catch(e){};
+		for (let [, func] in Iterator(mapaPlus.onLoadArray)) try{func && func()}catch(e){mapaPlus.dump(e, 1)};
 		mapaPlus.onLoadArray = [];
 	}
 	else
@@ -1455,81 +1300,89 @@ mapaPlus.upgrade = function()
 	let compare = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
 									.getService(Components.interfaces.nsIVersionComparator).compare,
 			version = this.core.pref.getCharPref("version")
-	if (version != "firstinstall"	&& (this.core.app.firstRun || version != this.core.app.version))
-	{
-		var val;
+	if (version == "firstinstall"	|| (!this.core.app.firstRun && version == this.core.app.version))
+		return;
 /*
+function upgradeMS(
 	full old setting name,
 	short new setting name,
 	delete true/false,
 	old type (Bool, Int, Char),
 	new type (Bool, Int, Char)
 	callback function(old value)
-	return old setting, null if failed
+)
+return old setting, null if failed
 //		r = this.upgradeMS("masterPasswordTimeout.oldname", "newname", true, "Char", callback);
 */
-		function upgradeMS(o, n, d, g, s, c)
+	function upgradeMS(o, n, d, g, s, c)
+	{
+		n = n || null;
+		d = typeof(d) == "undefined" ? true : d;
+		g = g || "Bool";
+		s = s || g;
+		c = c || function(r){return r;}
+		var aCount = {value:0};
+		var r = null;
+		var p = Components.classes["@mozilla.org/preferences-service;1"]
+						.getService(Components.interfaces.nsIPrefService).getBranch("");
+		p.getChildList(o, aCount);
+		if( aCount.value != 0 )
 		{
-			n = n || null;
-			d = typeof(d) == "undefined" ? true : d;
-			g = g || "Bool";
-			s = s || g;
-			c = c || function(r){return r;}
-			var aCount = {value:0};
-			var r = null;
-			var p = Components.classes["@mozilla.org/preferences-service;1"]
-							.getService(Components.interfaces.nsIPrefService).getBranch("");
-			p.getChildList(o, aCount);
-			if( aCount.value != 0 )
-			{
-				try{r = p['get' + g + 'Pref'](o)}catch(e){r=null;mapaPlus.dump(o + " (" + g + ") doesn't exist")};
-				if (d)
-					try{p.deleteBranch(o)}catch(e){};
+			try{r = p['get' + g + 'Pref'](o)}catch(e){r=null;mapaPlus.dump(o + " (" + g + ") doesn't exist")};
+			if (d)
+				try{p.deleteBranch(o)}catch(e){};
 
-				if (n !== null && r !== null)
-					try{mapaPlus.core.pref['set' + s + 'Pref'](n, c(r))}catch(e){mapaPlus.dump("error converting " + o + " (" + g + ") = " + r + " to " + n + " (" + s + ") = " + c(r))}
-			}
-			return r;
+			if (n !== null && r !== null)
+				try{mapaPlus.core.pref['set' + s + 'Pref'](n, c(r))}catch(e){mapaPlus.dump("error converting " + o + " (" + g + ") = " + r + " to " + n + " (" + s + ") = " + c(r))}
 		}
-
-		if (compare(version, "0.4") < 0)
-		{
-			upgradeMS("masterPasswordTimeout.enabled",					"logouttimer");
-			upgradeMS("masterPasswordTimeout.timeout",					"logouttimeout", true, "Int");
-			upgradeMS("masterPasswordTimeoutPlus.enabled",			"logouttimer");
-			upgradeMS("masterPasswordTimeoutPlus.timeout",			"logouttimeout", true, "Int");
-			upgradeMS("masterPasswordTimeoutPlus.statusbar",		"statusbar");
-			upgradeMS("masterPasswordTimeoutPlus.toolsmenu",		"toolsmenu");
-			upgradeMS("masterPasswordTimeoutPlus.contextmenu",	"contextmenu");
-			upgradeMS("masterPasswordTimeoutPlus.inactivity",		"logoutinactivity");
-		}
-		if (compare(version, "1.14") < 0)
-		{
-			var startupFail = upgradeMS("extensions.masterPasswordPlus.startupfail");
-			startupFail = startupFail ? this.core.STARTUP_QUIT : this.core.STARTUP_DONOTHING;
-			this.core.pref.setIntPref("startupfail", startupFail);
-		}
-		if (compare(version, "1.16") < 0)
-		{
-			upgradeMS("extensions.masterPasswordPlus.enabled",			"logouttimer");
-			upgradeMS("extensions.masterPasswordPlus.timeout",			"logoutimeout");
-			upgradeMS("extensions.masterPasswordPlus.inactivity",		"logoutinactivity");
-		}
-		if (compare(version, "1.21") < 0)
-		{
-			upgradeMS("extensions.masterPasswordPlus.lockhotkeywin",	"lockwinhotkey", true, "Char");
-			let convert = function(val)
-			{
-				return val ? 2 : 1;
-			}
-			upgradeMS("extensions.masterPasswordPlus.logouthotkeyglobal",	"logouthotkeyenabled", true, "Bool", "Int", convert);
-			upgradeMS("extensions.masterPasswordPlus.lockhotkeyglobal",	"lockhotkeyenabled", true, "Bool", "Int", convert);
-			upgradeMS("extensions.masterPasswordPlus.locklogouthotkeyglobal",	"locklogouthotkeyenabled", true, "Bool", "Int", convert);
-		}
-
-		this.core.pref.setCharPref("version", this.core.app.version);
-		this.onLoadAdd(this.openChanges);
+		return r;
 	}
+
+	if (compare(version, "0.4") < 0)
+	{
+		upgradeMS("masterPasswordTimeout.enabled",					"logouttimer");
+		upgradeMS("masterPasswordTimeout.timeout",					"logouttimeout", true, "Int");
+		upgradeMS("masterPasswordTimeoutPlus.enabled",			"logouttimer");
+		upgradeMS("masterPasswordTimeoutPlus.timeout",			"logouttimeout", true, "Int");
+		upgradeMS("masterPasswordTimeoutPlus.statusbar",		"statusbar");
+		upgradeMS("masterPasswordTimeoutPlus.toolsmenu",		"toolsmenu");
+		upgradeMS("masterPasswordTimeoutPlus.contextmenu",	"contextmenu");
+		upgradeMS("masterPasswordTimeoutPlus.inactivity",		"logoutinactivity");
+	}
+	if (compare(version, "1.14") < 0)
+	{
+		let startupFail = upgradeMS("extensions.masterPasswordPlus.startupfail");
+		startupFail = startupFail ? this.core.STARTUP_QUIT : this.core.STARTUP_DONOTHING;
+		this.core.pref.setIntPref("startupfail", startupFail);
+	}
+	if (compare(version, "1.16") < 0)
+	{
+		upgradeMS("extensions.masterPasswordPlus.enabled",			"logouttimer");
+		upgradeMS("extensions.masterPasswordPlus.timeout",			"logoutimeout");
+		upgradeMS("extensions.masterPasswordPlus.inactivity",		"logoutinactivity");
+	}
+	if (compare(version, "1.21") < 0)
+	{
+		upgradeMS("extensions.masterPasswordPlus.lockhotkeywin",	"lockwinhotkey", true, "Char");
+		let convert = function(val)
+		{
+			return val ? 2 : 1;
+		}
+		upgradeMS("extensions.masterPasswordPlus.logouthotkeyglobal",	"logouthotkeyenabled", true, "Bool", "Int", convert);
+		upgradeMS("extensions.masterPasswordPlus.lockhotkeyglobal",	"lockhotkeyenabled", true, "Bool", "Int", convert);
+		upgradeMS("extensions.masterPasswordPlus.locklogouthotkeyglobal",	"locklogouthotkeyenabled", true, "Bool", "Int", convert);
+	}
+
+	if (compare(version, "1.21.2") < 0)
+	{
+		let p = Components.classes["@mozilla.org/preferences-service;1"]
+						.getService(Components.interfaces.nsIPrefService).getDefaultBranch(mapaPlusCore.PREF_BRANCH),
+				str = Components.classes["@mozilla.org/supports-string;1"].createInstance(Components.interfaces.nsISupportsString);
+		str.data = p.getComplexValue("forceprompt", Components.interfaces.nsISupportsString).data;
+		this.core.pref.setComplexValue("forceprompt", Components.interfaces.nsISupportsString, str);
+	}
+	this.core.pref.setCharPref("version", this.core.app.version);
+	this.onLoadAdd(function(){setTimeout(function(){mapaPlus.openChanges()}, 500)});
 }
 
 mapaPlus.lockSetTransparent = function(v)
@@ -1543,6 +1396,60 @@ mapaPlus.lockSetBgImage = function(v)
 }
 mapaPlus.screenRestored = true;
 mapaPlus.windowMinimizedForced = false;
+(mapaPlus.setWindowState = function()
+{
+	mapaPlus.windowMaximized = window.windowState == window.STATE_MAXIMIZED;
+	mapaPlus.windowMinimized = window.windowState == window.STATE_MINIMIZED;
+	mapaPlus.windowNormal = window.windowState == window.STATE_NORMAL;
+	mapaPlus.windowFullscreen = window.windowState == window.STATE_FULLSCREEN;
+})()
+
+mapaPlus.isMinimized = function()
+{
+	if (mapaPlus.windowState != window.windowState)
+	{
+		if (window.windowState == window.STATE_MINIMIZED)
+		{
+			if (!mapaPlus.windowMinimizedForced)
+			{
+				if (window.screenX > -32000 && window.screenY > -32000)
+				{
+					mapaPlus.screenX = window.screenX;
+					mapaPlus.screenY = window.screenY;
+				}
+				mapaPlus.screenRestored = false;
+			}
+			mapaPlus.minimized();
+		}
+		else if (mapaPlus.Win7Features)
+		{
+			if (mapaPlus.screenRestored)
+				mapaPlus.setWindowState();
+
+			if (!mapaPlus.windowMinimizedForced && !mapaPlus.screenRestored)
+			{
+				let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+				timer.init({observe:function()
+				{
+					mapaPlus.windowMinimizedForced = true;
+					window.screenX = mapaPlus.screenX;
+					window.screenY = mapaPlus.screenY;
+					if (mapaPlus.windowMaximized || mapaPlus.windowFullscreen)
+					{
+						window.maximize();
+					}
+					mapaPlus.windowMinimizedForced = false;
+					mapaPlus.screenRestored = true;
+					mapaPlus.setWindowState();
+				}}, 0, timer.TYPE_ONE_SHOT);
+			}
+		}
+	}
+
+	mapaPlus.windowState = window.windowState;
+}
+
+/*
 (mapaPlus.setWindowState = function()
 {
 	let windowState = window.windowState;
@@ -1610,7 +1517,7 @@ mapaPlus.dump([mapaPlus.windowState, window.windowState, windowState, mapaPlus.s
 		}
 	}
 }
-
+*/
 mapaPlus.minimized = function()
 {
 	if (this.core.prefLogoutOnMinimize)
@@ -1642,7 +1549,7 @@ mapaPlus.init = function()
 	if (this.initialized)
 		return;
 
-	this.windowID = this.core.windowAdd(this);
+	this.windowID = this.core.windowAdd(this, this.loadedManualy ? "WindowGeneric" : "");
 	this.initialized = true;
 	document.getElementById("masterPasswordPlusUnLockInfo").value = document.getElementById("masterPasswordPlusUnLockInfo").value.replace("#", mapaPlus.core.appInfo.name);
 
@@ -1672,9 +1579,12 @@ mapaPlus.init = function()
 	if (!this.core.isTB && WINTASKBAR_CONTRACTID in Components.classes &&
 			Components.classes[WINTASKBAR_CONTRACTID].getService(Components.interfaces.nsIWinTaskbar).available)
 	{
-		let temp = {};
-		Components.utils.import("resource://gre/modules/WindowsPreviewPerTab.jsm", temp);
-		this.Win7Features = temp;
+			let temp = {};
+			try
+			{
+				Components.utils.import("resource://gre/modules/WindowsPreviewPerTab.jsm", temp);
+			}catch(e){}
+			this.Win7Features = temp;
 	}
 	this.core.workAround.init(this, this.first);
 	if (!this.loadedManualy && !mapaPlus.core.style.MozAppearance)

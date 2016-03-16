@@ -1,4 +1,4 @@
-if (mapaPlus.core.prefSuppress == 2 && mapaPlus.core.status == 2)
+if (mapaPlus.core.status == 2 && (mapaPlus.core.prefSuppress == 2 || mapaPlus.core.prefSuppressTemp))
 {
 	var b = mapaPlus.core.dialogForce, ok = false;
 	mapaPlus.core.dialogForce = true;
@@ -10,6 +10,7 @@ if (mapaPlus.core.prefSuppress == 2 && mapaPlus.core.status == 2)
 	mapaPlus.core.dialogForce = b;
 	if (!ok)
 	{
-		window.close();
+		let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+		timer.init({observe:window.close}, 0, timer.TYPE_ONE_SHOT);
 	}
 }

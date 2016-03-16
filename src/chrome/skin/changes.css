@@ -7,7 +7,7 @@
 {
 	-moz-user-select: text;
 }
-#mapaPlusChangesLog
+#mapaPlusChangesLogBox
 {
 	margin: 0;
 	border: 0;
@@ -16,6 +16,12 @@
 	padding: 0.5em;
 	overflow: auto;
 }
+
+#mapaPlusChangesLogBox[window]
+{
+	border-bottom: 1px solid ThreeDDarkShadow;
+}
+
 #mapaPlusChangesLog,
 #mapaPlusChangesLog *
 {
@@ -26,11 +32,17 @@
 {
 	padding: 0;
 	margin: 0;
-	white-space: pre;
+	white-space: pre-wrap;
 	text-align: left;
 }
+#mapaPlusChangesLog > hbox
+{
+	padding: 1px 0 1px 0;
+	margin-top: 1px;
+}
 
-.title
+.title,
+.titlelog
 {
 	font-weight: bold;
 	font-size: 1em;
@@ -39,6 +51,41 @@
 {
 	margin:0;
 }
+
+#mapaPlusChangesLog > hbox.added > vbox > description,
+#mapaPlusChangesLog > hbox.removed > vbox > description,
+#mapaPlusChangesLog > hbox.changed > vbox > description,
+#mapaPlusChangesLog > hbox.fixed > vbox > description
+{
+	padding-left: 5px;
+}
+
+.last
+{
+	border-bottom: 1px solid ThreeDShadow;
+}
+
+#mapaPlusChangesLog[flex="1"]:not([highlight="2"]) hbox:not(.last)[wrapped] .border
+{
+	border-bottom: 1px dotted ThreeDShadow;
+}
+#mapaPlusChangesLog:not([highlight="2"]) hbox:not(.last)[wrapped] .border.tab,
+#mapaPlusChangesLog hbox:not(.last)[wrapped] .border
+{
+	border-bottom: 1px dotted transparent;
+}
+
+#mapaPlusChangesLog hbox:not(.last)
+{
+	margin-bottom: 0 !important;
+	padding-bottom: 0 !important;
+}
+
+.titlelog
+{
+	margin-top: 1em !important;
+}
+
 #mapaPlusSupport
 {
 	min-width: 19em;
@@ -73,4 +120,10 @@
 #mapaPlusChangesLog[highlight="1"] description.fixed
 {
 	background-color: #FFFFBF;
+}
+
+#mapaPlusMenu
+{
+	cursor: pointer;
+	list-style-image: none;
 }
