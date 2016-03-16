@@ -7,6 +7,16 @@ Legend:
 - = Removed
 ! = Fixed
 
+v1.21.4 (2016-03-16)
+	* different approach to show MP prompt on startup
+	* dropped support for FF <4.0 and TB <5.0
+	! timer didn't show more then 24 hours
+	! DOM Inspector window would not get locked
+	! missing options on FF29+
+	! issue #85 (Saved passwords list is empty)
+	! password prompt missing custom title and options button
+	! FF/TB 48 compatibility
+
 v1.21.3 (2014-10-12)
 	* flashing for a split a second prompt window is now less intrusive if visible at all.
 	! FF/TB 35 compatibility

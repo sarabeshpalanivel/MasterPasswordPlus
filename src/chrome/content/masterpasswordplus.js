@@ -34,6 +34,9 @@ mapaPlus.loaded = new Date();
 mapaPlus.loadedManualy = false;
 mapaPlus.Win7Features = null;
 mapaPlus.MinTrayR = null;
+mapaPlus.CHANGESLOG_FULL = 1;
+mapaPlus.CHANGESLOG_NOTIFICATION = 2;
+mapaPlus.CHANGESLOG_NOTIFICATION2 = 4;
 
 (mapaPlus.observer = {
 	_observerService: Components.classes["@mozilla.org/observer-service;1"]
@@ -1229,14 +1232,6 @@ mapaPlus.load = function()
 	window.addEventListener("unload", timer.cancel, false);
 }
 
-mapaPlus.openChanges = function()
-{
-	if (mapaPlus.core.prefShowChangesLog)
-	{
-		mapaPlus.openURL("chrome://mapaplus/content/changes.xul");
-	}
-}
-
 mapaPlus.showMenu = function(e)
 {
 	e.stopPropagation();
@@ -1302,8 +1297,10 @@ mapaPlus.upgrade = function()
 {
 	let compare = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
 									.getService(Components.interfaces.nsIVersionComparator).compare,
-			version = this.core.pref.getCharPref("version")
-	if (version == "firstinstall"	|| (!this.core.app.firstRun && version == this.core.app.version))
+			version = this.core.pref.getCharPref("version");
+
+	mapaPlus.core.prevVersion = version;
+	if (version == "firstinstall"	|| (!this.core.addon.firstRun && version == this.core.addon.version))
 		return;
 /*
 function upgradeMS(
@@ -1384,8 +1381,15 @@ return old setting, null if failed
 		str.data = p.getComplexValue("forceprompt", Components.interfaces.nsISupportsString).data;
 		this.core.pref.setComplexValue("forceprompt", Components.interfaces.nsISupportsString, str);
 	}
-	this.core.pref.setCharPref("version", this.core.app.version);
-	this.onLoadAdd(function(){setTimeout(function(){mapaPlus.openChanges()}, 500)});
+	if (compare(version, "1.21.4") < 0)
+	{
+		upgradeMS(mapaPlusCore.PREF_BRANCH + "showchangeslog", "showchangeslog", false, "Bool", "Int", function(val)
+		{
+			return val ? mapaPlus.CHANGESLOG_FULL : 0;
+		});
+	}
+	this.core.pref.setCharPref("version", this.core.addon.version);
+	this.onLoadAdd(function(){setTimeout(function(){mapaPlus.openChanges()}, 1000)});
 }
 
 mapaPlus.lockSetTransparent = function(v)
@@ -1541,6 +1545,7 @@ mapaPlus.minimized = function()
 
 mapaPlus.init = function()
 {
+	mapaPlus.upgrade();
 	if (!this.core.initialized)
 	{
 		this.core.init(false, this);
@@ -1548,15 +1553,6 @@ mapaPlus.init = function()
 		this.core.windowListener.observe(window, "domwindowopened", true);
 		this.core.lockOverlay = document.getElementById("masterPasswordPlusLock").parentNode.cloneNode(true);
 		this.first = true;
-/*
-window.setTimeout(function()
-{
-//		window.openContentTab(url, "tab", "addons.mozilla.org");
-	window.toErrorConsole();
-//		window.inspectDOMNode(window.document);
-//		window.openOptionsDialog();
-},1000);
-*/
 	}
 	if (this.initialized)
 		return;
@@ -1649,23 +1645,6 @@ window.setTimeout(function()
 		window.addEventListener("sizemodechange", mapaPlus.isMinimized, true);
 	}
 	this.update(true);
-}
-
-try
-{
-	Components.utils.import("resource://gre/modules/AddonManager.jsm");
-	AddonManager.getAddonByID(mapaPlus.core.GUID, function(app)
-	{
-		mapaPlus.core.app = app;
-		mapaPlus.upgrade();
-	});
-}
-catch (e)
-{
-	mapaPlus.core.app = Components.classes["@mozilla.org/extensions/manager;1"]
-								.getService(Components.interfaces.nsIExtensionManager)
-								.getItemForID(mapaPlus.core.GUID);
-	mapaPlus.upgrade();
 }
 
 

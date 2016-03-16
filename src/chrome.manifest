@@ -6,6 +6,9 @@ locale		mapaplus	es-ES				chrome/locale/es-ES/
 locale		mapaplus	de-DE				chrome/locale/de-DE/
 skin			mapaplus	classic/1.0	chrome/skin/
 resource	mapaplus							chrome/modules/
+component	{3F6CF5B4-39AE-11E3-9DB0-5FED6188709B}	components/masterPasswordPlusComponents.js
+contract	@mpp/masterpasswordplus;1	{3F6CF5B4-39AE-11E3-9DB0-5FED6188709B}
+category	profile-after-change	MasterPasswordPlus	@mpp/masterpasswordplus;1
 
 style	chrome://global/content/customizeToolbar.xul												chrome://mapaplus/skin/masterpasswordplus.css
 style	chrome://browser/content/browser.xul																chrome://mapaplus/skin/masterpasswordplus.css
@@ -29,3 +32,5 @@ overlay	chrome://mapaplus/content/masterpasswordplusOverlay.xul						chrome://ma
 overlay	chrome://mapaplus/content/masterpasswordplusOptions.xul						chrome://mapaplus/content/masterpasswordplusOptionsOverlay.xul
 overlay	chrome://mapaplus/content/changempOverlay.xul											chrome://mapaplus/content/masterpasswordplusOptionsOverlay.xul
 overlay	chrome://mapaplus/content/changepasswordOverlay.xul								chrome://mapaplus/content/masterpasswordplusOptionsOverlay.xul
+
+overlay	chrome://sessionmanager/content/session_prompt.xul								chrome://mapaplus/content/masterpasswordplusForcePromptOverlay.xul

@@ -1,36 +1,43 @@
-mapaPlus.LoadSignons = typeof(LoadSignons) == undefined ? null : LoadSignons,
-mapaPlus.FinalizeSignonDeletions = typeof(FinalizeSignonDeletions) == undefined ? null : FinalizeSignonDeletions,
-mapaPlus.ConfirmShowPasswords = typeof(ConfirmShowPasswords) == undefined ? null : ConfirmShowPasswords,
-mapaPlus.TogglePasswordVisible = typeof(TogglePasswordVisible) == undefined ? null : TogglePasswordVisible,
-mapaPlus.exec = function(f, v)
+mapaPlus.load = function()
 {
-	var dialogShow = mapaPlusCore.dialogShow;
-	var dialogTemp = mapaPlusCore.dialogTemp;
-	mapaPlusCore.dialogShow = true;
-	mapaPlusCore.dialogTemp = false;
-	mapaPlusCore.suppressedFocusForce = true;
-	var r = f(v);
-	mapaPlusCore.dialogTemp = dialogTemp;
-	mapaPlusCore.dialogShow = dialogShow;
-	return r;
+	mapaPlus.init();
 }
-
-var LoadSignons = function()
+mapaPlus.init = function()
 {
-	return mapaPlus.exec(mapaPlus.LoadSignons);
-},
-
-FinalizeSignonDeletions = function(syncNeeded)
-{
-	return mapaPlus.exec(mapaPlus.FinalizeSignonDeletions, syncNeeded);
-},
-
-ConfirmShowPasswords = function()
-{
-	return mapaPlus.exec(mapaPlus.ConfirmShowPasswords);
-},
-
-TogglePasswordVisible = function()
-{
-	return mapaPlus.exec(mapaPlus.TogglePasswordVisible);
+	this.LoadSignons = typeof(window.LoadSignons) == undefined ? null : window.LoadSignons,
+	this.FinalizeSignonDeletions = typeof(window.FinalizeSignonDeletions) == undefined ? null : window.FinalizeSignonDeletions,
+	this.ConfirmShowPasswords = typeof(window.ConfirmShowPasswords) == undefined ? null : window.ConfirmShowPasswords,
+	this.TogglePasswordVisible = typeof(window.TogglePasswordVisible) == undefined ? null : window.TogglePasswordVisible,
+	window.LoadSignons = function()
+	{
+		return mapaPlus.exec(mapaPlus.LoadSignons);
+	}
+	
+	window.FinalizeSignonDeletions = function(syncNeeded)
+	{
+		return mapaPlus.exec(mapaPlus.FinalizeSignonDeletions, syncNeeded);
+	}
+	
+	window.ConfirmShowPasswords = function()
+	{
+		return mapaPlus.exec(mapaPlus.ConfirmShowPasswords);
+	}
+	
+	window.TogglePasswordVisible = function()
+	{
+		return mapaPlus.exec(mapaPlus.TogglePasswordVisible);
+	}
 }
+mapaPlus.exec = function(f, v)	
+{	
+	var dialogShow = mapaPlus.core.dialogShow;	
+	var dialogTemp = mapaPlus.core.dialogTemp;	
+	mapaPlus.core.dialogShow = true;	
+	mapaPlus.core.dialogTemp = false;	
+	mapaPlus.core.suppressedFocusForce = true;	
+	var r = f(v);	
+	mapaPlus.core.dialogTemp = dialogTemp;	
+	mapaPlus.core.dialogShow = dialogShow;	
+	return r;	
+}
+window.addEventListener("load", mapaPlus.load, true);

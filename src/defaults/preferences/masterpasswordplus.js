@@ -45,7 +45,7 @@ pref("extensions.masterPasswordPlus.lockonminimize", 0); //lock on minimize
 
 
 //hidden settings
-pref("extensions.masterPasswordPlus.showchangeslog", true); //show changes log after each update
+pref("extensions.masterPasswordPlus.showchangeslog", 1); //show changes log after each update
 pref("extensions.masterPasswordPlus.nonlatinwarning", 2); //show warning icon when used non-latin letter in the password (0=off, 1=always, 2=full screen only)
 pref("extensions.masterPasswordPlus.showlang", 2); //show current keyboard language (windows only)(0=off, 1=always, 2=full screen only)
 pref("extensions.masterPasswordPlus.noworkaround", ""); //list of work around of conflicts with other extensions to ignore, separate by comma. Available: AeroBuddy
@@ -75,7 +75,7 @@ param:
 you can combine parameters by separating them with | "always|close" = force always and close window
 */
 
-pref("extensions.masterPasswordPlus.forceprompt", '[{"enabled":"1","name":"PassHash","url":"chrome://passhash/content/passhash-dialog.xul","param":""},{"enabled":"1","name":"FireFTP","url":"chrome://fireftp/content/fireftp.xul","param":""},{"enabled":"1","name":"SessionManager","url":"chrome://sessionmanager/content/session_prompt.xul","param":"startup"}]');
+pref("extensions.masterPasswordPlus.forceprompt", '[{"enabled":"1","name":"PassHash","url":"chrome://passhash/content/passhash-dialog.xul","param":""},{"enabled":"1","name":"FireFTP","url":"chrome://fireftp/content/fireftp.xul","param":""}]');
 
 
 //internal settings, do not change

@@ -59,6 +59,20 @@ mapaPlus.check = function ()
 								.GetStringFromName("CertPassPrompt");
 		try
 		{
+			let slotsMore = true;
+			while(modules.hasMoreElements())
+			{
+				let module = modules.getNext().QueryInterface(Components.interfaces.nsIPKCS11Module),
+						slots = module.listSlots();
+				while(slots.hasMoreElements())
+				{
+					let slot = slots.getNext().QueryInterface(Components.interfaces.nsIPKCS11Slot);
+					slotnames.push(slot.tokenName ? slot.tokenName : slot.name);
+				}
+			}
+		}
+		catch(e)
+		{
 			let modulesMore = true,
 					slotsMore = true;
 			while(modulesMore)
@@ -104,7 +118,6 @@ mapaPlus.check = function ()
 				}
 			}
 		}
-		catch(e){}
 		if (text)
 		{
 			for(let i = 0; i < slotnames.length; i++)

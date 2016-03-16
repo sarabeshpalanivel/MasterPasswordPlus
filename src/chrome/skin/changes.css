@@ -1,41 +1,39 @@
-#mapaPlusChangesWindow
+#changesLogWindow
 {
 	padding: 0;
 }
-#mapaPlusChangesWindow,
-#mapaPlusChangesWindow *
+#changesLog *
 {
 	-moz-user-select: text;
 }
-#mapaPlusChangesLogBox
+#changesLogBox
 {
 	margin: 0;
 	border: 0;
 	border-top: 1px solid ThreeDDarkShadow;
-	font-family: 'courier new', 'times new roman', fixed, monospace;
-	padding: 0.5em;
+	font-family: Monaco,"DejaVu Sans Mono",'courier new', 'times new roman', fixed, monospace;
+	padding: 1.2em;
 	overflow: auto;
 }
 
-#mapaPlusChangesLogBox[window]
+#changesLogBox[window]
 {
 	border-bottom: 1px solid ThreeDDarkShadow;
 }
 
-#mapaPlusChangesLog,
-#mapaPlusChangesLog *
+#changesLog,
+#changesLog *
 {
-	-moz-user-focus: normal;
 	cursor: text;
 }
-#mapaPlusChangesLog *
+#changesLog *
 {
 	padding: 0;
 	margin: 0;
 	white-space: pre-wrap;
 	text-align: left;
 }
-#mapaPlusChangesLog > hbox
+#changesLog > hbox
 {
 	padding: 1px 0 1px 0;
 	margin-top: 1px;
@@ -47,83 +45,114 @@
 	font-weight: bold;
 	font-size: 1em;
 }
-.link
-{
-	margin:0;
-}
 
-#mapaPlusChangesLog > hbox.added > vbox > description,
-#mapaPlusChangesLog > hbox.removed > vbox > description,
-#mapaPlusChangesLog > hbox.changed > vbox > description,
-#mapaPlusChangesLog > hbox.fixed > vbox > description
-{
-	padding-left: 5px;
-}
-
+hbox.border,
 .last
 {
 	border-bottom: 1px solid ThreeDShadow;
 }
 
-#mapaPlusChangesLog[flex="1"]:not([highlight="2"]) hbox:not(.last)[wrapped] .border
+#changesLog[flex="1"]:not([highlight="2"]) hbox:not(.last)[wrapped] .border
 {
 	border-bottom: 1px dotted ThreeDShadow;
 }
-#mapaPlusChangesLog:not([highlight="2"]) hbox:not(.last)[wrapped] .border.tab,
-#mapaPlusChangesLog hbox:not(.last)[wrapped] .border
+#changesLog:not([highlight="2"]) hbox:not(.last)[wrapped] .border.tab,
+#changesLog hbox:not(.last)[wrapped] .border
 {
 	border-bottom: 1px dotted transparent;
 }
 
-#mapaPlusChangesLog hbox:not(.last)
+#changesLog hbox:not(.last)
 {
 	margin-bottom: 0 !important;
 	padding-bottom: 0 !important;
 }
 
-.titlelog
+#changesLog:not([legend="0"]) .titlelog,
+#changesLog[legend="0"] .titlelog:not(#changesLogFirst)
 {
 	margin-top: 1em !important;
 }
 
-#mapaPlusSupport
+#changesLogSupport
 {
-	min-width: 19em;
+	min-width: 18em;
 }
-#mapaPlusSupport,
-#mapaPlusSupport *
+#changesLogSupport,
+#changesLogSupport *
 {
 	font-style: italic;
 }
 .type
 {
-/*
 	font-weight: bold;
-*/
 }
-#mapaPlusChangesLog[highlight="2"] .added,
-#mapaPlusChangesLog[highlight="1"] description.added
+#changesLog[highlight="2"] .added,
+#changesLog[highlight="1"] description.added
 {
 	background-color: #C9F5C9;
 }
-#mapaPlusChangesLog[highlight="2"] .removed,
-#mapaPlusChangesLog[highlight="1"] description.removed
+#changesLog[highlight="2"] .removed,
+#changesLog[highlight="1"] description.removed
 {
 	background-color: #FFBFBF;
 }
-#mapaPlusChangesLog[highlight="2"] .changed,
-#mapaPlusChangesLog[highlight="1"] description.changed
+#changesLog[highlight="2"] .changed,
+#changesLog[highlight="1"] description.changed
 {
 	background-color: #BFEEFF;
 }
-#mapaPlusChangesLog[highlight="2"] .fixed,
-#mapaPlusChangesLog[highlight="1"] description.fixed
+#changesLog[highlight="2"] .fixed,
+#changesLog[highlight="1"] description.fixed
 {
 	background-color: #FFFFBF;
 }
 
-#mapaPlusMenu
+#changesLogMenu
 {
 	cursor: pointer;
 	list-style-image: none;
+}
+#changesLogMenu .button-icon
+{
+	margin-right: 0.5em;
+	list-style-image:url("settings.png");
+}
+
+#changesLog[legend="0"] .legend
+{
+	display: none;
+}
+.link
+{
+	-moz-user-focus: normal;
+	margin: 0;
+	cursor: pointer !important;
+}
+.link.issue
+{
+	border: 1px solid ThreeDShadow;
+	border-radius: 3px;
+	padding: 0 5px 0 5px !important;
+	background-color: rgba(127,127,127, 0.07);
+	background-clip: padding-box;
+	font-weight: bold;
+}
+.link.setting
+{
+	font-weight: bold;
+}
+
+.changesLog_copy
+{
+	list-style-image:url("chrome://mapaplus/skin/copy.png") !important;
+}
+.changesLog_copy_link
+{
+	list-style-image:url("chrome://mapaplus/skin/copy_link.png") !important;
+}
+
+#changesLogContext menuitem[disabled="true"] .menu-iconic-left
+{
+	opacity: 0.5 !important;
 }
