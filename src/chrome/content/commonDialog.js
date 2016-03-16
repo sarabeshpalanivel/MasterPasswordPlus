@@ -235,6 +235,7 @@ mapaPlus.quit = function()
 {
 //	commonDialogOnLoad();
 	this.core.windowRemove(this.windowID, this.windowType);
+	window.resizeTo(0, 0); // Force hide window
 	window.close();
 }
 

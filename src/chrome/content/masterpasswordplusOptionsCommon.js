@@ -82,18 +82,22 @@ mapaPlus.iniIcons = function(objId, iconId, id, checkbox)
 			if (elId)
 			{
 				dir = 1;
-				el = document.getElementById(elId).nextSibling;
+				if (document.getElementById(elId))
+					el = document.getElementById(elId).nextSibling;
 			}
 			else
 			{
 				elId = this.iconSelected[id].getAttribute("insertbefore");
-				el = document.getElementById(elId).previousSibling;
+				if (document.getElementById(elId))
+					el = document.getElementById(elId).previousSibling;
 			}
-			
-			el.setAttribute("directionId", elId);
-			el.setAttribute("direction", dir);
-			el.setAttribute("selected", true);
-			el.collapsed = false;
+			if (el)
+			{
+				el.setAttribute("directionId", elId);
+				el.setAttribute("direction", dir);
+				el.setAttribute("selected", true);
+				el.collapsed = false;
+			}
 		}
 	}
 	return urlBarIcons;

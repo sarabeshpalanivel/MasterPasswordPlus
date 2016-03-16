@@ -7,6 +7,10 @@ Legend:
 - = Removed
 ! = Fixed
 
+v1.21.3 (2014-10-12)
+	* flashing for a split a second prompt window is now less intrusive if visible at all.
+	! FF/TB 35 compatibility
+
 v1.21.2 (2013-03-23)
 	+ hidden option extensions.masterPasswordPlus.lockignorefirstkey, that controls when pressing a key on locked window: should it be passed to the MP prompt or not (controls a feature introduced in v1.20)
 	+ in Firefox/Thunderbird 8.0+ a link at General tab in options window to open all available settings
@@ -16,7 +20,7 @@ v1.21.2 (2013-03-23)
 	! error in console on non Vista/W7/W8 systems
 
 v1.21.1 (2013-03-08)
-	+ extensions.masterPasswordPlus.forceprompt setting (for advanced users). Users can now add windows to the list that require MP logined in.
+	+ extensions.masterPasswordPlus.forceprompt setting (for advanced users). Users can now add windows to the list that require MP login.
 	! improved the way hotkeys append to non-main windows
 	! window title didn't change on lock in some windows
 	! in some cases on Windows Vista/7 locked window would still show it's content in taskbar preview
@@ -57,7 +61,7 @@ v1.20 (2012-11-06)
 	! cleaned up some style namespace pollution
 	! old name showed in about dialog box 
 	! about dialog is now resizable
-	! pressing any key in locked window would pass keyboard event to the element that was focused before window locked. Now it passes to the MP dialog box instead so you can start typing immediately without waiting for the MP prompt to showup.
+	! pressing any key in locked window would pass keyboard event to the element that was focused before window locked. Now it passes to the MP dialog box instead so you can start typing immediately without waiting for the MP prompt to show up.
 	! no MP+ icon shown when added onto title toolbar in TB18
 	! incorrectly identifying generic password prompt as master password prompt
 	! global lock/unlock keys didn't work

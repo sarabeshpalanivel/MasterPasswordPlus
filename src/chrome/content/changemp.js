@@ -168,7 +168,7 @@ mapaPlus.init = function()
 					}
 				}
 			} catch (e) {
-				mapaPlus.dump(e);
+//				mapaPlus.dump(e);
 				promptService.alert(window,
 														bundle.getString("pw_change_failed_title"),
 														bundle.getString("failed_pw_change"));

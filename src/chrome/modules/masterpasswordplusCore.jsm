@@ -89,7 +89,7 @@ var mapaPlusCore = {
 		timer: Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer),
 		init: function(t)
 		{
-			var t = t || "Window";
+			t = t || "Window";
 			this.timer.init({observe: function()
 				{
 					mapaPlusCore.windowFocus(t);
@@ -119,7 +119,7 @@ var mapaPlusCore = {
 	focused: null,
 
 	style: {},
-	
+
 	strings: {
 		deleteSettings: "Delete all settings?"
 	},
@@ -127,6 +127,28 @@ var mapaPlusCore = {
 	dump: function (aMessage, obj, tab, parent, c)
 	{
 	//	return;
+		let func = this.dump;
+		if (!("cache" in this.dump) || typeof(tab) == "undefined")
+		{
+			this.dump.cache = {
+				id: 1
+			};
+		}
+
+		let cache = this.dump.cache;
+		function objectId(obj)
+		{
+				let id = cache.id++;
+				if (obj==null) return id;
+				try
+				{
+					if (obj.___obj_id==null)
+						obj.___obj_id=id;
+					id = obj.___obj_id;
+				}
+				catch(e){}
+				return id;
+		}
 
 		parent = parent || aMessage;
 		c = c || 0;
@@ -134,7 +156,6 @@ var mapaPlusCore = {
 
 		let showType = 1,
 				sort = 1, //0 = none, 1 = case sensetive, 2 = case insensitive
-				ret = ret || "",
 				i,
 				r = "",
 				t2,
@@ -205,6 +226,9 @@ var mapaPlusCore = {
 				for(var ii = 0; ii < array.length; ii++)
 				{
 					i = array[ii];
+					if (i == "___obj_id")
+						continue;
+
 					if (showType)
 						t2Text = " (unknown)";
 					try
@@ -238,9 +262,16 @@ var mapaPlusCore = {
 					{
 						r += append + i + t2Text + ": " + e;
 					};
-					if (t2 == "object" && aMessage[i] !== null && aMessage[i] != parent && c < obj)
+					if (t2 == "object" && aMessage[i] !== null && c < obj && !(tab && aMessage[i] == this.dump))
 					{
-						r += "\n" + _tab(tab) + "{\n" + this.dump(aMessage[i], obj, tab + 5, parent, c+1) + _tab(tab) + "}";
+						r += "\n" + _tab(tab) + "{\n";
+						let id = objectId(aMessage[i]);
+						if (!(id in cache))
+							cache[id] = this.dump(aMessage[i], obj, tab + 5, parent, c+1);
+
+						r += cache[id];
+
+						r += _tab(tab) + "}";
 					}
 					r += "\n"
 				}
@@ -260,7 +291,7 @@ var mapaPlusCore = {
 
 	windowAdd: function(win, t)
 	{
-		var t = t || "Window";
+		t = t || "Window";
 		if (!(t in this.window))
 		{
 			this.windowID[t] = 0;
@@ -274,7 +305,7 @@ var mapaPlusCore = {
 
 	windowRemove: function(id, t)
 	{
-		var t = t || "Window";
+		t = t || "Window";
 		if (t in this.window)
 		{
 			this.window[t][id] = null;
@@ -284,7 +315,7 @@ var mapaPlusCore = {
 
 	windowUpdate: function(u, f, t)
 	{
-		var t = t || "Window";
+		t = t || "Window";
 		var name = null;
 		if (u)
 			name = "update";
@@ -300,7 +331,7 @@ var mapaPlusCore = {
 	{
 		let observerSubject = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
 
-		let type = type || "Window";
+		type = type || "Window";
 		observerSubject.data = subj;
 //this.dump(subj + " | " + type + " | " + data);
 		Cc["@mozilla.org/observer-service;1"]
@@ -310,14 +341,14 @@ var mapaPlusCore = {
 
 	windowBlinkCancel: function(t)
 	{
-		var t = t || "Window";
+		t = t || "Window";
 		this.dialogSuppress = false;
 		this.windowAction("blinkCancel", null, t)
 	},
 
 	windowFirst: function(t)
 	{
-		var t = t || "Window";
+		t = t || "Window";
 		if (!(t in this.window))
 			return null;
 
@@ -334,7 +365,7 @@ var mapaPlusCore = {
 
 	windowFocus: function(t, first)
 	{
-		var t = t || "Window";
+		t = t || "Window";
 		if (!(t in this.window))
 			return false;
 
@@ -352,7 +383,10 @@ var mapaPlusCore = {
 
 	windowFullScreen: function()
 	{
-		var w = this.window["Window"]
+		var w = this.window["Window"];
+		if (!w)
+			return null;
+
 		for(var i = 1; i < w.length; i++)
 		{
 			if (w[i] != null && w[i].window.fullScreen)
@@ -379,8 +413,8 @@ var mapaPlusCore = {
 		}
 		else
 		{
-			var tab = tab || "tab";
-			var a = typeof(a) == "undefined" ? false : a;
+			tab = tab || "tab";
+			a = typeof(a) == "undefined" ? false : a;
 			if (this.focused && !this.focused.closed)
 				this.focused.openUILinkIn(url, tab, a, b, c);
 			else
@@ -555,7 +589,7 @@ var mapaPlusCore = {
 		if (!window.lockedWindow)
 			this.locked = true;
 		else
-			this.ss.setWindowValue(window, "lockedWindow", window.lockedWindow);
+			this.ss.setWindowValue(window, "lockedWindow", window.lockedWindow.toString());
 
 		window.locked = true;
 		if (!this.isTB && this.prefLockHideTitle && window.gBrowser)
@@ -932,7 +966,7 @@ var mapaPlusCore = {
 					{
 						let v = this._pref.getBoolPref("glass");
 						this._glass = v;
-						mapaPlus.ss.setWindowValue(mapaPlus.window, "AeroBuddy", v);
+						mapaPlus.ss.setWindowValue(mapaPlus.window, "AeroBuddy", v.toString());
 						this._pref.setBoolPref("glass", false);
 					}
 					catch(e){};
@@ -1026,7 +1060,7 @@ var mapaPlusCore = {
 			if (mpc.prefNoObserve)
 				return;
 
-			var mapaPlus = mapaPlus || null;
+			mapaPlus = mapaPlus || null;
 
 			mpc.prefLogoutTimeout = mpc.pref.getIntPref("logouttimeout");
 			mpc.prefLogoutInactivity = mpc.pref.getBoolPref("logoutinactivity");
@@ -1209,6 +1243,26 @@ var mapaPlusCore = {
 					windowClose = false;
 			if (aTopic == "domwindowopened")
 			{
+/*
+let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+timer.init({observe: function(e)
+{
+	mapaPlusCore.dump(window.location);
+	if (window.location.toString().match("common"))
+	{
+//		window.close();
+	}
+
+	if (!window.location.toString().match("about:blank"))
+	{
+		timer.cancel();
+		mapaPlusCore.dump(window.arguments, 2);
+	}
+
+}}, 0, timer.TYPE_REPEATING_SLACK);
+//mapaPlusCore.dump(window,2);
+//mapaPlusCore.dump(mapaPlusCore.dump.cache, 1);
+*/
 				if ("mapaPlus" in window && !window.mapaPlus.noOverlayLoaded)
 				{
 					if (window.mapaPlus.close)
@@ -1269,6 +1323,7 @@ var mapaPlusCore = {
 						{
 							window.document.documentElement.ownerDocument.loadOverlay("chrome://mapaplus/content/masterpasswordplusOverlay.xul", {observe: function(e)
 							{
+								window.mapaPlus = window.mapaPlus || {};
 								window.mapaPlus.noOverlayLoaded = true;
 								let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
 								timer.init({observe:function()
@@ -1288,7 +1343,6 @@ var mapaPlusCore = {
 										window.mapaPlusEventsAdded = true;
 									}
 								}}, 100, timer.TYPE_ONE_SHOT);
-
 							}});
 						}
 					}
@@ -1341,7 +1395,7 @@ var mapaPlusCore = {
 
 	init: function(f, mapaPlus)
 	{
-		var f = f || false;
+		f = f || false;
 		if (!this.initialized)
 		{
 			try
@@ -1581,3 +1635,4 @@ catch(e)
 
 Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher)
 	.registerNotification(mapaPlusCore.windowListener);
+

@@ -309,6 +309,9 @@ mapaPlus.suppressedPopupSuspend = function()
 
 mapaPlus.suppressedPopupRemove = function()
 {
+	if (typeof(gBrowser) == "undefined")
+		return;
+
 	var box = gBrowser.getNotificationBox();
 	var boxId = box.getNotificationWithValue(this.blocked);
 	if (boxId)
@@ -323,7 +326,7 @@ mapaPlus.suppressedPopupOptions = function()
 
 mapaPlus.suppressedPopup = function(f, t)
 {
-	if (this.core.isTB || (this.core.suppressedPopupStop && !f))
+	if (this.core.isTB || (this.core.suppressedPopupStop && !f) || typeof(gBrowser) == "undefined")
 		return;
 
 	t = typeof(t) != "undefined" ? t : this.core.prefSuppressPopupRemove;
@@ -548,9 +551,9 @@ mapaPlus.showLock = function(delay)
 		try
 		{
 			if (!this.loadedManualy)
-				this.ss.setWindowValue(window, "lockedWindow", this.lockedWindow);
+				this.ss.setWindowValue(window, "lockedWindow", this.lockedWindow.toString());
 		}
-		catch(e){};
+		catch(e){this.dump(e, 1)};
 
 	this.locked = true;
 	if (this.core.prefLockHideTitle)
@@ -1545,6 +1548,15 @@ mapaPlus.init = function()
 		this.core.windowListener.observe(window, "domwindowopened", true);
 		this.core.lockOverlay = document.getElementById("masterPasswordPlusLock").parentNode.cloneNode(true);
 		this.first = true;
+/*
+window.setTimeout(function()
+{
+//		window.openContentTab(url, "tab", "addons.mozilla.org");
+	window.toErrorConsole();
+//		window.inspectDOMNode(window.document);
+//		window.openOptionsDialog();
+},1000);
+*/
 	}
 	if (this.initialized)
 		return;
@@ -1606,17 +1618,21 @@ mapaPlus.init = function()
 	if (!this.loadedManualy && !("__SSi" in window) || !window.__SSi)
 		this.ss.init(window);
 */
-	var wasLocked = false;
-	try
+	let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+	timer.init({observe: function()
 	{
-		if (!this.loadedManualy)
-			wasLocked = this.ss.getWindowValue(window, "lockedWindow");
-	}
-	catch(e){};
-	var lockedWindow = !this.core.isTB && wasLocked == "true";
-	if (this.core.pref.getBoolPref("lockrestore") && (this.core.locked || lockedWindow || (locked && this.core.status == 2)))
-		this.lock(lockedWindow, 1);
+		var wasLocked = false;
+		try
+		{
+			if (!mapaPlus.loadedManualy)
+				wasLocked = mapaPlus.ss.getWindowValue(window, "lockedWindow") == "true";
+		}
+		catch(e){};
+		var lockedWindow = !mapaPlus.core.isTB && wasLocked;
+		if (mapaPlus.core.pref.getBoolPref("lockrestore") && (mapaPlus.core.locked || lockedWindow || (locked && mapaPlus.core.status == 2)))
+			mapaPlus.lock(lockedWindow, 1);
 
+	}}, 100, timer.TYPE_ONE_SHOT);
 	this.hotkeyInit();
 
 	this.MinTrayR = "gMinTrayR" in window;
