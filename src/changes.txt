@@ -7,6 +7,9 @@ Legend:
 - = Removed
 ! = Fixed
 
+v1.21.5 (2016-03-17)
+	! issue #88 (Unable change or delete master password)
+
 v1.21.4 (2016-03-16)
 	* different approach to show MP prompt on startup
 	* dropped support for FF <4.0 and TB <5.0

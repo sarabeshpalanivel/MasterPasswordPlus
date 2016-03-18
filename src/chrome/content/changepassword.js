@@ -96,7 +96,7 @@ mapaPlus.init = function()
 
 	setPassword = function ()
 	{
-		var pk11db = Components.classes[nsPK11TokenDB].getService(nsIPK11TokenDB);
+		var pk11db = Components.classes["@mozilla.org/security/pk11tokendb;1"].getService(Components.interfaces.nsIPK11TokenDB);
 		var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 																	.getService(Components.interfaces.nsIPromptService);
 		var token = pk11db.findTokenByName(tokenName);
@@ -125,7 +125,7 @@ mapaPlus.init = function()
 						// we reached a case that should have been prevented by checkPasswords.
 					} else {
 						if (pw1.value == "") {
-							var secmoddb = Components.classes[nsPKCS11ModuleDB].getService(nsIPKCS11ModuleDB);
+							var secmoddb = Components.classes["@mozilla.org/security/pkcs11moduledb;1"].getService(Components.interfaces.nsIPKCS11ModuleDB);
 							if (secmoddb.isFIPSEnabled) {
 								// empty passwords are not allowed in FIPS mode
 								promptService.alert(window,
