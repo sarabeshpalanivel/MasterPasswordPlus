@@ -448,6 +448,7 @@ var changesLog = {
 					list = "";
 					for(let i in addons)
 					{
+						addons[i].sort();
 						let t = addons[i].join("\n");
 						if (t)
 							list += "\n\n [" + i.charAt(0).toUpperCase() + i.slice(1) + (addons[i].length > 1 ? "s" : "") + "]\n" + t;
@@ -467,8 +468,7 @@ var changesLog = {
 					catch(err)
 					{
 						let evt = document.createEvent("MouseEvents");
-						evt.initMouseEvent("click", true, true, window, 1, 0, 0, 0, 0,
-        false, false, false, false, 0, null)
+						evt.initMouseEvent("click", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null)
 						e.target.dispatchEvent(evt);
 					}
 				}

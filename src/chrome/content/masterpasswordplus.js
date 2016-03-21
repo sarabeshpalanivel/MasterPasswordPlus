@@ -37,6 +37,7 @@ mapaPlus.MinTrayR = null;
 mapaPlus.CHANGESLOG_FULL = 1;
 mapaPlus.CHANGESLOG_NOTIFICATION = 2;
 mapaPlus.CHANGESLOG_NOTIFICATION2 = 4;
+mapaPlus.backupPreviewsEnable = null;
 
 (mapaPlus.observer = {
 	_observerService: Components.classes["@mozilla.org/observer-service;1"]
@@ -693,6 +694,15 @@ mapaPlus.showLock = function(delay)
 
 	try
 	{
+		let p = Components.classes["@mozilla.org/preferences-service;1"]
+						.getService(Components.interfaces.nsIPrefService).getBranch("browser.taskbar.previews.enable");
+		if (mapaPlus.backupPreviewsEnable === null)
+			mapaPlus.backupPreviewsEnable = p.getBoolPref("");
+
+		p.setBoolPref("", false);
+	}catch(e){}
+	try
+	{
 		if (this.Win7Features)
 		{
 			function remove()
@@ -841,6 +851,17 @@ mapaPlus.showUnlock = function(f)
 		}
 	}
 
+	try
+	{
+		if (mapaPlus.backupPreviewsEnable !== null)
+		{
+			let p = Components.classes["@mozilla.org/preferences-service;1"]
+							.getService(Components.interfaces.nsIPrefService).getBranch("browser.taskbar.previews.enable");
+
+			p.setBoolPref("", mapaPlus.backupPreviewsEnable);
+			mapaPlus.backupPreviewsEnable = null;
+		}
+	}catch(e){}
 	if (this.Win7Features)
 	{
 		let windowState = window.windowState;

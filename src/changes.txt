@@ -7,6 +7,10 @@ Legend:
 - = Removed
 ! = Fixed
 
+v1.21.6 (2016-03-20)
+	! issue #88 (Unable change or delete master password) for real this time. Somehow the fixed file never got into the package in last version.
+	! issue #89 (Windows 10(8?) - (Tab preview still show content when window locked on Windows 10 (8?))
+
 v1.21.5 (2016-03-17)
 	! issue #88 (Unable change or delete master password)
 
