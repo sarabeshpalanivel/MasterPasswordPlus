@@ -850,10 +850,15 @@ mapaPlus.showUnlock = function(f)
 			}
 		}
 	}
+	let lockedLast = true;
+	for each(let t in this.core.window)
+		for each(let w in t) 
+		if (w.window != window && w.lockedWindow)
+			lockedLast = false;
 
 	try
 	{
-		if (mapaPlus.backupPreviewsEnable !== null)
+		if (lockedLast && mapaPlus.backupPreviewsEnable !== null)
 		{
 			let p = Components.classes["@mozilla.org/preferences-service;1"]
 							.getService(Components.interfaces.nsIPrefService).getBranch("browser.taskbar.previews.enable");
