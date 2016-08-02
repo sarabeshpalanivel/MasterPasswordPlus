@@ -1312,11 +1312,6 @@ mapaPlus.upgrade = function()
 			version = this.core.pref.getCharPref("version");
 
 
-if (!this.core.oo)
-{
-	this.core.oo = true;
-	this.onLoadAdd(function(){setTimeout(function(){mapaPlus.openChanges()}, 1000)});
-}
 	mapaPlus.core.prevVersion = version;
 	if (version == "firstinstall"	|| (!this.core.addon.firstRun && version == this.core.addon.version))
 		return;
@@ -1406,8 +1401,15 @@ return old setting, null if failed
 			return val ? mapaPlus.CHANGESLOG_FULL : 0;
 		});
 	}
-	this.core.pref.setCharPref("version", this.core.addon.version);
-	this.onLoadAdd(function(){setTimeout(function(){mapaPlus.openChanges()}, 1000)});
+this.core.pref.setCharPref("version", this.core.addon.version);
+if (!this.core.changeLogShown)
+{
+	this.core.changeLogShown = true;
+	this.onLoadAdd(function()
+	{
+		mapaPlusCore.openChangesTimer = mapaPlusCore.async(function(){mapaPlus.openChanges()}, 1000, mapaPlusCore.openChangesTimer);
+	});
+}
 }
 
 mapaPlus.lockSetTransparent = function(v)
@@ -1563,7 +1565,8 @@ mapaPlus.minimized = function()
 
 mapaPlus.init = function()
 {
-	mapaPlus.upgrade();
+this.dump.debug();
+		mapaPlus.upgrade();
 	if (!this.core.initialized)
 	{
 		this.core.init(false, this);

@@ -151,7 +151,7 @@ mapaPlus.dump(e, 1);
 	notification: Components.classes['@mozilla.org/alerts-service;1'].getService(Components.interfaces.nsIAlertsService),
 	openChanges: function()
 	{
-		mapaPlus.showChangesLog(mapaPlus.core.prefShowChangesLog);
+		mapaPlus.showChangesLog(mapaPlus.core.pref.getIntPref("showchangeslog"));
 	},
 	get getOpenURL ()
 	{
@@ -173,6 +173,7 @@ mapaPlus.dump(e, 1);
 	{
 		if (typeof(type) == "undefined" || type & mapaPlus.CHANGESLOG_FULL)
 		{
+mapaPlus.dump(type);
 			if (mapaPlus.getOpenURL)
 				mapaPlus.getOpenURL("chrome://mapaplus/content/changes.xul", true);
 		}
