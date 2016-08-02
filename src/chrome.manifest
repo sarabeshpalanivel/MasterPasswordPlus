@@ -18,7 +18,6 @@ style	chrome://mapaplus/content/masterpasswordplusLockOverlay.xul					chrome://m
 
 overlay	chrome://browser/content/browser.xul															chrome://mapaplus/content/masterpasswordplusOverlay.xul
 overlay	chrome://passwordmgr/content/passwordManager.xul									chrome://mapaplus/content/passwordManagerOverlay.xul
-overlay	chrome://passwordmgr/content/passwordManager.xul									chrome://mapaplus/content/masterpasswordplusOverlay.xul
 overlay	chrome://global/content/commonDialog.xul													chrome://mapaplus/content/commonDialogOverlay.xul
 overlay	chrome://mozapps/content/preferences/changemp.xul									chrome://mapaplus/content/changempOverlay.xul
 overlay	chrome://pippki/content/changepassword.xul												chrome://mapaplus/content/changepasswordOverlay.xul

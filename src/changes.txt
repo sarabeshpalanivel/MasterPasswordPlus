@@ -13,7 +13,9 @@ v1.22 (2016-08-01)
 	* collapsed by default changes of old versions in changes log (controlled via options menu at changes log page)
 	! possible errors related to changes log
 	! changes log link in about addon window would not always work
-	! issue #89 (Tab preview still show content when window locked on Windows 10 (8?))
+	! Tab preview still show content when window locked on Windows 10 (8?) (issue #89)
+	! Change master password is broken when opened from Firefox options (issue #94)
+	! empty saved logins list when logged out (issue #85)
 
 v1.21.6 (2016-03-20)
 	! issue #88 (Unable change or delete master password) for real this time. Somehow the fixed file never got into the package in last version.

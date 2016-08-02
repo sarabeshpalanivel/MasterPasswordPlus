@@ -1,43 +1,42 @@
-mapaPlus.load = function()
+(function()
 {
-	mapaPlus.init();
-}
-mapaPlus.init = function()
+Components.utils.import("resource://mapaplus/masterpasswordplusCore.jsm");
+let _LoadSignons = typeof(window.LoadSignons) == undefined ? null : window.LoadSignons,
+		_FinalizeSignonDeletions = typeof(window.FinalizeSignonDeletions) == undefined ? null : window.FinalizeSignonDeletions,
+		_ConfirmShowPasswords = typeof(window.ConfirmShowPasswords) == undefined ? null : window.ConfirmShowPasswords,
+		_TogglePasswordVisible = typeof(window.TogglePasswordVisible) == undefined ? null : window.TogglePasswordVisible;
+
+window.LoadSignons = function()
 {
-	this.LoadSignons = typeof(window.LoadSignons) == undefined ? null : window.LoadSignons,
-	this.FinalizeSignonDeletions = typeof(window.FinalizeSignonDeletions) == undefined ? null : window.FinalizeSignonDeletions,
-	this.ConfirmShowPasswords = typeof(window.ConfirmShowPasswords) == undefined ? null : window.ConfirmShowPasswords,
-	this.TogglePasswordVisible = typeof(window.TogglePasswordVisible) == undefined ? null : window.TogglePasswordVisible,
-	window.LoadSignons = function()
-	{
-		return mapaPlus.exec(mapaPlus.LoadSignons);
-	}
-	
-	window.FinalizeSignonDeletions = function(syncNeeded)
-	{
-		return mapaPlus.exec(mapaPlus.FinalizeSignonDeletions, syncNeeded);
-	}
-	
-	window.ConfirmShowPasswords = function()
-	{
-		return mapaPlus.exec(mapaPlus.ConfirmShowPasswords);
-	}
-	
-	window.TogglePasswordVisible = function()
-	{
-		return mapaPlus.exec(mapaPlus.TogglePasswordVisible);
-	}
+	dump(mapaPlusCore.dialogShow)
+	return _exec(_LoadSignons);
 }
-mapaPlus.exec = function(f, v)	
+
+window.FinalizeSignonDeletions = function(syncNeeded)
+{
+	return _exec(_FinalizeSignonDeletions, syncNeeded);
+}
+
+window.ConfirmShowPasswords = function()
+{
+	return _exec(_ConfirmShowPasswords);
+}
+
+window.TogglePasswordVisible = function()
+{
+	return _exec(_TogglePasswordVisible);
+}
+
+_exec = function(f, v)	
 {	
-	var dialogShow = mapaPlus.core.dialogShow;	
-	var dialogTemp = mapaPlus.core.dialogTemp;	
-	mapaPlus.core.dialogShow = true;	
-	mapaPlus.core.dialogTemp = false;	
-	mapaPlus.core.suppressedFocusForce = true;	
+	var dialogShow = mapaPlusCore.dialogShow;	
+	var dialogTemp = mapaPlusCore.dialogTemp;	
+	mapaPlusCore.dialogShow = true;	
+	mapaPlusCore.dialogTemp = false;	
+	mapaPlusCore.suppressedFocusForce = true;
 	var r = f(v);	
-	mapaPlus.core.dialogTemp = dialogTemp;	
-	mapaPlus.core.dialogShow = dialogShow;	
+	mapaPlusCore.dialogTemp = dialogTemp;	
+	mapaPlusCore.dialogShow = dialogShow;	
 	return r;	
 }
-window.addEventListener("load", mapaPlus.load, true);
+})();
