@@ -37,7 +37,6 @@ mapaPlus.MinTrayR = null;
 mapaPlus.CHANGESLOG_FULL = 1;
 mapaPlus.CHANGESLOG_NOTIFICATION = 2;
 mapaPlus.CHANGESLOG_NOTIFICATION2 = 4;
-mapaPlus.backupPreviewsEnable = null;
 
 (mapaPlus.observer = {
 	_observerService: Components.classes["@mozilla.org/observer-service;1"]
@@ -627,7 +626,8 @@ mapaPlus.showLock = function(delay)
 			if (n[i].firstChild && n[i].firstChild.id == "masterPasswordPlusLock")
 				continue;
 
-			n[i].setAttribute("mapaVisibility", n[i].style.visibility);
+			n[i]._mapaVisibility = n[i].style.visibility;
+//			n[i].setAttribute("mapaVisibility", n[i].style.visibility);
 			n[i].style.visibility = "hidden";
 		}
 	}
@@ -656,7 +656,8 @@ mapaPlus.showLock = function(delay)
 
 			o = o[c];
 		}
-		o.setAttribute("mapaVisibility", o.style.visibility);
+		o._mapaVisibility = o.style.visibility;
+//		o.setAttribute("mapaVisibility", o.style.visibility);
 		o.style.visibility="hidden";
 	});
 
@@ -692,15 +693,6 @@ mapaPlus.showLock = function(delay)
 		}
 	}
 
-	try
-	{
-		let p = Components.classes["@mozilla.org/preferences-service;1"]
-						.getService(Components.interfaces.nsIPrefService).getBranch("browser.taskbar.previews.enable");
-		if (mapaPlus.backupPreviewsEnable === null)
-			mapaPlus.backupPreviewsEnable = p.getBoolPref("");
-
-		p.setBoolPref("", false);
-	}catch(e){}
 	try
 	{
 		if (this.Win7Features)
@@ -784,10 +776,13 @@ mapaPlus.showUnlock = function(f)
 	let n = win.childNodes;
 	for(let i = 0; i < n.length; i++)
 	{
-		if (n[i].hasAttribute("mapaVisibility"))
+//		if (n[i].hasAttribute("mapaVisibility"))
+		if ("_mapaVisibility" in n[i])
 		{
-			n[i].style.visibility = n[i].getAttribute("mapaVisibility");
+//			n[i].style.visibility = n[i].getAttribute("mapaVisibility");
 			n[i].removeAttribute("mapaVisibility");
+			n[i].style.visibility = n[i]._mapaVisibility;
+			delete n[i]._mapaVisibility;
 		}
 	}
 	mapaPlus.extraElements.forEach(function hide(c, i, t, o)
@@ -815,8 +810,10 @@ mapaPlus.showUnlock = function(f)
 
 			o = o[c];
 		}
-		o.style.visibility = o.getAttribute("mapaVisibility");
-		o.removeAttribute("mapaVisibility");
+//		o.style.visibility = o.getAttribute("mapaVisibility");
+//		o.removeAttribute("mapaVisibility");
+		o.style.visibility = o._mapaVisibility;
+		delete o._mapaVisibility;
 	});
 
 	let change = function(obj)
@@ -853,20 +850,9 @@ mapaPlus.showUnlock = function(f)
 	let lockedLast = true;
 	for each(let t in this.core.window)
 		for each(let w in t) 
-		if (w.window != window && w.lockedWindow)
+		if (w && w.window != window && w.lockedWindow)
 			lockedLast = false;
 
-	try
-	{
-		if (lockedLast && mapaPlus.backupPreviewsEnable !== null)
-		{
-			let p = Components.classes["@mozilla.org/preferences-service;1"]
-							.getService(Components.interfaces.nsIPrefService).getBranch("browser.taskbar.previews.enable");
-
-			p.setBoolPref("", mapaPlus.backupPreviewsEnable);
-			mapaPlus.backupPreviewsEnable = null;
-		}
-	}catch(e){}
 	if (this.Win7Features)
 	{
 		let windowState = window.windowState;
@@ -1325,6 +1311,12 @@ mapaPlus.upgrade = function()
 									.getService(Components.interfaces.nsIVersionComparator).compare,
 			version = this.core.pref.getCharPref("version");
 
+
+if (!this.core.oo)
+{
+	this.core.oo = true;
+	this.onLoadAdd(function(){setTimeout(function(){mapaPlus.openChanges()}, 1000)});
+}
 	mapaPlus.core.prevVersion = version;
 	if (version == "firstinstall"	|| (!this.core.addon.firstRun && version == this.core.addon.version))
 		return;
@@ -1616,8 +1608,18 @@ mapaPlus.init = function()
 			let temp = {};
 			try
 			{
+				//Windows 7
 				Components.utils.import("resource://gre/modules/WindowsPreviewPerTab.jsm", temp);
-			}catch(e){}
+			}
+			catch(e)
+			{
+				//Windows 10
+				try
+				{
+					Components.utils.import("resource:///modules/WindowsPreviewPerTab.jsm", temp);
+				}
+				catch(e){}
+			}
 			this.Win7Features = temp;
 	}
 	this.core.workAround.init(this, this.first);

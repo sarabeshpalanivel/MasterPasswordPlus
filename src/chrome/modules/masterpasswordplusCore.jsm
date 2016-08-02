@@ -5,7 +5,9 @@ const EXPORTED_SYMBOLS = ["mapaPlusCore"],
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 
-var mapaPlusCore = {
+var self = this,
+		_dump = function(){},
+		mapaPlusCore = {
 	GUID: 'masterpasswordtimeoutplus@vano',
 	app: null,
 
@@ -75,6 +77,9 @@ var mapaPlusCore = {
 	STARTUP_LOCK: 2,
 
 	lockPrefBackup: null,
+	storage: {
+		persist: {},
+	},
 	PREF_BRANCH: PREF_BRANCH,
 	pref: Cc["@mozilla.org/preferences-service;1"]
 				.getService(Ci.nsIPrefService).getBranch(PREF_BRANCH),
@@ -125,170 +130,7 @@ var mapaPlusCore = {
 		deleteSettings: "Delete all settings?"
 	},
 
-	dump: function (aMessage, obj, tab, parent, c)
-	{
-	//	return;
-		let func = this.dump;
-		if (!("cache" in this.dump) || typeof(tab) == "undefined")
-		{
-			this.dump.cache = {
-				id: 1
-			};
-		}
-
-		let cache = this.dump.cache;
-		function objectId(obj)
-		{
-				let id = cache.id++;
-				if (obj==null) return id;
-				try
-				{
-					if (obj.___obj_id==null)
-						obj.___obj_id=id;
-					id = obj.___obj_id;
-				}
-				catch(e){}
-				return id;
-		}
-
-		parent = parent || aMessage;
-		c = c || 0;
-		tab = tab || 0;
-
-		let showType = 1,
-				sort = 1, //0 = none, 1 = case sensetive, 2 = case insensitive
-				i,
-				r = "",
-				t2,
-				t = typeof(aMessage),
-				append = "",
-				tText = "",
-				t2Text = "";
-		function _tab(tab)
-		{
-			return (new Array(tab)).join(" ");
-		}
-		if (showType)
-			tText = " (" + t + ")";
-
-		if (obj && t == "object" && aMessage !== null)
-		{
-			try
-			{
-				var array = new Array();
-				for(i in aMessage)
-					array.push(i);
-
-				if (sort)
-					if (sort == 2)
-					{
-						array.sort(function (a, b)
-						{
-							function chunkify(t)
-							{
-								var tz = [], x = 0, y = -1, n = 0, i, j;
-
-								while (i = (j = t.charAt(x++)).charCodeAt(0))
-								{
-									var m = (i == 46 || (i >=48 && i <= 57));
-									if (m !== n)
-									{
-										tz[++y] = "";
-										n = m;
-									}
-									tz[y] += j;
-								}
-								return tz;
-							}
-
-							var aa = chunkify(a.toLowerCase()),
-									bb = chunkify(b.toLowerCase()),
-									x, c, d;
-
-							for (x = 0; aa[x] && bb[x]; x++)
-							{
-								if (aa[x] !== bb[x])
-								{
-									c = Number(aa[x]), d = Number(bb[x]);
-									if (c == aa[x] && d == bb[x])
-									{
-										return c - d;
-									}
-									else
-										return (aa[x] > bb[x]) ? 1 : -1;
-								}
-							}
-							return aa.length - bb.length;
-						});
-					}
-					else
-						array.sort();
-
-				for(var ii = 0; ii < array.length; ii++)
-				{
-					i = array[ii];
-					if (i == "___obj_id")
-						continue;
-
-					if (showType)
-						t2Text = " (unknown)";
-					try
-					{
-						try
-						{
-							t2 = typeof(aMessage[i]);
-						}
-						catch(e)
-						{
-							t2 = "error";
-						}
-						if (showType)
-							t2Text = " (" + t2 + ")";
-
-						let text = aMessage[i];
-						append = _tab(tab);
-						try
-						{
-							text = text.toString();
-							text = text.split("\n");
-							for(var l = 1; l < text.length; l++)
-								text[l] = append + text[l];
-
-							text = text.join("\n");
-						}
-						catch(e){}
-						r += append + i + t2Text + ": " + text;
-					}
-					catch(e)
-					{
-						r += append + i + t2Text + ": " + e;
-					};
-					if (t2 == "object" && aMessage[i] !== null && c < obj && !(tab && aMessage[i] == this.dump))
-					{
-						r += "\n" + _tab(tab) + "{\n";
-						let id = objectId(aMessage[i]);
-						if (!(id in cache))
-							cache[id] = this.dump(aMessage[i], obj, tab + 5, parent, c+1);
-
-						r += cache[id];
-
-						r += _tab(tab) + "}";
-					}
-					r += "\n"
-				}
-			}
-			catch(e)
-			{
-				r += append + i + " (error): " + e + "\n"
-			}
-		}
-		if (tab)
-			return r;
-
-			Components.classes["@mozilla.org/consoleservice;1"]
-				.getService(Components.interfaces.nsIConsoleService)
-				.logStringMessage("mapaPlus: " + tText + ":" + aMessage + (r ? "\n" + r : ""));
-	},
+	dump: function(){},
 
 	windowAdd: function(win, t)
 	{
@@ -1434,15 +1276,37 @@ timer.init({observe: function(e)
 			this.suppressTemp.stop();
 			this.dialogTemp = true;
 		}
-	}
-},//mapaPlusCore
-self = this;
+	},
+
+	async: function(callback, time, timer)
+	{
+		if (timer)
+			timer.cancel();
+		else
+			timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+
+		timer.init({observe:function()
+		{
+			callback();
+		}}, time || 0, timer.TYPE_ONE_SHOT);
+		return timer;
+	},//async()
+
+}//mapaPlusCore
 
 function include(path)
 {
 	Services.scriptloader.loadSubScript(mapaPlusCore.addon.getResourceURI(path).spec, self);
 }
+var __dumpName__ = "_dump";
 
+Services.scriptloader.loadSubScript("chrome://mapaplus/content/dump.js");
+mapaPlusCore.log = _dump;
+mapaPlusCore.dump = _dump;
+var log = _dump;
+log.folder = "";
+log.title = "CM+";
+log.showCaller = 3;
 AddonManager.getAddonByID(mapaPlusCore.GUID, function(addon)
 {
 	mapaPlusCore.addon = addon;
@@ -1452,8 +1316,8 @@ AddonManager.getAddonByID(mapaPlusCore.GUID, function(addon)
 	mapaPlusCore.SUPPORTSITE = SUPPORTSITE;
 	mapaPlusCore.ISSUESSITE = ISSUESSITE;
 	mapaPlusCore.ADDONDOMAIN = ADDONDOMAIN;
-	mapaPlusCore.isTB = (mapaPlusCore.appInfo.ID == "{3550f703-e582-4d05-9a08-453d09bdfdc6}");
-	
+//	mapaPlusCore.isTB = (mapaPlusCore.appInfo.ID == "{3550f703-e582-4d05-9a08-453d09bdfdc6}");
+	mapaPlusCore.isTB = (mapaPlusCore.appInfo.ID == "{3550f703-e582-4d05-9a08-453d09bdfdc6}" || mapaPlusCore.appInfo.ID == "postbox@postbox-inc.com");
 	mapaPlusCore.isGecko2 = Cc["@mozilla.org/xpcom/version-comparator;1"]
 													.getService(Ci.nsIVersionComparator)
 													.compare(mapaPlusCore.appInfo.version, (mapaPlusCore.isTB ? "3.3" : "4.0")) >= 0
@@ -1549,6 +1413,7 @@ AddonManager.getAddonByID(mapaPlusCore.GUID, function(addon)
 		mapaPlusCore.startupPassed = true;
 	}
 })();
+
 mapaPlusCore.dialogTemp = true;
 mapaPlusCore.dialogForce = false;
 mapaPlusCore.dialogShow = false;

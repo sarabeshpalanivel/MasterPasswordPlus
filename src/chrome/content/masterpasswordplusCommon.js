@@ -45,20 +45,20 @@ var mapaPlus = {
 	changemp: function()
 	{
 		//open window to set up master password
-		this._openDialog("chrome://mozapps/content/preferences/changemp.xul", "mapaPlusChangeMPWindow", "centerscreen");
+		return this._openDialog("chrome://mozapps/content/preferences/changemp.xul", "mapaPlusChangeMPWindow", "centerscreen");
 //		this._openDialog("chrome://pippki/content/changepassword.xul", "mapaPlusChangePWindow", "centerscreen");
 	},
 
 	removemp: function()
 	{
 		//open window to remove master password
-		this._openDialog("chrome://mozapps/content/preferences/removemp.xul", "mapaPlusRemoveMPWindow", "centerscreen");
+		return this._openDialog("chrome://mozapps/content/preferences/removemp.xul", "mapaPlusRemoveMPWindow", "centerscreen");
 	},
 
 	_openDialog: function(a, b, c, arg)
 	{
 		if (mapaPlus.locked)
-			return;
+			return null;
 
 		var wm = Components.classes['@mozilla.org/appshell/window-mediator;1'].getService(Components.interfaces.nsIWindowMediator);
 		var browsers = wm.getZOrderDOMWindowEnumerator('', false);
@@ -68,24 +68,24 @@ var mapaPlus = {
 			if (browser.location.href.toString() == a)
 			{
 				browser.focus();
-				return;
+				return browser;
 			}
 		}
-		Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-			.getService(Components.interfaces.nsIWindowWatcher)
-			.openWindow(null, a, b, c, arg);
+		return Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+						.getService(Components.interfaces.nsIWindowWatcher)
+						.openWindow(null, a, b, c, arg);
 
 //		window.openDialog(a, b, c, arg);
 	},
 
 	options: function(arg)
 	{
-		mapaPlus._openDialog("chrome://mapaplus/content/masterpasswordplusOptions.xul", "mapaPlusOptionsWindow", "centerscreen", arg);
+		return mapaPlus._openDialog("chrome://mapaplus/content/masterpasswordplusOptions.xul", "mapaPlusOptionsWindow", "centerscreen", arg);
 	},
 
 	about: function()
 	{
-		this._openDialog("chrome://mapaplus/content/masterpasswordplusAbout.xul", "mapaPlusAboutWindow", "centerscreen, resizable");
+		return this._openDialog("chrome://mapaplus/content/masterpasswordplusAbout.xul", "mapaPlusAboutWindow", "centerscreen, resizable");
 	},
 
 	openURL: function(url)
@@ -93,12 +93,17 @@ var mapaPlus = {
 		if (mapaPlus.core.isTB)
 		{
 //url = "about:addons";
+			let win = null;
 			try
 			{
-				openContentTab(url, "tab", "addons.mozilla.org");
+				win = openContentTab(url, "tab", "addons.mozilla.org");
+mapaPlus.dump("openContentTab");
 			}
-			catch(e){}
-			return
+			catch(e)
+			{
+mapaPlus.dump(e, 1);
+				win = mapaPlus._openDialog(url, url);
+			}
 /*
 			let tabmail = document.getElementById("tabmail"),
 					args = {
@@ -114,7 +119,9 @@ var mapaPlus = {
 */
 		}
 		else
-			switchToTabHavingURI(url, true);
+			win = switchToTabHavingURI(url, true);
+
+		return win;
 //			openUILinkIn(url, "tab", false, null, null);
 	},
 
@@ -146,100 +153,113 @@ var mapaPlus = {
 	{
 		mapaPlus.showChangesLog(mapaPlus.core.prefShowChangesLog);
 	},
+	get getOpenURL ()
+	{
+		let	win = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+							.getInterface(Components.interfaces.nsIWebNavigation)
+							.QueryInterface(Components.interfaces.nsIDocShellTreeItem)
+							.rootTreeItem
+							.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+							.getInterface(Components.interfaces.nsIDOMWindow),
+				first = mapaPlus.core.windowFirst(),
+				func = win.switchToTabHavingURI;
+		if (!func && first !== null)
+		{
+			func =  mapaPlus.core.window["Window"][first].window.switchToTabHavingURI || mapaPlus.core.window["Window"][first].openURL || mapaPlus.openURL;
+		}
+		return func
+	},
 	showChangesLog: function(type, demo)
 	{
 		if (typeof(type) == "undefined" || type & mapaPlus.CHANGESLOG_FULL)
 		{
-			let	win = window.QueryInterface(Ci.nsIInterfaceRequestor)
-								.getInterface(Ci.nsIWebNavigation)
-								.QueryInterface(Ci.nsIDocShellTreeItem)
-								.rootTreeItem
-								.QueryInterface(Ci.nsIInterfaceRequestor)
-								.getInterface(Ci.nsIDOMWindow),
-					first = mapaPlus.core.windowFirst();
-			if (first !== null)
-			{
-				let func = win.switchToTabHavingURI || mapaPlus.core.window["Window"][first].window.switchToTabHavingURI;
-				if (func)
-					func("chrome://mapaplus/content/changes.xul", true);
-			}
+			if (mapaPlus.getOpenURL)
+				mapaPlus.getOpenURL("chrome://mapaplus/content/changes.xul", true);
 		}
 	
 		let addon = this.core.addon;
 		if (type & mapaPlus.CHANGESLOG_NOTIFICATION)
 			try
 			{
-				let	utf8Converter = Components.classes["@mozilla.org/intl/utf8converterservice;1"].getService(Components.interfaces.nsIUTF8ConverterService),
-						ioService = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService),
-						scriptableStream = Components.classes["@mozilla.org/scriptableinputstream;1"].getService(Components.interfaces.nsIScriptableInputStream),
-						aURL = addon.getResourceURI("changes.txt").spec,
-						channel,
-						input,
+				let str = "",
+						mp = mapaPlus,
 						notifListener = {
 							observe: function(aSubject, aTopic, aData)
 							{
 								if (aTopic == 'alertclickcallback')
 								{
-									mapaPlus.showChangesLog();
+									mp.showChangesLog();
 								}
 							}
 						};
-				try
+				if (Components.classes["@mozilla.org/xpcom/version-comparator;1"]
+						.getService(Components.interfaces.nsIVersionComparator)
+						.compare(this.core.appInfo.version, "8.0") > 0)
 				{
-					channel = ioService.newChannel(aURL,null,null);
-				}
-				catch(e) //FF48 WHAT THE FUCK, MOZILLA?! HOW ABOUT YOU UPDATE THE DAMN DOCUMENTATION BEFORE YOU REMOVE SHIT WITHOUT BACKWARDS COMPATIBILITY?
-				{
-					channel = ioService.newChannel2(aURL,null,null,
-																					null,      // aLoadingNode
-																					Services.scriptSecurityManager.getSystemPrincipal(),
-																					null,      // aTriggeringPrincipal
-																					Components.interfaces.nsILoadInfo.SEC_NORMAL,
-																					Components.interfaces.nsIContentPolicy.TYPE_INTERNAL_IMAGE
-					);
-				}
-				input = channel.open();
-	
-				scriptableStream.init(input);
-				let str = scriptableStream.read(input.available());
-				scriptableStream.close();
-				input.close();
-				str = utf8Converter.convertURISpecToUTF8 (str, "UTF-8");
-				str = str.replace(/\t/g, "  ");
-				function RegExpEscape(string)
-				{
-					return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
-				}
-				let strV = (new RegExp("(^v" + RegExpEscape(addon.version) + " \\([\\s\\S]+)" , "m")).exec(str),
-						prevVersion = mapaPlus.core.prevVersion.replace("-signed", "");
-	
-				if (strV)
-				{
-					str = strV[1];
-					if (demo && prevVersion == addon.version)
+					let	utf8Converter = Components.classes["@mozilla.org/intl/utf8converterservice;1"].getService(Components.interfaces.nsIUTF8ConverterService),
+							ioService = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService),
+							scriptableStream = Components.classes["@mozilla.org/scriptableinputstream;1"].getService(Components.interfaces.nsIScriptableInputStream),
+							aURL = addon.getResourceURI("changes.txt").spec,
+							channel,
+							input
+					try
 					{
-						let v,l = [],
-								r = new RegExp("[\\s\\S]{2}^v([a-z0-9.]+) \\(", "mig");
-	
-						while (v = r.exec(str))
-							l.push(v[1]);
-	
-						if (l.length)
-							prevVersion = l[Math.floor(Math.random() * l.length)];
-	
+						channel = ioService.newChannel(aURL,null,null);
 					}
-					strV = (new RegExp("([\\s\\S]+)^v" + RegExpEscape(prevVersion) + " \\(" , "m")).exec(str);
+					catch(e) //FF48 WHAT THE FUCK, MOZILLA?! HOW ABOUT YOU UPDATE THE DAMN DOCUMENTATION BEFORE YOU REMOVE SHIT WITHOUT BACKWARDS COMPATIBILITY?
+					{
+						channel = ioService.newChannel2(aURL,null,null,
+																						null,      // aLoadingNode
+																						Services.scriptSecurityManager.getSystemPrincipal(),
+																						null,      // aTriggeringPrincipal
+																						Components.interfaces.nsILoadInfo.SEC_NORMAL,
+																						Components.interfaces.nsIContentPolicy.TYPE_INTERNAL_IMAGE
+						);
+					}
+					input = channel.open();
+		
+					scriptableStream.init(input);
+					str = scriptableStream.read(input.available());
+					scriptableStream.close();
+					input.close();
+					str = utf8Converter.convertURISpecToUTF8 (str, "UTF-8");
+					str = str.replace(/\t/g, "  ");
+					function RegExpEscape(string)
+					{
+						return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+					}
+					let strV = (new RegExp("(^v" + RegExpEscape(addon.version) + " \\([\\s\\S]+)" , "m")).exec(str),
+							prevVersion = mapaPlus.core.prevVersion.replace("-signed", "");
+		
 					if (strV)
+					{
 						str = strV[1];
-	
+						if (demo && prevVersion == addon.version)
+						{
+							let v,l = [],
+									r = new RegExp("[\\s\\S]{2}^v([a-z0-9.]+) \\(", "mig");
+		
+							while (v = r.exec(str))
+								l.push(v[1]);
+		
+							if (l.length)
+								prevVersion = l[Math.floor(Math.random() * l.length)];
+		
+						}
+						strV = (new RegExp("([\\s\\S]+)^v" + RegExpEscape(prevVersion) + " \\(" , "m")).exec(str);
+						if (strV)
+							str = strV[1];
+		
+					}
 				}
-				mapaPlus.notification.showAlertNotification(	'chrome://mapaPlus/skin/masterpasswordplus.png',
-																									addon.name + " " + mapaPlus._("updated").replace("{old}", "v" + mapaPlus.core.prevVersion).replace("{new}", "v" + addon.version),
-																									str.replace(/^\s+|\s+$/g, ""),
-																									true,
-																									null,
-																									notifListener,
-																									addon.name + " " + mapaPlus._("updated"));
+
+				mapaPlus.notification.showAlertNotification(	'chrome://mapaPlus/skin/images/masterpasswordplus.png',
+																											addon.name + " " + mapaPlus._("updated").replace("{old}", "v" + mapaPlus.core.prevVersion).replace("{new}", "v" + addon.version),
+																											str.replace(/^\s+|\s+$/g, ""),
+																											true,
+																											null,
+																											notifListener,
+																											addon.name + " " + mapaPlus._("updated"));
 			}catch(e){mapaPlus.dump(e, 1);}
 	
 		if (type & mapaPlus.CHANGESLOG_NOTIFICATION2 && window.gBrowser && document.getElementById("notification-popup"))

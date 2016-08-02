@@ -3,7 +3,7 @@
 
 	<Description about="urn:mozilla:install-manifest">
 		<em:id>masterpasswordtimeoutplus@vano</em:id>
-		<em:version>1.21.6</em:version>
+		<em:version>1.22b2</em:version>
 		<em:type>2</em:type>
 		<em:unpack>true</em:unpack>
 		<em:name>Master Password+</em:name>
@@ -11,11 +11,12 @@
 		<em:creator>V@no</em:creator>
 		<em:homepageURL>http://goo.gl/Ipdep</em:homepageURL>
 		<em:optionsURL>chrome://mapaplus/content/masterpasswordplusOptions.xul</em:optionsURL>
-		<em:iconURL>chrome://mapaplus/skin/masterpasswordplus.png</em:iconURL>
+		<em:iconURL>chrome://mapaplus/skin/images/masterpasswordplus.png</em:iconURL>
 		<em:aboutURL>chrome://mapaplus/content/masterpasswordplusAbout.xul</em:aboutURL>
 		<em:translator>Fang5566 (zh-CN)</em:translator>
 		<em:translator>Julián Andrés Osorio López (es-ES)</em:translator>
 		<em:translator>SN (de-DE)</em:translator>
+		<em:multiprocessCompatible>true</em:multiprocessCompatible>
 
 		<!-- Firefox -->
 		<em:targetApplication>
@@ -33,6 +34,15 @@
 				<em:minVersion>5.0</em:minVersion>
 				<em:maxVersion>48.0a1</em:maxVersion>
 			</Description>
+		</em:targetApplication>
+
+    <!-- Postbox -->
+		<em:targetApplication>
+		    <Description>
+		        <em:id>postbox@postbox-inc.com</em:id>
+		        <em:minVersion>3.0</em:minVersion>
+		        <em:maxVersion>4.*</em:maxVersion>
+		    </Description>
 		</em:targetApplication>
 
 		<em:localized>
