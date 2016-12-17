@@ -6,13 +6,13 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://mapaplus/masterpasswordplusCore.jsm");
 
-let self = this,
-		log = mapaPlusCore.log;
 function $(id)
 {
 	return document.getElementById(id);
 }
-var changesLog = {
+var self = this,
+		log = mapaPlusCore.log,
+		changesLog = {
 	addon: null,
 	PREF_BRANCH: mapaPlusCore.PREF_BRANCH,
 	GUID: mapaPlusCore.GUID,
@@ -111,9 +111,9 @@ var changesLog = {
 				let txt = sel.toString();
 				if (this.checkboxGet("changesLogCopyIssueUrl") && (ISSUESSITE || SOURCESITE))
 				{
-					txt = txt.replace(/([ ,])(#([0-9a-z]{1,40}))/g, function(a, b, c, d)
+					txt = txt.replace(/(^|[\s,.;:\(])(#([0-9a-z]{1,40}))/g, function(a, b, c, d)
 					{
-						if (d.length > 3 && b.match(/[a-z]/))
+						if (d.length > 3 && d.match(/[a-z]/))
 							return a + " (" + SOURCESITE + d + ")";
 
 						return a + " (" + ISSUESSITE + d + ")";
@@ -336,6 +336,7 @@ log.debug();
 
 	onload: function()
 	{
+log.debug("onload()");
 		if (!("arguments" in window) || !window.arguments)
 			document.documentElement._buttons.accept.hidden = true;
 		else
@@ -344,12 +345,6 @@ log.debug();
 			$("changesLogTitle").parentNode.setAttribute("align", "center");
 			$("changesLogBox").setAttribute("window", true);
 		}
-		changesLog.showLegendType();
-		changesLog.showHighlight();
-		changesLog.showWrap();
-		changesLog.showAltbg();
-		changesLog.showExpandAll();
-		changesLog.checkboxGet("changesLogCopyIssueUrl");
 		if ($("changesLogBox"))
 		{
 			if ("scrollTop" in mapaPlusCore.changesLog)
@@ -382,7 +377,7 @@ log.debug();
 		let l = this.pref.getChildList(""),
 				r = {};
 		l.sort();
-		for each (let i in l)
+		for (let i of l)
 		{
 			if (/^template/.test(i))
 				continue;
@@ -442,6 +437,7 @@ log.debug();
 
 	init: function()
 	{
+log.debug("init()");
 		this.pref = Services.prefs.getBranch(this.PREF_BRANCH);
 		let changesLogObj = $("changesLog"),
 				aURL = this.addon.getResourceURI("changes.txt").spec,
@@ -575,7 +571,7 @@ log.debug();
 						for(let i in extra)
 							body[i] = extra[i];
 
-						changesLog.copy(JSON.stringify(body, null, 2));
+						changesLog.copy(JSON.stringify(body, null));
 					}
 
 					if (Cc["@mozilla.org/xpcom/version-comparator;1"].getService(Ci.nsIVersionComparator)
@@ -871,13 +867,13 @@ log.debug();
 				{
 					let line = list[i],
 							listSetting = [],
-							regSetting = new RegExp("(" + this.RegExpEscape(this.PREF_BRANCH) + "[a-z0-9_\\-.]*)", "gi"),
+//							regSetting = new RegExp("(" + this.RegExpEscape(this.PREF_BRANCH) + "[a-z0-9_\\-.]*)", "gi"),
+							regSetting = new RegExp("(?:[\\s\\(])([a-z]\\w*\\.[a-z]\\w*\\.[a-z0-9_\\-.]*)", "gi"),
 							setting;
-
 					while(setting = regSetting.exec(line))
 						listSetting.push({type: "config", data: setting});
 
-//					regSetting = new RegExp("(\\(?(?:(?:https?|ftp):\/\/)((?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?)\\)?)", "gi");
+//					regSetting = new RegExp("(\\(?(?:(?:https?|ftp):\/\/)((?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00A1-\uFFFF0-9]-*)*[a-z\u00A1-\uFFFF0-9]+)(?:\.(?:[a-z\u00A1-\uFFFF0-9]-*)*[a-z\u00A1-\uFFFF0-9]+)*(?:\.(?:[a-z\u00A1-\uFFFF]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?)\\)?)", "gi");
  regSetting = new RegExp(
   "(\\(?" +
     // protocol identifier
@@ -912,6 +908,7 @@ log.debug();
     "(?:/\\S*)?)" +
   "\\)?)", "gi"
 );
+
 					while(setting = regSetting.exec(line))
 						listSetting.push({type: "url", data: setting});
 
@@ -935,8 +932,8 @@ log.debug();
 									url = part[1];
 									urlText = url;
 									link = "about:config?filter=" + url;
-									text = line.substring(start, end);
-									start = end + url.length;
+									text = line.substring(start, end + 1);
+									start = end + 1 + url.length;
 									ll.addEventListener("click", function(e)
 									{
 										if (e.button == 2)
@@ -1018,7 +1015,7 @@ e.preventDefault();
 
 //			if (i > 0)
 //				verBox.appendChild(document.createTextNode("\n"));
-		}
+		} //for array
 		if (prevhboxTitle)
 			prevhboxTitle.insertBefore(showStats(stats), prevhboxTitle.lastChild);
 
@@ -1060,4 +1057,10 @@ AddonManager.getAddonByID(changesLog.GUID, function(addon)
 		mapaPlusCore.changesLog.versions = {};
 
 	changesLog.init();
+	changesLog.showLegendType();
+	changesLog.showHighlight();
+	changesLog.showWrap();
+	changesLog.showAltbg();
+	changesLog.showExpandAll();
+	changesLog.checkboxGet("changesLogCopyIssueUrl");
 });

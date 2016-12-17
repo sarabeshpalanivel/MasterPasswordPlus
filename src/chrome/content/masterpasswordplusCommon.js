@@ -1,5 +1,7 @@
-var mapaPlus = {
-
+var mapaPlus, log;
+(function()
+{
+	mapaPlus ={
 	locked: false,
 	windowType: "window",
 	loadCore: function()
@@ -7,6 +9,7 @@ var mapaPlus = {
 		Components.utils.import("resource://mapaplus/masterpasswordplusCore.jsm");
 		this.core = mapaPlusCore;
 		this.dump = this.core.dump;
+		log = this.core.dump;
 	},
 
 	ss: {
@@ -90,18 +93,18 @@ var mapaPlus = {
 
 	openURL: function(url)
 	{
+		let win = null;
 		if (mapaPlus.core.isTB)
 		{
 //url = "about:addons";
-			let win = null;
 			try
 			{
 				win = openContentTab(url, "tab", "addons.mozilla.org");
-mapaPlus.dump("openContentTab");
+log("openContentTab");
 			}
 			catch(e)
 			{
-mapaPlus.dump(e, 1);
+log.error(e);
 				win = mapaPlus._openDialog(url, url);
 			}
 /*
@@ -151,7 +154,7 @@ mapaPlus.dump(e, 1);
 	notification: Components.classes['@mozilla.org/alerts-service;1'].getService(Components.interfaces.nsIAlertsService),
 	openChanges: function()
 	{
-		mapaPlus.showChangesLog(mapaPlus.core.pref.getIntPref("showchangeslog"));
+		mapaPlus.showChangesLog(mapaPlus.core.pref("showchangeslog"));
 	},
 	get getOpenURL ()
 	{
@@ -171,9 +174,9 @@ mapaPlus.dump(e, 1);
 	},
 	showChangesLog: function(type, demo)
 	{
+log([type, type & mapaPlus.CHANGESLOG_FULL]);
 		if (typeof(type) == "undefined" || type & mapaPlus.CHANGESLOG_FULL)
 		{
-mapaPlus.dump(type);
 			if (mapaPlus.getOpenURL)
 				mapaPlus.getOpenURL("chrome://mapaplus/content/changes.xul", true);
 		}
@@ -239,7 +242,6 @@ mapaPlus.dump(type);
 						{
 							let v,l = [],
 									r = new RegExp("[\\s\\S]{2}^v([a-z0-9.]+) \\(", "mig");
-		
 							while (v = r.exec(str))
 								l.push(v[1]);
 		
@@ -263,47 +265,15 @@ mapaPlus.dump(type);
 																											addon.name + " " + mapaPlus._("updated"));
 			}catch(e){mapaPlus.dump(e, 1);}
 	
-		if (type & mapaPlus.CHANGESLOG_NOTIFICATION2 && window.gBrowser && document.getElementById("notification-popup"))
-		{
-	//		try
-	//		{
-				if (mapaPlus.core._notify)
-					mapaPlus.core._notify.remove()
-	
-	
-				mapaPlus.core._notify = PopupNotifications.show(window.gBrowser.selectedBrowser,
-					"mapaPlus-update",
-					addon.name + " " + mapaPlus._("updated").replace("{old}", "v" + mapaPlus.core.prevVersion).replace("{new}", "v" + addon.version),
-					null, /* anchor ID */
-					{
-						label: mapaPlus._("changesLog"),
-						accessKey: mapaPlus._("changesLog_key"),
-						callback: function() {
-							mapaPlus.showChangesLog()
-						}
-					},
-					[{  /* secondary action */
-						label: mapaPlus._("menu_options"),
-						accessKey: mapaPlus._("menu_options_key"),
-						callback: function()
-						{
-							mapaPlus.core._notify.remove();
-							mapaPlus.options();
-						},
-						dismiss: true
-					}],
-					{
-						persistWhileVisible: true,
-						learnMoreURL: mapaPlus.core.HOMEPAGE,
-						hideNotNow: true,
-						removeOnDismissal: demo ? true : false
-					}
-				);
-	//		}catch(e){mapaPlus.core.dump(e, 1)};
-		}
-	
 	}//openChanges()
 }
+mapaPlus.notification = Components.classes['@mozilla.org/alerts-service;1'].getService(Components.interfaces.nsIAlertsService);
+mapaPlus.notificationAvailable = (mapaPlus.notification && mapaPlus.notification.showAlertNotification);
+mapaPlus.CHANGESLOG_NONE = 0;
+mapaPlus.CHANGESLOG_FULL = 2;
+mapaPlus.CHANGESLOG_NOTIFICATION = 1;
+
+})();
 
 mapaPlus.loadCore();
 switch (Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch("ui.key.").getIntPref("accelKey"))

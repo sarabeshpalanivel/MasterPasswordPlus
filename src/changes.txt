@@ -3,19 +3,35 @@ Master Password+ changes log
 Legend:
 
 + = Added
+! = Fixed
 * = Changed
 - = Removed
-! = Fixed
+
+v1.23b1 (2016--)
+	+ MP prompt inside locked window (issue #83)
+	+ new options to disable password field in locked windows after NN failed attempts for NN seconds.
+	+ new option to lock/logout when computer goes to sleep (not all systems supported https://bugzilla.mozilla.org/show_bug.cgi?id=758848) (issue #68)
+	+ ability prevent individual window from getting locked when global lock initiated (it doesn't affect locking as individual windows) extensions.masterPasswordPlus.nolockpersist hidden setting controls if such flag restored after restart (issue #99)
+	+ help tab in options
+	! incorrect default action used on toollbar button (issue #100)
+	! MP prompt buttons didn't fit into window (issue #102)
+	! window minimize/maximize/exit buttons are not visible when window is locked and browser.tabs.drawInTitlebar enabled
+	! window size changed when lock on minimize enabled and window minimized
+	- extensions.masterPasswordPlus.lockignorefirstkey setting (issue #90)
+	- dropped support for FF 14 and older
+	* user activity is now detected globally - even when FF/TB not in focus (issue #95)
+	* optimized handling of prefences changes
+	* submitting empty password no longer considered as incorrect
 
 v1.22 (2016-08-01)
 	+ experimental postbox support (https://www.postbox-inc.com)
 	+ experimental e10s support
-	* collapsed by default changes of old versions in changes log (controlled via options menu at changes log page)
 	! possible errors related to changes log
 	! changes log link in about addon window would not always work
 	! Tab preview still show content when window locked on Windows 10 (8?) (issue #89)
 	! Change master password is broken when opened from Firefox options (issue #94)
 	! empty saved logins list when logged out (issue #85)
+	* collapsed by default changes of old versions in changes log (controlled via options menu at changes log page)
 
 v1.21.6 (2016-03-20)
 	! issue #88 (Unable change or delete master password) for real this time. Somehow the fixed file never got into the package in last version.
@@ -25,18 +41,18 @@ v1.21.5 (2016-03-17)
 	! issue #88 (Unable change or delete master password)
 
 v1.21.4 (2016-03-16)
-	* different approach to show MP prompt on startup
-	* dropped support for FF <4.0 and TB <5.0
 	! timer didn't show more then 24 hours
 	! DOM Inspector window would not get locked
 	! missing options on FF29+
 	! issue #85 (Saved passwords list is empty)
 	! password prompt missing custom title and options button
 	! FF/TB 48 compatibility
+	* different approach to show MP prompt on startup
+	* dropped support for FF <4.0 and TB <5.0
 
 v1.21.3 (2014-10-12)
-	* flashing for a split a second prompt window is now less intrusive if visible at all.
 	! FF/TB 35 compatibility
+	* flashing for a split a second prompt window is now less intrusive if visible at all.
 
 v1.21.2 (2013-03-23)
 	+ hidden option extensions.masterPasswordPlus.lockignorefirstkey, that controls when pressing a key on locked window: should it be passed to the MP prompt or not (controls a feature introduced in v1.20)
@@ -62,18 +78,18 @@ v1.21 (2012-11-12)
 	+ contact information to about window and changes log
 	+ option to disable hotkeys
 	+ change master password window is now resize to fit the screen
-	* changes log will not open on first install
-	* changed default hotkey for window lock
 	! incorrect unlock label showed when a window was individually locked, then unlocked and global lock occur
 	! possible freezing when MP dialog showed (mainly in Waterfox)
 	! attempting set hotkey that already being used by MP+ would trigger the action of the set hotkey
 	! in FF3.6 in some cases Change MP window would not be properly resized
 	! flickering side effect when minimized window getting locked on Windows Vista/7
+	* changes log will not open on first install
+	* changed default hotkey for window lock
 
 v1.20.1 (2012-11-07)
-	* changing prompt identification string in options will automatically update in all existing MP prompt windows
 	! no icon showed on toolbar button in TB
 	! MP+ would not detect MP prompt on non-english versions of FF and TB
+	* changing prompt identification string in options will automatically update in all existing MP prompt windows
 
 v1.20 (2012-11-06)
 	+ customizable default MP+ button action
@@ -81,8 +97,6 @@ v1.20 (2012-11-06)
 	+ option for global lock / lock+logout hotkeys
 	+ option logout on minimize
 	+ option lock on minimize (a bit glitchy on Windows Vista/7 with Aero taskbar preview - window will minimize twice)
-	* minimum lock timeout is now 10 seconds
-	* new icons so they are easier recognized by color blind people (ugly, I know, so any new designs are welcome!)
 	! title of locked windows is not changed with some title-changing addons
 	! some issues with Vimperator and possible other addons
 	! cleaned up some style namespace pollution
@@ -94,6 +108,8 @@ v1.20 (2012-11-06)
 	! global lock/unlock keys didn't work
 	! hotkeys were not shown in the MP+ menu in a new window
 	! Windows Vista/7 taskbar preview would show content of minimized locked windows. As a work around all minimized windows are now restored then minimized again, creating "flickering" side effect.
+	* minimum lock timeout is now 10 seconds
+	* new icons so they are easier recognized by color blind people (ugly, I know, so any new designs are welcome!)
 
 v1.19.1 (2012-04-16)
 	! high CPU usage when locked
@@ -101,9 +117,9 @@ v1.19.1 (2012-04-16)
 
 v1.19 (2012-04-15)
 	+ German translation (Thanks to SN)
-	* the way hotkey shown in menu 
 	! in some languages text in change MP window didn't fit
 	! misspelling in unlock window message
+	* the way hotkey shown in menu 
 	- dropped support for: FF 3.5, TB 3.0 and older
 
 v1.18 (2012-04-08)
@@ -142,12 +158,12 @@ v1.16 (2011-07-04)
 	+ flashing icon at notification bar
 	+ dropdown menu on toolbar/statusbar buttons (no more context menu)
 	+ ability lock individual windows in TB with hotkeys
-	* prompt invoked by a locked window no longer has options button
 	! notification bar timeout wasn't reset after repeatedly blocked MP prompts
 	! possible double MP prompt when option "Ask for password on startup" is activated
 	! unlock button at locked window looked messed up on some themes
 	! on windows classic theme locking menu items would be barely visible when highlighted
 	! unable unlock individually locked window if MP prompt was already shown
+	* prompt invoked by a locked window no longer has options button
 
 v1.15.4 (2011-04-05)
 	! Just a stupid bug fix - custom identification string was displayed on any prompts, not only on master password prompt.
@@ -165,14 +181,14 @@ v1.15.2 (2011-03-30)
 
 v1.15.1 (2011-03-28)
 
+	! FF4 - mouse wheel scrolling not working on some sites after MP prompt was blocked. In some cases there could be a side effect with this fix: window will loose focus for a brief moment. You can disable this fix by adding "FF4" (without quotes) to the comma separated list in "extensions.masterPasswordPlus.noworkaround" setting via about:config page. Thanks to Infocatcher for providing this fix!
+	! settings not saved in "Change Master Password" window
 	* warning icon will display at MP prompt window when entered non-latin characters (above 127 charcode). It's controlled by "extensions.masterPasswordPlus.nonlatinwarning" setting: 0=never show, 1=always show, 2=show only in fullscreen
 	* options in "Prompt" section are no longer disabled when block set to "none"
 	* replaced checkbox at MP prompt with a button. Now only pressing that button will activate temporary MP suppression
 	* some default settings
 	* color of the notification bar when MP prompt was suppressed
 	* icon of the notification bar when MP prompt was suppressed
-	! FF4 - mouse wheel scrolling not working on some sites after MP prompt was blocked. In some cases there could be a side effect with this fix: window will loose focus for a brief moment. You can disable this fix by adding "FF4" (without quotes) to the comma separated list in "extensions.masterPasswordPlus.noworkaround" setting via about:config page. Thanks to Infocatcher for providing this fix!
-	! settings not saved in "Change Master Password" window
 
 v1.15 (2011-03-08)
 	+ option at info bar to reset temporary suppression
@@ -185,9 +201,9 @@ v1.14 (2011-02-21)
 	+ option to lock application on startup if MP was canceled
 	+ option to minimize all windows on Auto-lock
 	+ option for Login/Logout hotkeys to be registered as global - they will work in any opened windows such as options, other extension's windows, dialog boxes, etc (FF / TB windows that is)
+	! on systems with instantApply (unix/Mac) timer for Auto-logout would reset after Auto-lock was executed.
 	* when enabled "only when active" in Auto-logout or Auto-lock options the timers now will be reset when user active in any opened windows, including windows by other extensions, alert boxes, dialogs, etc
 	* some internal code for change master password window
-	! on systems with instantApply (unix/Mac) timer for Auto-logout would reset after Auto-lock was executed.
 	- option "lock" from Auto-logout section
 	- support for FF3.0 (it still works, but it's kind of buggy)
 
@@ -239,12 +255,12 @@ v1.10 (2011-01-15)
 	+ support for FF v4.0.b10pre
 	+ work around AeroBuddy extension, when not everything being covered when locked (can be disabled by adding AeroBuddy into extensions.masterPasswordPlus.noworkaround preference)
 	+ option to remove window title when locked
+	! tooltip counter was incorrectly initialized
 	* significant performance increase with multiple windows opened
 	* options protection doesn't ask password when options window opened (it has "Unlock" button now)
 	* when Firefox window is locked only title bar is visible
 	* background image when window is locked
 	* lock message appearance 
-	! tooltip counter was incorrectly initialized
 
 v1.9 (2011-01-08)
 	+ lock application - will prevent using the application until unlocked. (either use CTRL+SHIFT+L or via right click on icon)
@@ -296,11 +312,11 @@ v1.2 (2010-12-12)
 
 v1.1 (2010-12-04)
 	+ tooltip on toolbar/statusbar buttons that shows how long until master password will timeout.
+	- some unnecessary alert messages from "Change Master Password" window.
+	- dropped support for Firefox/Thunderbird older then v3
 	* rewrote timer module, now it is one timer for every window.
 	* if no MP is set, the timer no longer active
 	* entering correct MP in "Remove Master Password" window and pressing cancel will not unlock the browser anymore
-	- some unnecessary alert messages from "Change Master Password" window.
-	- dropped support for Firefox/Thunderbird older then v3
 
 v1.0 (2010-11-22)
 	+ timeout options directly into "Change Master Password" window

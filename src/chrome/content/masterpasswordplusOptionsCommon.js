@@ -1,10 +1,20 @@
+(function(){
+function $(id)
+{
+	return document.getElementById(id);
+}
 mapaPlus.mainWindow = Components.classes["@mozilla.org/appshell/window-mediator;1"]
                    .getService(Components.interfaces.nsIWindowMediator)
                    .getMostRecentWindow((mapaPlus.core.isTB ? "mail:3pane" : "navigator:browser"));
 
 mapaPlus.iconSelected = {};
-mapaPlus.instantApply = Components.classes["@mozilla.org/preferences-service;1"]
+Object.defineProperty(mapaPlus, "instantApply", {
+	get: function()
+	{
+		return Components.classes["@mozilla.org/preferences-service;1"]
 				.getService(Components.interfaces.nsIPrefBranch).getBoolPref("browser.preferences.instantApply");
+	}
+});
 
 mapaPlus.autoSave = mapaPlus.instantApply ? mapaPlus.saveOptions : function(){};
 mapaPlus.isLocked = false;
@@ -39,7 +49,7 @@ mapaPlus.iniIcons = function(objId, iconId, id, checkbox)
 		vbox.id = "mapapl-"+id+"-" + children[0].id;
 		vbox.appendChild(icon);
 		var last = document.importNode(vbox, true);
-		document.getElementById(objId).appendChild(last);
+		$(objId).appendChild(last);
 		for (var i = 0; i < children.length; i++)
 		{
 			if (skipId.indexOf(children[i].id) != -1 || skipTag.indexOf(children[i].tagName) != -1)
@@ -63,16 +73,16 @@ mapaPlus.iniIcons = function(objId, iconId, id, checkbox)
 
 			if (clone.children.length == 1 && clone.children[0].style.listStyleImage == "none")
 				clone.children[0].style.listStyleImage = clone.style.listStyleImage;
-			document.getElementById(objId).appendChild(clone);
+			$(objId).appendChild(clone);
 			clone.addEventListener("mousemove", function(e)
 			{
-				if (!mapaPlus.isLocked && document.getElementById(checkbox).checked)
+				if (!mapaPlus.isLocked && $(checkbox).checked)
 					mapaPlus.mouseMove(e);
 			}, false);
 			last = document.importNode(vbox, true);
 			last.setAttribute("directionId", clone.id);
 			last.id = "mapapl-"+ id + "-" + clone.id;
-			document.getElementById(objId).appendChild(last);
+			$(objId).appendChild(last);
 		};
 		if (this.iconSelected[id])
 		{
@@ -82,14 +92,14 @@ mapaPlus.iniIcons = function(objId, iconId, id, checkbox)
 			if (elId)
 			{
 				dir = 1;
-				if (document.getElementById(elId))
-					el = document.getElementById(elId).nextSibling;
+				if ($(elId))
+					el = $(elId).nextSibling;
 			}
 			else
 			{
 				elId = this.iconSelected[id].getAttribute("insertbefore");
-				if (document.getElementById(elId))
-					el = document.getElementById(elId).previousSibling;
+				if ($(elId))
+					el = $(elId).previousSibling;
 			}
 			if (el)
 			{
@@ -119,7 +129,7 @@ mapaPlus.showSelected = function (e)
 	if (e.target.id.match(/^mapapl-/) || p == "urlbar-icons" || p == "status-bar" || pp == "urlbar-icons" || pp == "status-bar")
 		return;
 
-	var c = document.getElementById("urlbar-icons").childNodes;
+	var c = $("urlbar-icons").childNodes;
 	for(var i = 0; i < c.length; i++)
 	{
 		if (c[i].id.match(/^mapapl-/))
@@ -127,9 +137,9 @@ mapaPlus.showSelected = function (e)
 			c[i].collapsed = c[i].getAttribute("selected") != "true";
 		}
 	}
-	if (document.getElementById("status-bar"))
+	if ($("status-bar"))
 	{
-		var c = document.getElementById("status-bar").childNodes;
+		var c = $("status-bar").childNodes;
 		for(var i = 0; i < c.length; i++)
 		{
 			if (c[i].id.match(/^mapapl-/))
@@ -287,7 +297,7 @@ mapaPlus.getOrder = function(obj)
 	var id = "";
 	var dir = false;
 	var sel = null;
-	var c = document.getElementById(obj);
+	var c = $(obj);
 	if (!c)
 		return false;
 
@@ -332,7 +342,7 @@ mapaPlus.timer = {
 	},
 	observe: function()
 	{
-		document.getElementById("mapaPlusIndicateIcon").setAttribute("suppressed", (document.getElementById("mapaPlusSuppressBlink").checked ? !(document.getElementById("mapaPlusIndicateIcon").getAttribute("suppressed") == "true") : true));
+		$("mapaPlusIndicateIcon").setAttribute("suppressed", ($("mapaPlusSuppressBlink").checked ? !($("mapaPlusIndicateIcon").getAttribute("suppressed") == "true") : true));
 	}
 }
 
@@ -352,12 +362,13 @@ mapaPlus.checkboxTriState = function(event)
 mapaPlus.suppressedPopup = function()
 {
 	if (this.mainWindow.mapaPlus)
-		this.mainWindow.mapaPlus.suppressedPopup(true, document.getElementById("mapaPlusSuppressPopupRemove").value);
+		this.mainWindow.mapaPlus.suppressedPopup(true, $("mapaPlusSuppressPopupRemove").value);
 }
 
 mapaPlus.close = function()
 {
 	window.removeEventListener("mousemove", mapaPlus.showSelected, true);
+
 }
 
 mapaPlus.confirmPasswordDone = {};
@@ -369,7 +380,7 @@ mapaPlus.confirmPassword = function(e)
 
 	if (e.target.tagName == "checkbox")
 	{
-		if (!e.target.checked && this.core.pref.getBoolPref(e.target.getAttribute("preference")))
+		if (!e.target.checked && this.core.pref(e.target.getAttribute("preference")))
 		{
 			e.target.checked = true;
 			e.target.checked = r = !this.confirmPasswordDo("");
@@ -378,7 +389,7 @@ mapaPlus.confirmPassword = function(e)
 	else
 	{
 		var p = e.target.parentNode.parentNode;
-		var d = p.hasAttribute("prevset") ? parseInt(p.getAttribute("prevset")) : this.core.pref.getIntPref(p.getAttribute("preference"));
+		var d = p.hasAttribute("prevset") ? parseInt(p.getAttribute("prevset")) : this.core.pref(p.getAttribute("preference"));
 		if (d && !this.confirmPasswordDo(""))
 		{
 			r = false;
@@ -392,8 +403,9 @@ mapaPlus.confirmPassword = function(e)
 	return r;
 }
 
-mapaPlus.confirmPasswordDo = function(id, f)
+mapaPlus.confirmPasswordDo = function confirmPasswordDo(id, f)
 {
+log.debug();
 	f = f || false;
 	if (!f && !this.isLocked && (this.pass || this.confirmPasswordDone[id] || (!this.instantApply && !this.protected && this.protectedBegin)))
 		return true;
@@ -427,22 +439,22 @@ mapaPlus.confirmPasswordDo = function(id, f)
 mapaPlus.addEventListener = function(id, callback, pref)
 {
 	let observer = new MutationObserver(callback);
-	observer.observe(document.getElementById(id), pref);
+	observer.observe($(id), pref);
 // do we need disconnect on unload?
 }
 
 mapaPlus.setListeners = function()
 {
-	document.getElementById("mapaPlusEnabled").addEventListener("CheckboxStateChange", this.enableDisable, false);
-	document.getElementById("mapaPlusStartup").addEventListener("CheckboxStateChange", this.enableDisable, false);
-	document.getElementById("mapaPlusStartupShort").addEventListener("CheckboxStateChange", this.enableDisable, false);
-	document.getElementById("mapaPlusSuppressPopup").addEventListener("CheckboxStateChange", this.suppress, false);
-	document.getElementById("mapaPlusToolsmenu").addEventListener("CheckboxStateChange", this.viewTogle, false);
-	document.getElementById("mapaPlusContextmenu").addEventListener("CheckboxStateChange", this.viewTogle, false);
-	document.getElementById("mapaPlusStatusbar").addEventListener("CheckboxStateChange", this.viewTogle, false);
-	document.getElementById("mapaPlusUrlbar").addEventListener("CheckboxStateChange", this.enableDisable, false);
-	document.getElementById("mapaPlusLockTimer").addEventListener("CheckboxStateChange", this.enableDisable, false);
-	document.getElementById("mapaPlusLockMinimize").addEventListener("CheckboxStateChange", this.enableDisable, false);
+	$("mapaPlusEnabled").addEventListener("CheckboxStateChange", this.enableDisable, false);
+	$("mapaPlusStartup").addEventListener("CheckboxStateChange", this.enableDisable, false);
+	$("mapaPlusStartupShort").addEventListener("CheckboxStateChange", this.enableDisable, false);
+	$("mapaPlusSuppressPopup").addEventListener("CheckboxStateChange", this.suppress, false);
+	$("mapaPlusToolsmenu").addEventListener("CheckboxStateChange", this.viewTogle, false);
+	$("mapaPlusContextmenu").addEventListener("CheckboxStateChange", this.viewTogle, false);
+	$("mapaPlusStatusbar").addEventListener("CheckboxStateChange", this.viewTogle, false);
+	$("mapaPlusUrlbar").addEventListener("CheckboxStateChange", this.enableDisable, false);
+	$("mapaPlusLockTimer").addEventListener("CheckboxStateChange", this.enableDisable, false);
+	$("mapaPlusLockMinimize").addEventListener("CheckboxStateChange", this.enableDisable, false);
 	try
 	{
 		this.addEventListener("mapaPlusSuppress", this.suppress, {attributes: true, attributeFilter: ["value"]});
@@ -452,10 +464,10 @@ mapaPlus.setListeners = function()
 	}
 	catch(e)
 	{
-		document.getElementById("mapaPlusSuppress").addEventListener("DOMAttrModified", this.suppress, false);
-		document.getElementById("mapaPlusLogoutHotkey").addEventListener("DOMAttrModified", this.hotkeyChanged, false);
-		document.getElementById("mapaPlusLockHotkey").addEventListener("DOMAttrModified", this.hotkeyChanged, false);
-		document.getElementById("mapaPlusLockWinHotkey").addEventListener("DOMAttrModified", this.hotkeyChanged, false);
+		$("mapaPlusSuppress").addEventListener("DOMAttrModified", this.suppress, false);
+		$("mapaPlusLogoutHotkey").addEventListener("DOMAttrModified", this.hotkeyChanged, false);
+		$("mapaPlusLockHotkey").addEventListener("DOMAttrModified", this.hotkeyChanged, false);
+		$("mapaPlusLockWinHotkey").addEventListener("DOMAttrModified", this.hotkeyChanged, false);
 	}
 }
 
@@ -473,18 +485,27 @@ mapaPlus.initCommon = function(id)
 	if (id == this.windowID)
 		return;
 
+	$("mapaPlusDebug").addEventListener("command", this.debugClick, true);
+	$("mapaPlusChangesLog").addEventListener("command", this.changesLogClick, true);
+	$("mapaPlusShowChangesLog_button").addEventListener("click", function(e)
+	{
+		if (e.button != 2)
+			mapaPlus.showChangesLog()
+	}, true);
+	this.debugMenu();
+	this.changesLogMenu();
 	this.hotkeyInit();
-	this.protectedBegin = this.core.pref.getBoolPref("protect");
+	this.protectedBegin = this.core.pref("protect");
 
-	this.setAttribute("mapaPlusLockTimerBox", "tooltiptext", document.getElementById("mapaPlusLockTimerBox").getAttribute("tooltiptext").replace("#", this.core.appInfo.name));
-	document.getElementById("mapaPlusStartupFail").setAttribute("prevset", this.core.pref.getIntPref("startupfail"));
+	this.setAttribute("mapaPlusLockTimerBox", "tooltiptext", $("mapaPlusLockTimerBox").getAttribute("tooltiptext").replace("#", this.core.appInfo.name));
+	$("mapaPlusStartupFail").setAttribute("prevset", this.core.pref("startupfail"));
 	window.addEventListener("CheckboxStateChange", this.checkboxTriState, false);
 	window.addEventListener("unload", this.closeCommon, false);
 	if (Components.classes["@mozilla.org/xpcom/version-comparator;1"]
 			.getService(Components.interfaces.nsIVersionComparator)
 			.compare(this.core.appInfo.version, "8.0") < 0)
 	{
-		document.getElementById("mapaPlusAllPrefs").collapsed = true;
+		$("mapaPlusAllPrefs").collapsed = true;
 	}
 	if ("arguments" in window && window.arguments[0])
 	{
@@ -498,11 +519,11 @@ mapaPlus.initCommon = function(id)
 			{
 				default:
 				case "selectTab":
-						var t = document.getElementById("options").childNodes[0].childNodes;
+						var t = $("options").childNodes[0].childNodes;
 						for(var i = 0; i < t.length; i++)
 							if (t[i].id == a[c])
 							{
-								document.getElementById("options").selectedIndex = i;
+								$("options").selectedIndex = i;
 								break;
 							}
 					break;
@@ -526,17 +547,26 @@ mapaPlus.initCommon = function(id)
 	else
 		this.enableDisable();
 
+	let sup = $("mapaPlusSupportSite");
+	sup.setAttribute("href", mapaPlusCore.SUPPORTSITE + mapaPlusCore.SUPPORTSITEQUERY);
+	sup.setAttribute("link", mapaPlusCore.SUPPORTSITE);
+	sup.setAttribute("tooltiptext", mapaPlusCore.SUPPORTSITE);
+	sup = $("mapaPlusSupportHomepage");
+	sup.setAttribute("href", mapaPlusCore.HOMEPAGE);
+	sup.setAttribute("link", mapaPlusCore.HOMEPAGE);
+	sup.setAttribute("tooltiptext", mapaPlusCore.HOMEPAGE);
+
 	if (this.core.isTB)
 		return;
 
-	var w = document.getElementById("urlbar").inputField.parentNode.boxObject.width;
-	document.getElementById("urlbar").inputField.parentNode.style.minWidth = "140px";
-	var w2 = document.getElementById("urlbar").inputField.parentNode.boxObject.width;
+	var w = $("urlbar").inputField.parentNode.boxObject.width;
+	$("urlbar").inputField.parentNode.style.minWidth = "140px";
+	var w2 = $("urlbar").inputField.parentNode.boxObject.width;
 	if (w2 > w)
 	{
-		document.getElementById("urlbar").width = document.getElementById("urlbar").boxObject.width + (w2-w);
+		$("urlbar").width = $("urlbar").boxObject.width + (w2-w);
 	}
-}
+}//initCommon()
 
 mapaPlus.loadArgs = function()
 {
@@ -558,7 +588,7 @@ mapaPlus.viewTogle = function(e)
 	if (!this.instantApply)
 		return;
 
-	this.core.pref.setBoolPref(e.target.getAttribute("preference"), e.target.checked);
+	this.core.pref(e.target.getAttribute("preference"), e.target.checked);
 	this.core.windowUpdate(true,true);
 }
 
@@ -788,13 +818,13 @@ mapaPlus.hotkeyGet = function(keys)
 			if (t == "ACCEL")
 				t = this.core.accel;
 
-			k = document.getElementById("platformKeys").getString("VK_" + t);
+			k = $("platformKeys").getString("VK_" + t);
 		}
 		catch(e)
 		{
 			try
 			{
-				k = document.getElementById("localeKeys").getString("VK_" + keys[i]);
+				k = $("localeKeys").getString("VK_" + keys[i]);
 			}
 			catch(e)
 			{
@@ -824,7 +854,7 @@ mapaPlus.hotkeyDupMark = function()
 	var l = this.hotkeyTaken.mapa;
 	for(var i in l)
 	{
-		document.getElementById(i).setAttribute("error", this.hotkeyCheckDup(i, l[i]) ? true : false);
+		$(i).setAttribute("error", this.hotkeyCheckDup(i, l[i]) ? true : false);
 	}
 }
 
@@ -869,20 +899,20 @@ mapaPlus.hotkeyInit = function(id)
 		this.hotkeyTaken.all["mapaPlusHotkeyTaken"+i] = m;
 		this.hotkeyTaken.all["mapaPlusHotkeyTaken"+i].push(k);
 	}
-	this.hotkeyShow([this.core.prefLogoutHotkey], document.getElementById("mapaPlusLogoutHotkey"), "init");
-	this.hotkeyShow([this.core.prefLockHotkey], document.getElementById("mapaPlusLockHotkey"), "init");
-	this.hotkeyShow([this.core.prefLockWinHotkey], document.getElementById("mapaPlusLockWinHotkey"), "init");
-	this.hotkeyShow([this.core.prefLockLogoutHotkey], document.getElementById("mapaPlusLockLogoutHotkey"), "init");
+	this.hotkeyShow([this.core.prefLogoutHotkey], $("mapaPlusLogoutHotkey"), "init");
+	this.hotkeyShow([this.core.prefLockHotkey], $("mapaPlusLockHotkey"), "init");
+	this.hotkeyShow([this.core.prefLockWinHotkey], $("mapaPlusLockWinHotkey"), "init");
+	this.hotkeyShow([this.core.prefLockLogoutHotkey], $("mapaPlusLockLogoutHotkey"), "init");
 	document.documentElement.getButton("disclosure").removeAttribute("accesskey");
 }
 
 mapaPlus.hotkeySave = function(id, pref)
 {
-	if (document.getElementById(id).getAttribute("error") == "true")
+	if ($(id).getAttribute("error") == "true")
 		return;
 
-	this.core.pref.setCharPref(pref, document.getElementById(id).keys.join(" ").toUpperCase());
-	document.getElementById(id).keysOrig = document.getElementById(id).keys;
+	this.core.pref(pref, $(id).keys.join(" ").toUpperCase());
+	$(id).keysOrig = $(id).keys;
 }
 
 mapaPlus.openAllPrefs = function()
@@ -894,9 +924,174 @@ mapaPlus.openAllPrefs = function()
 	mapaPlus.core.window["Window"][first].openURL('about:config?filter=' + mapaPlus.core.PREF_BRANCH);
 	mapaPlus.core.windowFocus();
 }
+mapaPlus.debugParse = function debugParse()
+{
+	let c = $("mapaPlusDebugMenu").children,
+	r = 0;
+	for (let i = 0; i < c.length; i++)
+		if (c[i].getAttribute("checked"))
+			r += Number(c[i].getAttribute("value"));
+
+	return r;
+}
+mapaPlus.debugSave = function()
+{
+	mapaPlusCore.pref("debug", this.debugParse());
+}
+
+mapaPlus.debugClick = function debugClick(e)
+{
+log.debug();
+	mapaPlus.debugMenu(mapaPlus.debugParse());
+	if (mapaPlus.instantApply)
+		mapaPlus.debugSave();
+}
+
+mapaPlus.debugMenu = function debugMenu(v)
+{
+	v = typeof(v) == "undefined" ? mapaPlusCore.pref("debug") : v;
+	let c = $("mapaPlusDebugMenu"),
+			t = [];
+
+	c = c.children;
+	for (let i = 0; i < c.length; i++)
+	{
+		let val = Number(c[i].getAttribute("value"));
+		if (v & val)
+		{
+			c[i].setAttribute("checked", true);
+		}
+		else
+		{
+			c[i].removeAttribute("checked");
+		}
+		if (val & 1)
+			c[i].disabled = (v & val);
+	}
+}
+
+
+mapaPlus.changesLogMenuParse = function changesLogMenuParse()
+{
+	let c = $("mapaPlusChangesLogMenu").children,
+	r = 0;
+	for (let i = 0; i < c.length; i++)
+		if (c[i].getAttribute("checked"))
+			r += Number(c[i].getAttribute("value"));
+
+	return r;
+}
+mapaPlus.changesLogSave = function()
+{
+	mapaPlusCore.pref("showchangeslog", this.changesLogMenuParse());
+}
+
+mapaPlus.changesLogClick = function changesLogClick(e)
+{
+	let first = mapaPlus.core.windowFirst();
+	if (first !== null)
+	{
+		let win = mapaPlus.core.window["Window"][first];
+
+		if (e.explicitOriginalTarget.getAttribute("checked")
+				&& Number(e.explicitOriginalTarget.getAttribute("value")) & mapaPlus.CHANGESLOG_NOTIFICATION)
+			mapaPlus.showChangesLog(mapaPlus.CHANGESLOG_NOTIFICATION, win)
+
+	}
+	mapaPlus.changesLogMenu(mapaPlus.changesLogMenuParse());
+	if (mapaPlus.instantApply)
+		mapaPlus.changesLogSave();
+}
+
+mapaPlus.changesLogMenu = function changesLogMenu(v)
+{
+log.debug();
+	v = typeof(v) == "undefined" ? mapaPlusCore.pref("showchangeslog") : v;
+	let c = $("mapaPlusChangesLogMenu"),
+			t = [];
+
+	c = c.children;
+	for (let i = 0; i < c.length; i++)
+	{
+		if (c[i].getAttribute("value") == 1 && !mapaPlus.notificationAvailable)
+			c[i].disabled = true;
+
+		if (!c[i].disabled && v & Number(c[i].getAttribute("value")))
+		{
+			t.push(mapaPlus.strings["changesLog" + Number(c[i].getAttribute("value"))]);
+			c[i].setAttribute("checked", true);
+		}
+		else
+			c[i].removeAttribute("checked");
+	}
+	if (!t.length)
+		t = [mapaPlus.strings["none"]];
+
+	$("mapaPlusChangesLog").setAttribute("label", (t.join(" + ")));
+}
+
+mapaPlus.linkClick = function linkClick(obj, e)
+{
+	let url = obj.getAttribute("href");
+	let email = url.match(/^mailto:/);
+	if (!obj.fixed)
+	{
+		let tags = {
+					OS: mapaPlus.core.appInfo.OS + " (" + mapaPlus.core.appInfo.XPCOMABI + ")",
+					VER: mapaPlus.core.addon.version,
+					APP: mapaPlus.core.appInfo.name + " " + mapaPlus.core.appInfo.version,
+				}
+		if (email)
+		{
+			let reg = new RegExp("\{([A-Z]+)\}", "gm");
+			url = url.replace(reg, function(a, b, c, d)
+			{
+				if (b in tags)
+					return " " + tags[b];
+				return a;
+			});
+			obj.setAttribute("href", url);
+			obj.fixed = true;
+		}
+	}
+	if (!mapaPlus.core.isTB || e.button == 2)
+		return true;
+
+	try
+	{
+		if (e.button == 1)
+			mapaPlus.core.openUILinkIn(url);
+		else if (email)
+		{
+			let aURI = Components.classes["@mozilla.org/network/io-service;1"]
+							.getService(Components.interfaces.nsIIOService)
+							.newURI(url, null, null);
+			Components.classes["@mozilla.org/messengercompose;1"]
+				.getService(Components.interfaces.nsIMsgComposeService)
+				.OpenComposeWindowWithURI(null, aURI);
+		}
+		else
+		{
+			let tabmail = window.top.document.getElementById("tabmail"),
+					args = {
+						type: "contentTab",
+						contentPage: url,
+						background: false
+					};
+				tabmail.openTab(args.type, args);
+		}
+	}
+	catch(e)
+	{
+		try{mapaPlus.core.openUILinkIn(url)}catch(e){};
+	}
+	return false;
+}//linkClick()
 
 mapaPlus.loadArgs();
 
 mapaPlus.timer.init();
 
 window.addEventListener("load", mapaPlus.onLoadCommon , false);
+
+})();

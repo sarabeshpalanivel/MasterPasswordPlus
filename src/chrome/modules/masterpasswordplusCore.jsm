@@ -26,42 +26,19 @@ var self = this,
 	suppressedPopupStop: false,
 	suppressedFocusForce: false,
 
-	prefLogoutTimeout: 0,
-	prefLogoutInactivity: false,
-	prefLogoutTimer: false,
-	prefSuppressTimer: 0,
-	prefSuppressBlink: false,
-	prefSuppressTemp: 0,
-	prefLockTimer: false,
-	prefLockTimeout: false,
-	prefLockInactivity: false,
-	prefLockHideTitle: true,
 	prefLockHotkey: "",
 	prefLockWinHotkey: "",
 	prefLogoutHotkey: "",
 	prefLockLogoutHotkey: "",
 	prefNoObserve: false,
-	prefLockIncorrect: 3,
-	prefLockLogout: false,
-	prefLockMinimize: false,
-	prefLockMinimizeBlur: false,
-	prefLogoutHotkeyEnabled: false,
-	prefLockHotkeyEnabled: false,
-	prefLockWinHotkeyEnabled: false,
-	prefLockLogoutHotkeyEnabled: false,
 	prefForcePrompt: [],
 	prefNoWorkAround: [],
-	prefNonLatinWarning: 0,
-	prefShowLang: 0,
-	prefShowChangesLog: false,
-	prefCommand: 0,
-	prefCommandLoggedin: 0,
-	prefLockIgnoreFirstKey: false,
 
 	locked: false,
 	lockDo: true,
 	lockIncorrect: 0,
 	lockOverlay: null,
+	unlockIncorrect: 0,
 
 	startupPassed: false,
 	startupIncorrect: 0,
@@ -81,8 +58,10 @@ var self = this,
 		persist: {},
 	},
 	PREF_BRANCH: PREF_BRANCH,
-	pref: Cc["@mozilla.org/preferences-service;1"]
+	prefs: Cc["@mozilla.org/preferences-service;1"]
 				.getService(Ci.nsIPrefService).getBranch(PREF_BRANCH),
+	prefsDefault: Cc["@mozilla.org/preferences-service;1"]
+				.getService(Ci.nsIPrefService).getDefaultBranch(PREF_BRANCH),
 
 //	crypt: Cc["@mozilla.org/security/sdr;1"].getService(Ci.nsISecretDecoderRing),
 
@@ -337,29 +316,35 @@ var self = this,
 		}
 	},
 
-	lock: function(l, m)
+	logout: function()
+	{
+		this.tokenDB.logoutAndDropAuthenticatedResources();
+	},//logout()
+
+	lock: function(logout, minimize)
 	{
 		if (this.status || !this.startupPassed)
 		{
-			l = l || false;
-			m = m || false;
+			logout = logout || false;
+			minimize = minimize || false;
 			this.locked = true;
 			this.prefNoObserve = true;
-			this.pref.setBoolPref("locked", true);
+			this.prefs.setBoolPref("locked", true);
 			this.prefNoObserve = false;
 			this.windowAction("showLock");
 			this.dialogShow = false;
-			this.prefSuppress = 2;
-			if (l)
-				this.tokenDB.logoutAndDropAuthenticatedResources();
+//			this.pref("suppress") = 2;
+			if (logout)
+				this.logout();
 
 			this.timerCheck.observe();
 			this.windowAction("lock", true, "Dialog");
+this.windowAction("test", {blah:109}, "Dialog");
 
-			if (m && this.prefLockMinimize)
+			if (minimize && this.pref("lockminimize"))
 			{
-				if (!this.prefLockMinimizeBlur
-						|| (this.prefLockMinimizeBlur
+				if (!this.pref("lockminimizeblur")
+						|| (this.pref("lockminimizeblur")
 								&& !Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher).activeWindow))
 				{
 					let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
@@ -399,21 +384,21 @@ var self = this,
 				}
 				if (this.isTB)
 				{
-					if (this.pref.getBoolPref("hidenewmailalert"))
+					if (this.pref("hidenewmailalert"))
 						rp("mail.biff.show_alert");
 
-					if (this.pref.getBoolPref("hidenewmailballoon"))
+					if (this.pref("hidenewmailballoon"))
 						rp("mail.biff.show_balloon");
 				}
 				if (Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService).getDefaultBranch("extensions.wmn.").getPrefType("showNotification") == Ci.nsIPrefBranch.PREF_BOOL)
 				{
-					if (this.pref.getBoolPref("hidenewmailalert"))
+					if (this.pref("hidenewmailalert"))
 						rp("extensions.wmn.showNotification");
 				}
 			}
 			return;
 		}
-	},
+	}, //lock()
 
 	showLock: function(window)
 	{
@@ -427,7 +412,7 @@ var self = this,
 			this.ss.setWindowValue(window, "lockedWindow", window.lockedWindow.toString());
 
 		window.locked = true;
-		if (!this.isTB && this.prefLockHideTitle && window.gBrowser)
+		if (!this.isTB && this.pref("lockhidetitle") && window.gBrowser)
 		{
 			window.lockedTitle = window.gBrowser.contentDocument.title;
 			window.gBrowser.contentDocument.title = window.document.getElementById("masterPasswordPlusUnLockInfo").value;
@@ -487,7 +472,7 @@ var self = this,
 		}catch(e){};
 
 		window.locked = false;
-		if (!this.isTB && this.prefLockHideTitle)
+		if (!this.isTB && this.pref("lockhidetitle"))
 		{
 			gBrowser.contentDocument.title = window.lockedTitle;
 		}
@@ -522,9 +507,9 @@ var self = this,
 		this.windowAction("lock", false, "Dialog");
 		this.countdownResetLock();
 		this.prefNoObserve = true;
-		this.pref.setBoolPref("locked", false);
+		this.prefs.setBoolPref("locked", false);
 		this.prefNoObserve = false;
-		this.prefSuppress = this.pref.getIntPref("suppress");
+//		this.pref("suppress") = this.pref("suppress");
 		this.windowAction("showUnlock");
 		if (this.lockPrefBackup)
 		{
@@ -543,29 +528,29 @@ var self = this,
 			return;
 
 		this.dialogSuppress = true;
-		this.dialogSuppressTimer = this.prefSuppressTimer*2+2;
+		this.dialogSuppressTimer = this.pref("suppresstimer")*2+2;
 	},
 
 	countdownReset: function()
 	{
-		var time = (this.forced ? this.forced : this.prefLogoutTimeout);
+		var time = (this.forced ? this.forced : this.pref("logouttimeout"));
 		time = new Date((parseInt((new Date().getTime()/1000))+time) * 1000);
 		this.timerTime = time;
 	},
 
 	countdownResetLock: function()
 	{
-		var time = this.pref.getIntPref("locktimeout");
+		var time = this.pref("locktimeout");
 		time = new Date((parseInt((new Date().getTime()/1000))+time) * 1000) ;
 		this.timerLockTime = time;
 	},
 
 	resetTimer: function(e)
 	{
-		if (mapaPlusCore.prefLogoutInactivity && !mapaPlusCore.forced)
+		if (mapaPlusCore.pref("logoutinactivity") && !mapaPlusCore.forced)
 			mapaPlusCore.countdownReset();
 
-		if (mapaPlusCore.prefLockInactivity)
+		if (mapaPlusCore.pref("lockinactivity"))
 			mapaPlusCore.countdownResetLock();
 	},
 
@@ -610,11 +595,15 @@ var self = this,
 
 	timerCheckObserver: function()
 	{
-		var time = new Date();
+		if (idleService.idleTime < 500)
+		{
+			mapaPlusCore.resetTimer();
+		}
+		let time = new Date();
 		if(this.tokenDB.needsLogin())
 		{
-			var locked = this.locked;
-			if (this.prefLockTimer)
+			let locked = this.locked;
+			if (this.pref("locktimer"))
 			{
 				if (!locked && this.timerLockTime && time.getTime() >= this.timerLockTime.getTime())
 				{
@@ -622,7 +611,7 @@ var self = this,
 //this.dump("locked done");
 					this.locked = true;
 					locked = true;
-					this.lock(this.prefLockLogout, true);
+					this.lock(false, true);
 					this.lockDo = true;
 				}
 				else
@@ -639,12 +628,12 @@ var self = this,
 					this.windowBlinkCancel();
 					this.windowAction("suppressedPopupRemove");
 				}
-				var l = true;
-				if ((this.prefLogoutTimer || this.forced) && this.timerTime && time.getTime() >= this.timerTime.getTime())
+				let l = true;
+				if ((this.pref("logouttimer") || this.forced) && this.timerTime && time.getTime() >= this.timerTime.getTime())
 				{
-					this.tokenDB.logoutAndDropAuthenticatedResources();
+					this.logout();
 					this.status = 2;
-					if (this.prefSuppress != 2 && !this.prefSuppressTemp)
+					if (this.pref("suppress") != 2 && !this.pref_SuppressTemp)
 						this.dialogShow = true;
 
 					l = false;
@@ -674,13 +663,13 @@ var self = this,
 				if (this.dialogSuppress || this.last != this.status)
 				{
 					this.dialogSuppressTimer--;
-					if (this.locked || !this.dialogSuppress || (this.dialogSuppressTimer < 2 && this.prefSuppressTimer))
+					if (this.locked || !this.dialogSuppress || (this.dialogSuppressTimer < 2 && this.pref("suppresstimer")))
 					{
 						this.windowBlinkCancel();
 					}
 					else
 					{
-						this.suppressedIcon = this.prefSuppressBlink ? Boolean(this.dialogSuppressTimer%2) : true;
+						this.suppressedIcon = this.pref("suppressblink") ? Boolean(this.dialogSuppressTimer%2) : true;
 					}
 					this.windowUpdate(this.last != this.status);
 				}
@@ -710,7 +699,7 @@ var self = this,
 		start: function()
 		{
 			mapaPlusCore.dialogShow = false;
-			this.timer.init(this, mapaPlusCore.prefSuppressTemp*60000, this.timer.TYPE_ONE_SHOT);
+			this.timer.init(this, mapaPlusCore.pref_SuppressTemp*60000, this.timer.TYPE_ONE_SHOT);
 		},
 
 		stop: function()
@@ -721,7 +710,7 @@ var self = this,
 
 		observe: function()
 		{
-			mapaPlusCore.prefSuppressTemp = false;
+			mapaPlusCore.pref_SuppressTemp = false;
 		}
 	},
 
@@ -871,19 +860,77 @@ var self = this,
 		return this.accel == a ? "ACCEL" : a;
 	},
 
-	prepareHotkey: function()
+	prepareHotkey: function prepareHotkey()
 	{
-		this.prefLogoutHotkeyEnabled = this.pref.getIntPref("logouthotkeyenabled");
-		this.prefLockHotkeyEnabled = this.pref.getIntPref("lockhotkeyenabled");
-		this.prefLockWinHotkeyEnabled = this.pref.getIntPref("lockwinhotkeyenabled");
-		this.prefLockLogoutHotkeyEnabled = this.pref.getIntPref("locklogouthotkeyenabled");
-		this.prefLogoutHotkey = this.pref.getCharPref("logouthotkey").split(" ");
-		this.prefLockHotkey = this.pref.getCharPref("lockhotkey").split(" ");
-		this.prefLockWinHotkey = this.pref.getCharPref("lockwinhotkey").split(" ");
-		this.prefLockLogoutHotkey = this.pref.getCharPref("locklogouthotkey").split(" ");
+log.debug();
+		this.prefLogoutHotkey = this.pref("logouthotkey").split(" ");
+		this.prefLockHotkey = this.pref("lockhotkey").split(" ");
+		this.prefLockWinHotkey = this.pref("lockwinhotkey").split(" ");
+		this.prefLockLogoutHotkey = this.pref("locklogouthotkey").split(" ");
 		this.windowAction("hotkeyInit");
 	},
+	pref: function (key, val, noCache, noAsync)
+	{
+		let pref = mapaPlusCore.pref;
 
+		try
+		{
+			if (!noCache && typeof(val) == "undefined")
+			{
+				return pref.prefs[key];
+			}
+			let type = typeof(pref.prefs[key]);
+			if (typeof(val) == "undefined")
+			{
+				type = pref.types[type];
+				if (type)
+					val = mapaPlusCore.prefs["get" + type + "Pref"](key);
+				else
+					val = mapaPlusCore.prefs.getComplexValue(key, Ci.nsISupportsString).data;
+
+				if (typeof(val) != "undefined")
+				pref.prefs[key] = val;
+				return val
+			}
+			else
+			{
+				if (type != typeof(val))
+				{
+					if (type == "number")
+						val = Number(val);
+					else if (type == "string")
+						val = String(val);
+					else
+						val = Boolean(val);
+				}
+				pref.prefs[key] = val;
+				let callback = function()
+				{
+					delete pref.timers[key];
+					let type = pref.types[typeof(pref.prefs[key])];
+					if (type)
+						mapaPlusCore.prefs["set" + type + "Pref"](key, val);
+					else
+					{
+						let str = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
+						str.data = val;
+						mapaPlusCore.prefs.setComplexValue(key, Ci.nsISupportsString, str);
+					}
+				}
+				if (noAsync)
+					callback();
+				else
+					pref.timers[key] = mapaPlusCore.async(callback, 0, pref.timers[key]);
+			}
+		}
+		catch(e)
+		{
+			log.error(e);
+		}
+		return null;
+	},
+
+/*
 	onPrefChange: {
 		observe: function(subject, topic, key)
 		{
@@ -897,50 +944,51 @@ var self = this,
 
 			mapaPlus = mapaPlus || null;
 
-			mpc.prefLogoutTimeout = mpc.pref.getIntPref("logouttimeout");
-			mpc.prefLogoutInactivity = mpc.pref.getBoolPref("logoutinactivity");
-			mpc.prefLogoutOnMinimize = mpc.pref.getBoolPref("logoutonminimize");
+			mpc.pref("logouttimeout") = mpc.prefs.getIntPref("logouttimeout");
+			mpc.pref("logoutinactivity") = mpc.prefs.getBoolPref("logoutinactivity");
+			mpc.pref("logoutonminimize") = mpc.prefs.getBoolPref("logoutonminimize");
+			mpc.pref("logoutonsleep") = mpc.prefs.getBoolPref("logoutonsleep");
 
-			mpc.prefSuppress = mpc.pref.getIntPref("suppress");
-			mpc.prefSuppressTimer = mpc.pref.getIntPref("suppresstimer");
-			mpc.prefSuppressBlink = mpc.pref.getBoolPref("suppressblink");
-			mpc.prefSuppressSound = mpc.pref.getBoolPref("suppresssound");
-			mpc.prefSuppressPopup = mpc.pref.getBoolPref("suppresspopup");
-			mpc.prefSuppressFocus = mpc.pref.getBoolPref("suppressfocus");
-			mpc.prefSuppressPopupRemove = mpc.pref.getIntPref("suppresspopupremove");
+			mpc.pref("suppress") = mpc.prefs.getIntPref("suppress");
+			mpc.pref("suppresstimer") = mpc.prefs.getIntPref("suppresstimer");
+			mpc.pref("suppressblink") = mpc.prefs.getBoolPref("suppressblink");
+			mpc.pref("suppresssound") = mpc.prefs.getBoolPref("suppresssound");
+			mpc.pref("suppresspopup") = mpc.prefs.getBoolPref("suppresspopup");
+			mpc.pref("suppressfocus") = mpc.prefs.getBoolPref("suppressfocus");
+			mpc.pref("suppresspopupremove") = mpc.prefs.getIntPref("suppresspopupremove");
 
-			mpc.prefLockInactivity = mpc.pref.getBoolPref("lockinactivity");
-			mpc.prefLockHideTitle = mpc.pref.getBoolPref("lockhidetitle");
-			mpc.prefLockMinimize = mpc.pref.getBoolPref("lockminimize");
-			mpc.prefLockMinimizeBlur = mpc.pref.getBoolPref("lockminimizeblur");
-			mpc.prefLockTimeout = mpc.pref.getIntPref("locktimeout");
-			mpc.prefLockOnMinimize = mpc.pref.getIntPref("lockonminimize");
-			if (mpc.prefLockTimeout < 10)
-				mpc.pref.setIntPref("locktimeout", 10);
+			mpc.pref("lockinactivity") = mpc.prefs.getBoolPref("lockinactivity");
+			mpc.pref("lockhidetitle") = mpc.prefs.getBoolPref("lockhidetitle");
+			mpc.pref("lockminimize") = mpc.prefs.getBoolPref("lockminimize");
+			mpc.pref("lockminimizeblur") = mpc.prefs.getBoolPref("lockminimizeblur");
+			mpc.pref("locktimeout") = mpc.prefs.getIntPref("locktimeout");
+			mpc.pref("lockonminimize") = mpc.prefs.getIntPref("lockonminimize");
+			mpc.pref("lockonsleep") = mpc.prefs.getBoolPref("lockonsleep");
+			if (mpc.pref("locktimeout") < 10)
+				mpc.prefs.setIntPref("locktimeout", 10);
 
 			mpc.timerCheck.init();
 
-			mpc.prefLogoutTimer = mpc.pref.getBoolPref("logouttimer");
-			mpc.prefLockTimer = mpc.pref.getBoolPref("locktimer");
-			mpc.prefLockIncorrect = mpc.pref.getIntPref("lockincorrect");
+			mpc.pref("logouttimer") = mpc.prefs.getBoolPref("logouttimer");
+			mpc.pref("locktimer") = mpc.prefs.getBoolPref("locktimer");
+			mpc.pref("lockincorrect") = mpc.prefs.getIntPref("lockincorrect");
 
-			mpc.prefNonLatinWarning = mpc.pref.getIntPref("nonlatinwarning");
-			mpc.prefShowLang = mpc.KB ? mpc.pref.getIntPref("showlang") : 0;
-			mpc.prefNoWorkAround = mpc.pref.getCharPref("noworkaround").split(",");
+			mpc.pref("nonlatinwarning") = mpc.prefs.getIntPref("nonlatinwarning");
+			mpc.pref("showlang") = mpc.KB ? mpc.prefs.getIntPref("showlang") : 0;
+			mpc.prefNoWorkAround = mpc.prefs.getCharPref("noworkaround").split(",");
 
-			mpc.prefShowChangesLog = mpc.pref.getIntPref("showchangeslog");
+			mpc.pref("showchangeslog") = mpc.prefs.getIntPref("showchangeslog");
 
-			mpc.prefCommand = mpc.pref.getIntPref("command");
-			mpc.prefCommandLoggedin = mpc.pref.getBoolPref("commandloggedin");
+			mpc.pref("command") = mpc.prefs.getIntPref("command");
+			mpc.pref("commandloggedin") = mpc.prefs.getBoolPref("commandloggedin");
 
-			mpc.prefLockIgnoreFirstKey = mpc.pref.getBoolPref("lockignorefirstkey");
 			mpc.prepareHotkey();
-			mpc.windowAction("lockSetTransparent", mpc.pref.getBoolPref("locktransparent"));
-			mpc.windowAction("lockSetBgImage", mpc.pref.getBoolPref("lockbgimage"));
+			mpc.windowAction("lockSetTransparent", mpc.prefs.getBoolPref("locktransparent"));
+			mpc.windowAction("lockSetBgImage", mpc.prefs.getBoolPref("lockbgimage"));
 
 			try
 			{
-				mpc.prefForcePrompt = JSON.parse(mpc.pref.getComplexValue("forceprompt", Components.interfaces.nsISupportsString).data);
+				mpc.prefForcePrompt = JSON.parse(mpc.prefs.getComplexValue("forceprompt", Components.interfaces.nsISupportsString).data);
 			}
 			catch(e)
 			{
@@ -952,10 +1000,84 @@ var self = this,
 
 		}
 	},
+*/
+	onPrefChange: {
+		observe: function onPrefChange_observe(aSubject, aTopic, aKey, init)
+		{
+			let self = mapaPlusCore;
+if (!init)
+	log.debug();
+			if(aTopic != "nsPref:changed" || self.prefNoObserve)
+				return;
+			let t = aSubject.getPrefType(aKey),
+					v;
 
+			if (t == Ci.nsIPrefBranch.PREF_INT)
+				v = aSubject.getIntPref(aKey);
+			else if (t == Ci.nsIPrefBranch.PREF_BOOL)
+				v = aSubject.getBoolPref(aKey);
+			else if (t == Ci.nsIPrefBranch.PREF_STRING)
+				v = aSubject.getComplexValue(aKey, Ci.nsISupportsString).data;
 
-	prompt: function(f)
+			self.pref.prefs[aKey] = v;
+			if (aKey == "debug")
+			{
+				log.logLevel = self.pref("debug") || 1;
+				if (log.logLevel & 4)
+					self.openConsole();
+			}
+
+			if (self.pref("locktimeout") < 10)
+				self.prefs.setIntPref("locktimeout", 10);
+
+			if (aKey == "forceprompt")
+				self.prefNoWorkAround = v.split(",");
+
+			if (aKey == "forceprompt")
+			{
+				try
+				{
+					self.prefForcePrompt = JSON.parse(v);
+				}
+				catch(e)
+				{
+					self.prefForcePrompt = [];
+				}
+			}
+			if (!init && ["logouthotkeyenabled", "lockhotkeyenabled", "lockwinhotkeyenabled", "locklogouthotkeyenabled",
+										"logouthotkey", "lockhotkey", "lockwinhotkey", "locklogouthotkey"].indexOf(aKey) != -1)
+				self.prepareHotkey();
+
+			if (!init)
+				this.do();
+		},
+		do: function onPrefChange_do(mapaPlus)
+		{
+			let self = mapaPlusCore;
+log.debug(self.prefNoObserve);
+
+			if(self.prefNoObserve)
+				return;
+
+			self.timerCheck.init();
+			mapaPlus = mapaPlus || null;
+			let id = mapaPlus && mapaPlus.windowID ? mapaPlus.windowID : 0;
+//			self.prepareHotkey();
+			self.windowAction("hotkeyInit", id, "Dialog");
+			self.windowAction("show", "", "Window");
+		}
+	},
+
+/*
+	onPrefChange: {
+		observe: function(){},
+		do: function(){}
+	},
+*/
+
+	prompt: function prompt(f)
 	{
+log.debug();
 		this.dialogBackup = {
 			dialogOptions: this.dialogOptions,
 			dialogTemp: this.dialogTemp,
@@ -963,7 +1085,7 @@ var self = this,
 		};
 		let r = false
 		if (f)
-			this.tokenDB.logoutAndDropAuthenticatedResources();
+			this.logout();
 
 		try
 		{
@@ -978,8 +1100,9 @@ var self = this,
 		return r;
 	},
 
-	command: function()
+	command: function command()
 	{
+log.debug()
 		this.dialogShow = false;
 
 		this.windowBlinkCancel();
@@ -987,9 +1110,9 @@ var self = this,
 		if (this.status == 1)
 		{
 			this.lockDo = false;
-			this.tokenDB.logoutAndDropAuthenticatedResources();
+			this.logout();
 			this.timerCheck.observe();
-			if (this.prefSuppress != 2 && !this.prefSuppressTemp)
+			if (this.pref("suppress") != 2 && !this.pref_SuppressTemp)
 				this.dialogShow = true;
 		}
 		else
@@ -1110,10 +1233,12 @@ timer.init({observe: function(e)
 				window.addEventListener("keydown", mapaPlusCore.hotkeyDown, true);
 				window.addEventListener("keypress", mapaPlusCore.hotkeyPress, true);
 				window.addEventListener("keyup", mapaPlusCore.hotkeyUp, true);
+/*
 				window.addEventListener("mousemove", mapaPlusCore.resetTimer, false);
 				window.addEventListener("keydown", mapaPlusCore.resetTimer, false);
 				window.addEventListener("mousedown", mapaPlusCore.resetTimer, false);
 				window.addEventListener("DOMMouseScroll", mapaPlusCore.resetTimer, false);
+*/
 				window.addEventListener("focus", mapaPlusCore.windowFocused, true);
 				window.addEventListener("load", function(event)
 				{
@@ -1136,8 +1261,8 @@ timer.init({observe: function(e)
 								return param.indexOf(name) != -1;
 							}
 							if ((mapaPlusCore.status == 2
-									&& (mapaPlusCore.prefSuppress == 2
-											|| mapaPlusCore.prefSuppressTemp
+									&& (mapaPlusCore.pref("suppress") == 2
+											|| mapaPlusCore.pref_SuppressTemp
 											|| (isParam("startup") && !mapaPlusCore.startupPassed)))
 									|| isParam("always"))
 							{
@@ -1158,7 +1283,7 @@ timer.init({observe: function(e)
 							}
 							break;
 						}
-						if (!windowClose)
+						if (!windowClose && window.document.documentElement.ownerDocument.loadOverlay)
 						{
 							window.document.documentElement.ownerDocument.loadOverlay("chrome://mapaplus/content/masterpasswordplusOverlay.xul", {observe: function(e)
 							{
@@ -1209,10 +1334,12 @@ timer.init({observe: function(e)
 				window.removeEventListener("keydown", mapaPlusCore.hotkeyDown, true);
 				window.removeEventListener("keypress", mapaPlusCore.hotkeyPress, true);
 				window.removeEventListener("keyup", mapaPlusCore.hotkeyUp, true);
+/*
 				window.removeEventListener("mousemove", mapaPlusCore.resetTimer, false);
 				window.removeEventListener("keydown", mapaPlusCore.resetTimer, false);
 				window.removeEventListener("mousedown", mapaPlusCore.resetTimer, false);
 				window.removeEventListener("DOMMouseScroll", mapaPlusCore.resetTimer, false);
+*/
 				window.removeEventListener("focus", mapaPlusCore.windowFocused, true);
 			}
 		},//windowListener.observe()
@@ -1243,13 +1370,13 @@ timer.init({observe: function(e)
 		{
 			try
 			{
-				mapaPlusCore.pref.resetBranch('');
+				mapaPlusCore.prefs.resetBranch('');
 			}
 			catch(e)
 			{
-				let list = mapaPlusCore.pref.getChildList('', {});
+				let list = mapaPlusCore.prefs.getChildList('', {});
 				for(let i = 0; i < list.length; i++)
-					mapaPlusCore.pref.clearUserPref(list[i]);
+					mapaPlusCore.prefs.clearUserPref(list[i]);
 			}
 		}
 	},
@@ -1261,14 +1388,15 @@ timer.init({observe: function(e)
 		{
 			try
 			{
-				this.pref.QueryInterface(Ci.nsIPrefBranch).addObserver('', this.onPrefChange, false);
+				this.prefs.QueryInterface(Ci.nsIPrefBranch).addObserver('', this.onPrefChange, false);
 			}
 			catch(e)
 			{
-				this.pref.QueryInterface(Ci.nsIPrefBranch2).addObserver('', this.onPrefChange, false);
+				this.prefs.QueryInterface(Ci.nsIPrefBranch2).addObserver('', this.onPrefChange, false);
 			}
 		}
 		this.onPrefChange.do(mapaPlus);
+		this.prepareHotkey();
 		if (f || !this.initialized)
 		{
 			this.initialized = true;
@@ -1278,20 +1406,91 @@ timer.init({observe: function(e)
 		}
 	},
 
-	async: function(callback, time, timer)
+	asyncMap: new Map(),
+	async: function async(callback, delay, timer, noreset)
 	{
-		if (timer)
-			timer.cancel();
-		else
+		if (!timer)
 			timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 
-		timer.init({observe:function()
-		{
-			callback();
-		}}, time || 0, timer.TYPE_ONE_SHOT);
+		if (!noreset)
+			timer.cancel();
+
+		let self = this,
+				prev = self.asyncMap.has(timer),
+				obj = {
+					delay: delay,
+					callback: callback,
+					observe: function()
+					{
+						timer.cancel();
+						this.callback();
+						self.asyncMap.delete(timer);
+					}
+				}
+
+		self.asyncMap.set(timer, obj);
+		if (prev && noreset)
+			return timer;
+
+		timer.init(obj, delay || 0, timer.TYPE_ONE_SHOT);
 		return timer;
 	},//async()
 
+	openConsole: function openConsole()
+	{
+		function toOpenWindowByType(inType, uri, features)
+		{
+			let win = Services.wm.getMostRecentWindow(inType),
+					ww = Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher);
+			if (win)
+				return win;
+			else if (features)
+				win = ww.openWindow(null, uri, inType, features, null);
+			else
+				win = ww.openWindow(null, uri, inType, "chrome,extrachrome,menubar,resizable,scrollbars,status,toolbar", null);
+
+			return win;
+		}
+		try
+		{
+			Object.defineProperty(self, "HUDService", {
+				get: function HUDService_getter() {
+					let devtools = Cu.import("resource://devtools/shared/Loader.jsm", {}).devtools;
+					return devtools.require("devtools/client/webconsole/hudservice");
+				},
+				configurable: true,
+				enumerable: true
+			});
+		}
+		catch(e){};
+		let win;
+		try
+		{
+			win = toOpenWindowByType("global:console", "chrome://console2/content/console2.xul");
+		}
+		catch(e){log.error(e)}
+		if (win)
+			return;
+
+		try
+		{
+			win = HUDService.getBrowserConsole();
+//				HUDService.openBrowserConsoleOrFocus();
+			if (!win)
+				win = HUDService.toggleBrowserConsole();
+		}
+		catch(e){log.error(e)}
+
+		if (win)
+			return;
+
+		try
+		{
+			win = toOpenWindowByType("global:console", "chrome://global/content/console.xul")
+		}
+		catch(e){log.error(e)}
+
+	},//openConsole()
 }//mapaPlusCore
 
 function include(path)
@@ -1300,13 +1499,26 @@ function include(path)
 }
 var __dumpName__ = "_dump";
 
+mapaPlusCore.pref.timers = {};
+mapaPlusCore.pref.prefs = {}; //this will hold cached preferences.
+mapaPlusCore.pref.types = {
+	boolean: "Bool",
+	number: "Int",
+//	string: "Char"
+}
 Services.scriptloader.loadSubScript("chrome://mapaplus/content/dump.js");
 mapaPlusCore.log = _dump;
 mapaPlusCore.dump = _dump;
 var log = _dump;
 log.folder = "";
-log.title = "CM+";
+log.title = "MP+";
 log.showCaller = 3;
+log.logLevel = 1;
+let l = mapaPlusCore.prefs.getChildList("");
+
+for(let i in l)
+	mapaPlusCore.onPrefChange.observe(mapaPlusCore.prefs, "nsPref:changed", l[i], true);
+
 AddonManager.getAddonByID(mapaPlusCore.GUID, function(addon)
 {
 	mapaPlusCore.addon = addon;
@@ -1314,6 +1526,7 @@ AddonManager.getAddonByID(mapaPlusCore.GUID, function(addon)
 	mapaPlusCore.EMAIL = EMAIL;
 	mapaPlusCore.HOMEPAGE = HOMEPAGE;
 	mapaPlusCore.SUPPORTSITE = SUPPORTSITE;
+	mapaPlusCore.SUPPORTSITEQUERY = SUPPORTSITEQUERY;
 	mapaPlusCore.ISSUESSITE = ISSUESSITE;
 	mapaPlusCore.ADDONDOMAIN = ADDONDOMAIN;
 //	mapaPlusCore.isTB = (mapaPlusCore.appInfo.ID == "{3550f703-e582-4d05-9a08-453d09bdfdc6}");
@@ -1360,15 +1573,38 @@ AddonManager.getAddonByID(mapaPlusCore.GUID, function(addon)
 	}
 	else
 	{
-		mapaPlusCore.pref.setIntPref("showlang", 0);
+		mapaPlusCore.prefs.setIntPref("showlang", 0);
 	}
 });
+let idleService = Cc["@mozilla.org/widget/idleservice;1"].getService(Ci.nsIIdleService),
+		observerService = Cc["@mozilla.org/observer-service;1"].getService(Ci.nsIObserverService),
+		sleep_notification = {
+			observe: function sleep_notification(subject, topic, data)
+			{
+				log.debug(Date());
+				if (mapaPlusCore.pref("logoutonsleep"))
+				{
+					mapaPlusCore.logout();
+				}
+
+				if (mapaPlusCore.pref("lockonsleep"))
+				{
+						mapaPlusCore.lock();
+				}
+			}
+		};
+
 //ask for master password on startup
 (mapaPlusCore.startupPass = function()
 {
 
+//open console window on startup
+	if (mapaPlusCore.pref("debug") & 4)
+	{
+//		mapaPlusCore.openConsole();
+	}
 	mapaPlusCore.status = mapaPlusCore.tokenDB.needsLogin() ? 1 : 0;
-	if (mapaPlusCore.pref.getBoolPref("startup"))
+	if (mapaPlusCore.pref("startup"))
 	{
 		let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 		try
@@ -1376,24 +1612,24 @@ AddonManager.getAddonByID(mapaPlusCore.GUID, function(addon)
 			mapaPlusCore.dialogShow = true;
 			mapaPlusCore.dialogTemp = false;
 			mapaPlusCore.dialogForce = false;
-			mapaPlusCore.prefNonLatinWarning = mapaPlusCore.pref.getIntPref("nonlatinwarning");
-			mapaPlusCore.prefShowLang = mapaPlusCore.KB ? mapaPlusCore.pref.getIntPref("showlang") : 0;
+//			mapaPlusCore.pref("nonlatinwarning") = mapaPlusCore.pref("nonlatinwarning");
+			mapaPlusCore.pref("showlang", mapaPlusCore.KB ? mapaPlusCore.pref("showlang") : 0);
 			mapaPlusCore.tokenDB.login(false);
 			mapaPlusCore.locked = false;
 			mapaPlusCore.startupPassed = true;
-			if (mapaPlusCore.pref.getBoolPref("startupshort"))
+			if (mapaPlusCore.pref("startupshort"))
 			{
-				var timeout = mapaPlusCore.pref.getIntPref("startuptimeout");
+				var timeout = mapaPlusCore.pref("startuptimeout");
 				if (timeout)
 					mapaPlusCore.forced = timeout;
 				else
-					mapaPlusCore.tokenDB.logoutAndDropAuthenticatedResources();
+					mapaPlusCore.logout();
 			}
 		}
 		catch(e)
 		{
-			let i = mapaPlusCore.pref.getIntPref("startupincorrect");
-			var sf = mapaPlusCore.pref.getIntPref("startupfail");
+			let i = mapaPlusCore.pref("startupincorrect");
+			var sf = mapaPlusCore.pref("startupfail");
 			if ((i && mapaPlusCore.startupIncorrect >= i) || (sf == mapaPlusCore.STARTUP_QUIT && !mapaPlusCore.startupPassed))
 			{
 				mapaPlusCore.quit();
@@ -1444,3 +1680,5 @@ AddonManager.addAddonListener(listener);
 Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher)
 	.registerNotification(mapaPlusCore.windowListener);
 
+observerService.addObserver(sleep_notification, "sleep_notification", false);
+observerService.addObserver(sleep_notification, "wake_notification", false);

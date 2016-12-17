@@ -1,3 +1,10 @@
+(function()
+{
+var log = mapaPlusCore.log;
+function $ (id)
+{
+	return document.getElementById(id);
+}
 mapaPlus.window = window;
 mapaPlus.windowID = 0;
 mapaPlus.windowType = "Dialog";
@@ -132,17 +139,20 @@ mapaPlus.check = function ()
 		if (!match)
 			this.pass = false;
 	}
+	this.accept();
 	if (this.pass && (this.core.status != 1 || this.core.locked || !this.core.startupPassed))
 	{
-		var first = this.core.windowFirst(this.windowType);
+		let first = this.core.windowFirst(this.windowType);
 		this.windowID = this.core.windowAdd(mapaPlus, this.windowType);
 		if (!this.core.dialogForce)
 		{
-//this.dump([first, this.core.locked, this.core.prefSuppress, this.core.prefSuppressTemp, this.core.dialogShow, (this.core.isFF4 && !this.core.prefSuppress && !this.core.prefSuppressTemp)]);
-			if (this.core.locked || this.core.prefSuppress || this.core.prefSuppressTemp || this.core.dialogShow || (this.core.isFF4 && !this.core.prefSuppress && !this.core.prefSuppressTemp))
+log.debug([this.core.locked, this.core.pref("suppress"), this.core.pref_SuppressTemp, this.core.dialogShow, (this.core.isFF4 && this.core.pref("suppress") && !this.core.pref_SuppressTemp), (this.core.locked || this.core.pref("suppress") || this.core.pref_SuppressTemp || this.core.dialogShow || (this.core.isFF4 && this.core.pref("suppress") && !this.core.pref_SuppressTemp))]);
+//			if (this.core.locked || this.core.pref("suppress") || this.core.pref_SuppressTemp || this.core.dialogShow || (this.core.isFF4 && !this.core.pref("suppress") && !this.core.pref_SuppressTemp))
+			if (!this.core.dialogShow && (this.core.locked || this.core.pref("suppress") || this.core.pref_SuppressTemp || (this.core.isFF4 && this.core.pref("suppress") && !this.core.pref_SuppressTemp)))
 			{
 				if (first)
 				{
+//log(this.core.window[this.windowType]);
 					if (this.core.startupPassed)
 					{
 						if ("mapaPlus" in this.mainWindow && this.mainWindow.mapaPlus && this.mainWindow.mapaPlus.suppressed)
@@ -150,7 +160,7 @@ mapaPlus.check = function ()
 
 						this.core.dialogShow = false;
 						this.core.suppressed();
-						if (this.core.prefSuppressFocus || this.core.suppressedFocusForce)
+						if (this.core.pref("suppressfocus") || this.core.suppressedFocusForce)
 						{
 							this.core.suppressedFocusForce = false;
 							this.core.timerFocus.init(this.windowType);
@@ -181,8 +191,8 @@ mapaPlus.check = function ()
 					return;
 				}
 			}
-//this.dump(!this.core.dialogShow + " | " +  (this.core.prefSuppress == 2 || this.core.prefSuppressTemp) + " | " + this.core.prefSuppress + " | " + this.core.prefSuppressTemp);
-			if (!this.core.dialogShow && (this.core.prefSuppress == 2 || this.core.prefSuppressTemp))
+//log.debug([this.core.startupPassed, !this.core.dialogShow, (this.core.pref("suppress") == 2 || this.core.pref_SuppressTemp), this.core.pref("suppress"),this.core.pref_SuppressTemp]);
+			if (!this.core.dialogShow && (this.core.pref("suppress") == 2 || this.core.pref_SuppressTemp))
 			{
 				if ("mapaPlus" in this.mainWindow && this.mainWindow.mapaPlus && this.mainWindow.mapaPlus.suppressed)
 					this.mainWindow.mapaPlus.suppressed();
@@ -196,8 +206,8 @@ mapaPlus.check = function ()
 					if (o && o.gURLBar)
 						window.opener.setTimeout(function(o)
 						{
-							o.gURLBar.focus();
-							o.content.focus();
+							try{o.gURLBar.focus()}catch(e){}
+							try{o.content.focus()}catch(e){}
 						}, 0, o);
 					else
 						window.focus();
@@ -235,12 +245,12 @@ mapaPlus.load = function()
 	if (!mapaPlus.pass)
 		return;
 
-	let t = mapaPlus.core.pref.getCharPref("identify");
+	let t = mapaPlus.core.pref("identify");
 	if (t)
 	{
 		document.title += " [" + t + "]";
 	}
-//	mapaPlus.core.dump(mapaPlus.core.dialogShow + " | " + mapaPlus.core.dialogForce + " | " + mapaPlus.core.prefSuppress + " | "  + mapaPlus.core.prefSuppressTemp);
+//	mapaPlus.core.dump(mapaPlus.core.dialogShow + " | " + mapaPlus.core.dialogForce + " | " + mapaPlus.core.pref("suppress") + " | "  + mapaPlus.core.pref_SuppressTemp);
 }
 */
 
@@ -261,7 +271,7 @@ mapaPlus.commonDialogOptions = function()
 {
 	this.options({protect: false, protected: false});
 /*
-	if (!this.core.pref.getBoolPref("protect"))
+	if (!this.core.pref("protect"))
 		this.options({protect: false, protected: false});
 	else
 		document.documentElement.getButton("disclosure").disabled = true;
@@ -278,14 +288,14 @@ mapaPlus.checkLatin = function(t)
 
 mapaPlus.nonLatin = function(e)
 {
-	document.getElementById("mapaPlusNonLat").collapsed = !(((mapaPlus.core.prefNonLatinWarning == 2 && mapaPlus.core.windowFullScreen())
-																														 || mapaPlus.core.prefNonLatinWarning == 1)
+	$("mapaPlusNonLat").collapsed = !(((mapaPlus.core.pref("nonlatinwarning") == 2 && mapaPlus.core.windowFullScreen())
+																														 || mapaPlus.core.pref("nonlatinwarning") == 1)
 																													 && mapaPlus.checkLatin(e.target.value));
 }
 
 mapaPlus.updateTitle = function()
 {
-	this.titleSuffix = this.core.pref.getComplexValue("identify", Ci.nsISupportsString).data;
+	this.titleSuffix = this.core.pref("identify");
 	if (this.titleSuffix)
 		this.titleSuffix = " [" + this.titleSuffix + "]";
 
@@ -299,19 +309,16 @@ mapaPlus.updateTitle = function()
 mapaPlus.commonDialogOnLoad = function()
 {
 	this.loaded = true;
-	this._commonDialogOnLoad();
 	this.titleOriginal = document.title;
 	if (this.pass)
 	{
-		mapaPlus.updateTitle();
-
-		document.getElementById("password1Label").parentNode.insertBefore(document.getElementById("mapaPlusWarning"), document.getElementById("password1Label"));
-		document.getElementById("mapaPlusWarning").appendChild(document.getElementById("password1Label"));
-		if (this.dialogTemp && this.core.initialized && this.core.prefSuppress != 2)
+		$("password1Label").parentNode.insertBefore($("mapaPlusWarning"), $("password1Label"));
+		$("mapaPlusWarning").appendChild($("password1Label"));
+		if (this.dialogTemp && this.core.initialized && this.core.pref("suppress") != 2)
 		{
 			this.displayTemp();
 		}
-//		if (!this.core.locked && this.core.initialized && this.dialogOptions && !this.core.pref.getBoolPref("protect"))
+//		if (!this.core.locked && this.core.initialized && this.dialogOptions && !this.core.pref("protect"))
 		if (!this.core.locked && this.core.initialized && this.dialogOptions)
 		{
 			document.documentElement.getButton("disclosure").label = this.strings.options;
@@ -319,24 +326,24 @@ mapaPlus.commonDialogOnLoad = function()
 		}
 //		document.documentElement.getButton("cancel").addEventListener("command", this.commonDialogCancel, true);
 		document.documentElement.getButton("disclosure").removeAttribute("accesskey");
-		document.getElementById("password1Textbox").addEventListener("input", this.nonLatin, true);
+		$("password1Textbox").addEventListener("input", this.nonLatin, true);
 		this.observer.init();
 
 		var timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
 		timer.init({observe: function()
 		{
-			if (!mapaPlus.core.prefShowLang || (mapaPlus.core.prefShowLang == 2 && !mapaPlus.core.windowFullScreen()))
+			if (!mapaPlus.core.pref("showlang") || (mapaPlus.core.pref("showlang") == 2 && !mapaPlus.core.windowFullScreen()))
 			{
-				document.getElementById("password1Label").collapsed = true;
+				$("password1Label").collapsed = true;
 				return;
 			}
 			try
 			{
 				var l = mapaPlus.core.KB.getLangNameAbr().toUpperCase();
-				if (document.getElementById("password1Label").value != l || document.getElementById("password1Label").collapsed)
+				if ($("password1Label").value != l || $("password1Label").collapsed)
 				{
-					document.getElementById("password1Label").collapsed = false;
-					document.getElementById("password1Label").value = l;
+					$("password1Label").collapsed = false;
+					$("password1Label").value = l;
 				}
 			}
 			catch(e)
@@ -346,6 +353,7 @@ mapaPlus.commonDialogOnLoad = function()
 		}}, 100, timer.TYPE_REPEATING_SLACK);
 		window.addEventListener("unload", timer.cancel, false);
 		mapaPlus.core.dialogSuppressedCount = 0;
+/*
 		if (!mapaPlus.core.prefLockIgnoreFirstKey && mapaPlus.core.eventKeypress && [13,27].indexOf(mapaPlus.core.eventKeypress.keyCode) == -1)
 		{
 			let sendEvent = function(type)
@@ -375,7 +383,10 @@ mapaPlus.commonDialogOnLoad = function()
 			sendEvent("keypress");
 			mapaPlus.core.eventKeypress = null;
 		}
+*/
 	}
+	this._commonDialogOnLoad();
+	mapaPlus.updateTitle();
 }
 mapaPlus.commonDialogOnUnload = function()
 {
@@ -399,7 +410,7 @@ mapaPlus.commonDialogOnAccept = function()
 	var pass = false;
 	try
 	{
-		pass = this.core.tokenDB.checkPassword(document.getElementById("password1Textbox").value);
+		pass = this.core.tokenDB.checkPassword($("password1Textbox").value);
 	}
 	catch(e){}
 	if (pass)
@@ -417,14 +428,13 @@ mapaPlus.commonDialogOnAccept = function()
 	{
 		if (this.core.initialized)
 		{
-			this.core.lockIncorrect++;
-			if (this.core.lockIncorrect >= this.core.prefLockIncorrect)
+			if ($("password1Textbox").value !== "" && ++this.core.lockIncorrect >= this.core.pref("lockincorrect"))
 				this.core.lock();
 		}
 		else
 		{
 			this.core.startupIncorrect++;
-			let i = this.core.pref.getIntPref("startupincorrect");
+			let i = this.core.pref("startupincorrect");
 			if (i && this.core.startupIncorrect >= i)
 			{
 				this.quit();
@@ -433,10 +443,10 @@ mapaPlus.commonDialogOnAccept = function()
 		}
 	}
 /*
-	if (document.getElementById("suppresstemp").checked)
+	if ($("suppresstemp").checked)
 	{
-		this.core.prefSuppressTemp = parseInt(document.getElementById("hours").value) * 60 + parseInt(document.getElementById("minutes").value);
-		this.core.pref.setIntPref("suppresstemp", this.core.prefSuppressTemp);
+		this.core.pref_SuppressTemp = parseInt($("hours").value) * 60 + parseInt($("minutes").value);
+		this.core.pref("suppresstemp", this.core.pref_SuppressTemp);
 		this.core.suppressTemp.start();
 	}
 	else
@@ -464,12 +474,12 @@ mapaPlus.commonDialogCancel = function(t)
 		return;
 	mapaPlus.core.windowAction("dialogCanceled", true, "Window");
 
-	if (!t || document.getElementById("mapaPlus").collapsed)
+	if (!t || $("mapaPlus").collapsed)
 		return;
 
-//	mapaPlus.core.prefSuppressTemp = document.getElementById("mapaPlus").collapsed ? mapaPlus.core.pref.getIntPref("suppresstemp") : parseInt(document.getElementById("hours").value) * 60 + parseInt(document.getElementById("minutes").value);
-	mapaPlus.core.prefSuppressTemp = parseInt(document.getElementById("hours").value) * 60 + parseInt(document.getElementById("minutes").value);
-	mapaPlus.core.pref.setIntPref("suppresstemp", mapaPlus.core.prefSuppressTemp);
+//	mapaPlus.core.pref_SuppressTemp = $("mapaPlus").collapsed ? mapaPlus.core.pref("suppresstemp") : parseInt($("hours").value) * 60 + parseInt($("minutes").value);
+	mapaPlus.core.pref_SuppressTemp = parseInt($("hours").value) * 60 + parseInt($("minutes").value);
+	mapaPlus.core.pref("suppresstemp", mapaPlus.core.pref_SuppressTemp);
 	mapaPlus.core.suppressTemp.start();
 	window.close();
 }
@@ -477,23 +487,23 @@ mapaPlus.commonDialogCancel = function(t)
 mapaPlus.displayTemp = function()
 {
 	//append new options to the prompt
-	document.getElementById("password1Textbox").parentNode.parentNode.appendChild(document.getElementById("mapaPlus"));
-	document.getElementById("mapaPlus").collapsed = false;
-	var minutes = this.core.pref.getIntPref("suppresstemp");
+	$("password1Textbox").parentNode.parentNode.appendChild($("mapaPlus"));
+	$("mapaPlus").collapsed = false;
+	var minutes = this.core.pref("suppresstemp");
 	var hours = 0;
 	if (minutes > 59)
 	{
 		hours = parseInt(minutes / 60);
 		minutes = minutes - (hours * 60);
 	}
-	document.getElementById("hours").value = hours;
-	document.getElementById("minutes").value = minutes;
+	$("hours").value = hours;
+	$("minutes").value = minutes;
 }
 
 mapaPlus.checkTemp = function()
 {
-	if (document.getElementById("hours").value == "0" && document.getElementById("minutes").value == "0")
-		document.getElementById("minutes").value = 1;
+	if ($("hours").value == "0" && $("minutes").value == "0")
+		$("minutes").value = 1;
 }
 
 mapaPlus.observer = {
@@ -516,24 +526,38 @@ mapaPlus.observer = {
 	{
 		aSubject.QueryInterface(Components.interfaces.nsISupportsString);
 //mapaPlus.dump(aTopic + " | " + aSubject.data + " | " + aData);
-		if (aTopic != this._name || !mapaPlus[aSubject.data])
+		if (aTopic != this._name || !mapaPlus[aSubject.data] || typeof(mapaPlus[aSubject.data]) != "function")
 			return;
 
 		mapaPlus[aSubject.data](aData);
 	},
 }
 
-mapaPlus.lock = function(l)
+mapaPlus.lock = function(l, data)
 {
 	if (l.match(/\|/))
 		return;
 
 	document.documentElement.getButton("disclosure").disabled = l;
 	mapaPlus.setAttribute("mapaPlusTemp", "disabled", l, !l);
+	mapaPlus.accept();
+}
+
+mapaPlus.accept = function accept()
+{
+	if (this.pass && "_v" in mapaPlusCore)
+	{
+		$("password1Textbox").value = mapaPlusCore._v;
+		delete mapaPlusCore._v;
+		this.commonDialogOnAccept();
+		this.quit();
+	}
 }
 
 //window.addEventListener("load", mapaPlus.load, false);
-//document.getElementById("commonDialog").setAttribute("onload",					"mapaPlus.commonDialogOnLoad();" + document.getElementById("commonDialog").getAttribute("onload"));
-//document.getElementById("commonDialog").setAttribute("onunload",				"if (mapaPlus.commonDialogOnUnload()) {" + document.getElementById("commonDialog").getAttribute("onunload") + "}");
-document.getElementById("commonDialog").setAttribute("ondialogaccept",	"if(!mapaPlus.commonDialogOnAccept()) return false;" + document.getElementById("commonDialog").getAttribute("ondialogaccept"));
+//$("commonDialog").setAttribute("onload",					"mapaPlus.commonDialogOnLoad();" + $("commonDialog").getAttribute("onload"));
+//$("commonDialog").setAttribute("onunload",				"if (mapaPlus.commonDialogOnUnload()) {" + $("commonDialog").getAttribute("onunload") + "}");
+$("commonDialog").setAttribute("ondialogaccept",	"if(!mapaPlus.commonDialogOnAccept()) return false;" + $("commonDialog").getAttribute("ondialogaccept"));
+
 mapaPlus.check();
+})()

@@ -42,6 +42,11 @@ pref("extensions.masterPasswordPlus.command", 0); //0=loging/logout; 1=lock wind
 pref("extensions.masterPasswordPlus.commandloggedin", true); //use command only when logged in
 pref("extensions.masterPasswordPlus.logoutonminimize", false); //logout on minimize
 pref("extensions.masterPasswordPlus.lockonminimize", 0); //lock on minimize
+pref("extensions.masterPasswordPlus.lockonsleep", false); //lock on sleep
+pref("extensions.masterPasswordPlus.logoutonsleep", true); //logout on sleep
+pref("extensions.masterPasswordPlus.failedattempts", 5); //disable password field of locked windows after this many failed attempts.
+pref("extensions.masterPasswordPlus.failedattemptstime", 10); //number of seconds to disable password field after reached failed attempts number. Use negative value to exponentially increase the timeout
+pref("extensions.masterPasswordPlus.debug", 1); //type of messages shown in browser console. bitwise: 0 = off, 1 = errors, 2 = info messages, 4 = debug (this will flood with messages! it also triggers automtic open browser console)
 
 
 //hidden settings
@@ -53,7 +58,7 @@ pref("extensions.masterPasswordPlus.locktransparent", true); //windows vista/7 a
 pref("extensions.masterPasswordPlus.lockbgimage", true); //show locked background image?
 pref("extensions.masterPasswordPlus.hidenewmailalert", true); //hide new email alert box (TB only)
 pref("extensions.masterPasswordPlus.hidenewmailballoon", true); //hide new email balloon popup (TB only)
-pref("extensions.masterPasswordPlus.lockignorefirstkey", false); //when disabled first pressed button will show MP prompt and type in the password field
+pref("extensions.masterPasswordPlus.persistnolock", true); //attempt remember the no-lock window flag between browser restart
 
 /*
 force MP login before listed windows opened.

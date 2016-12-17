@@ -341,11 +341,11 @@ mapaPlus.saveOptions = function()
 	}
 	var sel = this.getOrder("urlbar-icons");
 	if (sel)
-		this.core.pref.setCharPref("urlbarpos", (sel.dir?1:0)+sel.id);
+		this.core.pref("urlbarpos", (sel.dir?1:0)+sel.id);
 
 	sel = false;//this.getOrder("status-bar");
 	if (sel)
-		this.core.pref.setCharPref("statusbarpos", (sel.dir?1:0)+sel.id);
+		this.core.pref("statusbarpos", (sel.dir?1:0)+sel.id);
 
 	this.core.prefNoObserve = false;
 	this.core.windowUpdate(true,true);

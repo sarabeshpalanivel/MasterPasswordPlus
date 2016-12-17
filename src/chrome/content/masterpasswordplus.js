@@ -1,3 +1,10 @@
+(function()
+{
+function $(id)
+{
+	return document.getElementById(id);
+}
+var log = mapaPlus.core.log;
 if (!mapaPlus.core.startupPassed)
 {
 	window.close();
@@ -34,9 +41,7 @@ mapaPlus.loaded = new Date();
 mapaPlus.loadedManualy = false;
 mapaPlus.Win7Features = null;
 mapaPlus.MinTrayR = null;
-mapaPlus.CHANGESLOG_FULL = 1;
-mapaPlus.CHANGESLOG_NOTIFICATION = 2;
-mapaPlus.CHANGESLOG_NOTIFICATION2 = 4;
+mapaPlus.noLockWindow = false;
 
 (mapaPlus.observer = {
 	_observerService: Components.classes["@mozilla.org/observer-service;1"]
@@ -56,7 +61,7 @@ mapaPlus.CHANGESLOG_NOTIFICATION2 = 4;
 	observe: function(aSubject, aTopic, aData)
 	{
 		aSubject.QueryInterface(Components.interfaces.nsISupportsString);
-//	mapaPlus.dump("observe: " + aSubject.data, true);
+//	log("observe: " + aSubject.data, true);
 		if (aTopic != this._name || !mapaPlus[aSubject.data])
 			return;
 
@@ -66,28 +71,28 @@ mapaPlus.CHANGESLOG_NOTIFICATION2 = 4;
 
 mapaPlus.show = function()
 {
-	if (document.getElementById("mapa_statusbar"))
-		document.getElementById("mapa_statusbar").hidden = !this.core.pref.getBoolPref("statusbar");
+	if ($("mapa_statusbar"))
+		$("mapa_statusbar").hidden = !this.core.pref("statusbar");
 
-	if (document.getElementById("mapa_menu_tools"))
-		document.getElementById("mapa_menu_tools").hidden = !this.core.pref.getBoolPref("toolsmenu");
+	if ($("mapa_menu_tools"))
+		$("mapa_menu_tools").hidden = !this.core.pref("toolsmenu");
 
 	if (!this.core.isTB)
 	{
-		if (document.getElementById("mapa_menu_context"))
-			document.getElementById("mapa_menu_context").hidden = !this.core.pref.getBoolPref("contextmenu");
+		if ($("mapa_menu_context"))
+			$("mapa_menu_context").hidden = !this.core.pref("contextmenu");
 
-		if (document.getElementById("mapa_urlbar"))
+		if ($("mapa_urlbar"))
 		{
-			document.getElementById("mapa_urlbar").hidden = !this.core.pref.getBoolPref("urlbar");
+			$("mapa_urlbar").hidden = !this.core.pref("urlbar");
 
-			var id = this.core.pref.getCharPref("urlbarpos");
+			var id = this.core.pref("urlbarpos");
 			var direction = id.substr(0,1) == "1";
 			id = id.substr(1, id.length);
 			if (id)
 				this.setIcon({container:"urlbar-icons", element:"mapa_urlbar", idDefault:"go-button", directionDefault:0, id:id, direction:direction});
 
-			var id = this.core.pref.getCharPref("statusbarpos");
+			var id = this.core.pref("statusbarpos");
 			var direction = id.substr(0,1) == "1";
 			id = id.substr(1, id.length);
 			if (id)
@@ -99,7 +104,7 @@ mapaPlus.show = function()
 
 mapaPlus.setIcon = function(o)
 {
-	var icons = document.getElementById(o.container).childNodes;
+	var icons = $(o.container).childNodes;
 	var first = null;
 	var last = null
 	var sel = null;
@@ -129,21 +134,21 @@ mapaPlus.setIcon = function(o)
 	{
 		o.id = sel;
 	}
-	var u = document.getElementById(o.element);
+	var u = $(o.element);
 	if (o.id)
 	{
 		if (o.direction)
 		{
-			document.getElementById(o.container).insertBefore(u.parentNode.removeChild(u), document.getElementById(o.id).nextSibling);
+			$(o.container).insertBefore(u.parentNode.removeChild(u), $(o.id).nextSibling);
 		}
 		else
 		{
-			document.getElementById(o.container).insertBefore(u.parentNode.removeChild(u), document.getElementById(o.id));
+			$(o.container).insertBefore(u.parentNode.removeChild(u), $(o.id));
 		}
 	}
 	else
 	{
-		document.getElementById(o.container).appendChild(u.parentNode.removeChild(u));
+		$(o.container).appendChild(u.parentNode.removeChild(u));
 	}
 	var remove;
 	if (o.direction)
@@ -156,27 +161,27 @@ mapaPlus.setIcon = function(o)
 		o.direction = "insertbefore";
 		remove = "insertafter";
 	}
-	document.getElementById(o.element).setAttribute(o.direction, o.id);
-	document.getElementById(o.element).removeAttribute(remove);
+	$(o.element).setAttribute(o.direction, o.id);
+	$(o.element).removeAttribute(remove);
 }
 
 mapaPlus.setAttr = function(id, name, value)
 {
-	if (document.getElementById(id))
-		document.getElementById(id).setAttribute(name,value);
+	if ($(id))
+		$(id).setAttribute(name,value);
 };
 
 mapaPlus.removeAttr = function(id, name)
 {
-	if (document.getElementById(id))
-		document.getElementById(id).removeAttribute(name);
+	if ($(id))
+		$(id).removeAttribute(name);
 };
 
 mapaPlus.setTooltip = function(t)
 {
 	var s = s || false;
 	t = this.strings[t];
-	document.getElementById("mapa_tooltip_text").value = t;
+	$("mapa_tooltip_text").value = t;
 	this.setAttr("mapa_menu_tools", "label", t);
 	this.setAttr("mapa_menu_context", "label", t);
 	this.setAttr("mapa_menu_action", "label", t);
@@ -184,22 +189,22 @@ mapaPlus.setTooltip = function(t)
 
 mapaPlus.getTooltip = function(r)
 {
-	let cmd = this.core.prefCommand;
+	let cmd = this.core.pref("command");
 	if (!this.core.status)
 		cmd = 5;
-	else if (this.core.prefCommandLoggedin && this.core.status == 2)
+	else if (this.core.pref("commandloggedin") && this.core.status == 2)
 		cmd = 0;
-	else if (!this.core.prefCommand && this.core.status != 2)
+	else if (!this.core.pref("command") && this.core.status != 2)
 		cmd = 4;
 
 	cmd = "mapa_menu_" + this.commands[cmd];
-	document.getElementById("mapa_tooltip_text").setAttribute("value", this.strings[cmd]);
+	$("mapa_tooltip_text").setAttribute("value", this.strings[cmd]);
 	if (r)
 	{
 		this.tooltip.cancel();
-		document.getElementById("mapa_tooltip_timer_box").hidden = true;
-		document.getElementById("mapa_tooltip_timer_lock_box").hidden = true;
-		document.getElementById("mapa_tooltip_menu").hidePopup();
+		$("mapa_tooltip_timer_box").hidden = true;
+		$("mapa_tooltip_timer_lock_box").hidden = true;
+		$("mapa_tooltip_menu").hidePopup();
 		return false;
 	}
 	else
@@ -210,16 +215,16 @@ mapaPlus.getTooltip = function(r)
 
 mapaPlus.showTooltip = function()
 {
-	var logout = ((!this.core.prefLogoutTimer && !this.core.forced) || this.core.status != 1);
-	var lock = (!this.core.prefLockTimer || this.core.locked || !this.core.status);
-	document.getElementById("mapa_tooltip_timer_box").hidden = logout;
-	document.getElementById("mapa_tooltip_timer_lock_box").hidden = lock;
-	document.getElementById("mapa_tooltip_menu_timer_box").hidden = logout;
-	document.getElementById("mapa_tooltip_menu_timer_lock_box").hidden = lock;
-	document.getElementById("mapa_tooltip_timer").value = this.core.timeString;
-	document.getElementById("mapa_tooltip_menu_timer").value = this.core.timeString;
-	document.getElementById("mapa_tooltip_timer_lock").value = this.core.timeLockString;
-	document.getElementById("mapa_tooltip_menu_timer_lock").value = this.core.timeLockString;
+	var logout = ((!this.core.pref("logouttimer") && !this.core.forced) || this.core.status != 1);
+	var lock = (!this.core.pref("locktimer") || this.core.locked || !this.core.status);
+	$("mapa_tooltip_timer_box").hidden = logout;
+	$("mapa_tooltip_timer_lock_box").hidden = lock;
+	$("mapa_tooltip_menu_timer_box").hidden = logout;
+	$("mapa_tooltip_menu_timer_lock_box").hidden = lock;
+	$("mapa_tooltip_timer").value = this.core.timeString;
+	$("mapa_tooltip_menu_timer").value = this.core.timeString;
+	$("mapa_tooltip_timer_lock").value = this.core.timeLockString;
+	$("mapa_tooltip_menu_timer_lock").value = this.core.timeLockString;
 	return (logout && lock);
 }
 
@@ -229,7 +234,7 @@ mapaPlus.tooltip = {
 	{
 		if (mapaPlus.showTooltip())
 		{
-			document.getElementById("mapa_tooltip_menu").hidePopup();
+			$("mapa_tooltip_menu").hidePopup();
 			return false;
 		}
 
@@ -272,7 +277,7 @@ mapaPlus.blink = function(cancel)
 /*
 	if (typeof(this.core) == "undefined")
 	{
-		this.dump("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
+		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
 		this.loadCore();
 	}
 */
@@ -295,7 +300,7 @@ mapaPlus.blinkCancel = function()
 /*
 	if (typeof(this.core) == "undefined")
 	{
-		this.dump("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
+		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
 		this.loadCore();
 	}
 */
@@ -332,7 +337,7 @@ mapaPlus.suppressedPopup = function(f, t)
 	if (this.core.isTB || (this.core.suppressedPopupStop && !f) || typeof(gBrowser) == "undefined")
 		return;
 
-	t = typeof(t) != "undefined" ? t : this.core.prefSuppressPopupRemove;
+	t = typeof(t) != "undefined" ? t : this.core.pref("suppresspopupremove");
 	var box = gBrowser.getNotificationBox();
 	var boxId = box.getNotificationWithValue(this.blocked);
 	if (f && boxId)
@@ -343,7 +348,7 @@ mapaPlus.suppressedPopup = function(f, t)
 
 	if(f || !boxId)
 	{
-		document.getElementById("mapa_resettemp").hidden = !(this.core.prefSuppressTemp);
+		$("mapa_resettemp").hidden = !(this.core.pref_SuppressTemp);
 
 		boxId = box.appendNotification(this.strings.MasterPasswordSuppressed,
 			this.blocked,
@@ -402,7 +407,7 @@ mapaPlus.suppressed = function()
 /*
 	if (typeof(this.core) == "undefined")
 	{
-		this.dump("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
+		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
 		this.loadCore();
 	}
 */
@@ -413,10 +418,10 @@ mapaPlus.suppressed = function()
 		return;
 	}
 	this.core.suppressedLast = date.getTime();
-	if (this.core.prefSuppressSound)
+	if (this.core.pref("suppresssound"))
 		this.core.suppressedSound();
 
-	if (this.core.prefSuppressPopup)
+	if (this.core.pref("suppresspopup"))
 		this.suppressedPopup();
 }
 
@@ -424,11 +429,11 @@ mapaPlus.command = function(manual, button)
 {
 	this.core.dialogShow = false;
 	manual = (manual > 0) ? manual : false;
-	let command = button ? this.core.prefCommand : 0;
-	if ((manual && manual != 2 && !this.core.status) || (this.core.prefCommandLoggedin && this.core.status != 1))
+	let command = button ? this.core.pref("command") : 0;
+	if ((manual && manual != 2 && !this.core.status) || (this.core.pref("commandloggedin") && this.core.status != 1))
 		command = 0;
 
-	if (!manual && !this.core.prefLogoutTimer)
+	if (!manual && !this.core.pref("logouttimer"))
 		return;
 
 	switch(command)
@@ -479,9 +484,9 @@ mapaPlus.command = function(manual, button)
 mapaPlus.logout = function()
 {
 	this.core.lockDo = false;
-	this.core.tokenDB.logoutAndDropAuthenticatedResources();
+	this.core.logout();
 	this.core.timerCheck.observe();
-	if (this.core.prefSuppress != 2 && !this.core.prefSuppressTemp)
+	if (this.core.pref("supress") != 2 && !this.core.pref_SuppressTemp)
 		this.core.dialogShow = true;
 }
 
@@ -543,9 +548,9 @@ mapaPlus.extraElements = ["_selector", "_paneDeck", "_buttons", "_wizardButtons"
 
 mapaPlus.showLock = function(delay)
 {
-	if (window.location.toString().match("chrome://inspector/")) return;
-//	this.dump("showlock");
-	if (this.locked)
+if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome://inspector/")) return;
+//	log("showlock");
+	if (this.locked || (!this.lockedWindow && this.noLockWindow))
 		return;
 
 	if (!this.lockedWindow)
@@ -556,13 +561,13 @@ mapaPlus.showLock = function(delay)
 			if (!this.loadedManualy)
 				this.ss.setWindowValue(window, "lockedWindow", this.lockedWindow.toString());
 		}
-		catch(e){this.dump(e, 1)};
+		catch(e){log(e, 1)};
 
 	this.locked = true;
-	if (this.core.prefLockHideTitle)
+	if (this.core.pref("lockhidetitle"))
 	{
 
-		var title = document.getElementById("masterPasswordPlusUnLockInfo").value;
+		var title = $("masterPasswordPlusUnLockInfo").value;
 		try
 		{
 			let l = window.location.href.toString();
@@ -599,16 +604,17 @@ mapaPlus.showLock = function(delay)
 		}
 		catch(e){}
 	}
-	let o = document.getElementById("titlebar"); //FF4 with no menubar
+	let o = $("titlebar"); //FF4 with no menubar
 	if (o)
 	{
 		o = o.firstChild.boxObject.height + "px";
-		document.getElementById("masterPasswordPlusLock").style.top = o;
-		document.getElementById("masterPasswordPlusLockBox").style.top = o;
-		document.getElementById("masterPasswordPlusLockBox2").style.top = o;
+		$("masterPasswordPlusLock").style.top = o;
+		$("masterPasswordPlusLockBox").style.top = o;
+		$("masterPasswordPlusLockBox2").style.top = o;
 	}
 	this.core.workAround.do("off", this);
-	document.getElementById('masterPasswordPlusLock').parentNode.hidden = false;
+	$('masterPasswordPlusLock').parentNode.hidden = false;
+	$('masterPasswordPlusUnLockInput').focus();
 	let win = document.documentElement;
 	if (mapaPlus.core.style.MozAppearance)
 	{
@@ -668,28 +674,28 @@ mapaPlus.showLock = function(delay)
 	}
 	for(let i = 0; i < this.lockList.length; i++)
 	{
-		n = document.getElementById(this.lockList[i].id);
-		if (n)
-		{
-			if (this.lockList[i].exclude.length > 0)
-			{
-				let c = n.childNodes,
-						changed = false;
-				for(let l = 0; l < c.length; l++)
-				{
-					if (c[l].id && this.lockList[i].exclude.indexOf(c[l].id) != -1)
-						continue;
+		n = $(this.lockList[i].id);
+		if (!n)
+			continue;
 
-					changed = true;
-					change(c[l]);
-				}
-				if (!changed)
-					change(n);
-			}
-			else
+		if (this.lockList[i].exclude.length > 0)
+		{
+			let c = n.childNodes,
+					changed = false;
+			for(let l = 0; l < c.length; l++)
 			{
-				change(n);
+				if (c[l].id && this.lockList[i].exclude.indexOf(c[l].id) != -1)
+					continue;
+
+				changed = true;
+				change(c[l]);
 			}
+			if (!changed && this.lockList[i].exclude.indexOf(n.id) == -1)
+				change(n);
+		}
+		else
+		{
+			change(n);
 		}
 	}
 
@@ -721,8 +727,8 @@ mapaPlus.showLock = function(delay)
 			else
 				remove();
 		}
-	}catch(e){this.dump(e, 1)};
-//	document.getElementById('masterPasswordPlusUnLock').focus();
+	}catch(e){log(e, 1)};
+//	$('masterPasswordPlusUnLock').focus();
 
 }//showLock()
 
@@ -749,7 +755,7 @@ mapaPlus.showUnlock = function(f)
 	}catch(e){};
 
 	this.locked = false;
-	if (this.core.prefLockHideTitle)
+	if (this.core.pref("lockhidetitle"))
 	{
 		this.titleTimer.cancel();
 		window.removeEventListener("unload", this.titleTimer.cancel, false);
@@ -765,7 +771,7 @@ mapaPlus.showUnlock = function(f)
 		}catch(e){}
 	}
 	this.core.workAround.do("on", this);
-	document.getElementById('masterPasswordPlusLock').parentNode.hidden = true;
+	$('masterPasswordPlusLock').parentNode.hidden = true;
 	let win = document.documentElement;
 	if (mapaPlus.core.style.MozAppearance)
 	{
@@ -823,7 +829,7 @@ mapaPlus.showUnlock = function(f)
 	}
 	for(let i = 0; i < this.lockList.length; i++)
 	{
-		n = document.getElementById(this.lockList[i].id);
+		n = $(this.lockList[i].id);
 		if (n)
 		{
 			if (this.lockList[i].exclude.length > 0)
@@ -848,8 +854,8 @@ mapaPlus.showUnlock = function(f)
 		}
 	}
 	let lockedLast = true;
-	for each(let t in this.core.window)
-		for each(let w in t) 
+	for (let t in this.core.window)
+		for (let w in t) 
 		if (w && w.window != window && w.lockedWindow)
 			lockedLast = false;
 
@@ -878,7 +884,7 @@ mapaPlus.showUnlock = function(f)
 /*
 mapaPlus.menuAddHotkeys = function()
 {
-	var c = document.getElementById("mapa_menu").childNodes,
+	var c = $("mapa_menu").childNodes,
 			key;
 	for(var i = 0; i < c.length; i++)
 	{
@@ -911,13 +917,13 @@ mapaPlus.hotkeyGet = function(keys)
 			var t = keys[i];
 			if (t == "ACCEL")
 				t = this.core.accel;
-			k = document.getElementById("platformKeys").getString("VK_" + t);
+			k = $("platformKeys").getString("VK_" + t);
 		}
 		catch(e)
 		{
 			try
 			{
-				k = document.getElementById("localeKeys").getString("VK_" + keys[i]);
+				k = $("localeKeys").getString("VK_" + keys[i]);
 			}
 			catch(e)
 			{
@@ -949,30 +955,56 @@ mapaPlus.lockLogout = function()
 
 mapaPlus.lock = function(w, l)
 {
-	if (w)
+	let self = mapaPlus;
+	self.unlockIncorrectCheck();
+	if (w === true)
 	{
-		document.getElementById("masterPasswordPlusUnLockType").firstChild.textContent = this.strings.buttonUnlockWindow;
-		this.lockedWindow = true;
-		this.showLock(l);
+		$("masterPasswordPlusUnLockType").firstChild.textContent = self.strings.buttonUnlockWindow;
+		self.lockedWindow = true;
+		self.showLock(l);
+	}
+	else if (!w)
+	{
+
+		$("masterPasswordPlusUnLockType").firstChild.textContent = self.strings.buttonUnlock;
+		self.showLock(l);
+		self.core.lock(l ? true : false);
 	}
 	else
 	{
-		document.getElementById("masterPasswordPlusUnLockType").firstChild.textContent = this.strings.buttonUnlock;
-		this.showLock(l);
-		this.core.lock(l ? true : false);
+		
 	}
 }
+
+mapaPlus.noLockWindowToggle = function(type)
+{
+	if (typeof(type) == "undefined")
+		type = 2;
+
+	if (type == 2)
+		this.noLockWindow = !this.noLockWindow;
+	else
+		this.noLockWindow = type ? true : false;
+
+
+		if (!this.loadedManualy)
+				this.ss.setWindowValue(window, "noLockWindow", this.noLockWindow.toString());
+
+//		this.ss.deleteWindowValue(window, "noLockWindow");
+
+}//noLockWindowToggle()
 
 mapaPlus.unlock = function(forceUnlock)
 {
 //	mapaPlus.core.dump("unlock");
 	if (forceUnlock || this.login(false, true, false) || (!this.core.locked && !this.lockedWindow))
 	{
+		mapaPlus.unlockIncorrect(false);
 		if (this.lockedWindow)
 		{
 			this.showUnlock(true);
 			this.lockedWindow = false;
-			document.getElementById("masterPasswordPlusUnLockType").firstChild.textContent = this.strings.buttonUnlock;
+			$("masterPasswordPlusUnLockType").firstChild.textContent = this.strings.buttonUnlock;
 		}
 		else
 			this.core.unlock();
@@ -984,7 +1016,7 @@ mapaPlus.login2 = function()
 	mapaPlus.login(false);
 }
 
-mapaPlus.login = function(temp, force, options)
+mapaPlus.login = function(temp, force, options, check)
 {
 	var r = false;
 	if (!this.core.windowFirst("Dialog"))
@@ -1000,7 +1032,7 @@ mapaPlus.login = function(temp, force, options)
 
 	//	this.core.suppressTemp.stop();
 		if (force)
-			this.core.tokenDB.logoutAndDropAuthenticatedResources();
+			this.core.logout();
 
 		this.core.dialogShow = true;
 		if (!temp)
@@ -1030,6 +1062,9 @@ mapaPlus.login = function(temp, force, options)
 		this.core.windowFocus("Dialog");
 	}
 
+	if (r)
+		mapaPlusCore.windowAction("unlockIncorrect", "false");
+
 	return r;
 }
 
@@ -1039,7 +1074,7 @@ mapaPlus.update = function(f)
 /*
 	if (typeof(mapaPlus.core) == "undefined")
 	{
-		this.dump("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
+		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
 		this.loadCore();
 	}
 */
@@ -1061,19 +1096,21 @@ mapaPlus.update = function(f)
 		this.setAttr("mapa_menu_lock_logout", "disabled", status != 1);
 
 		this.setAttr("mapa_menu_changemp", "hidden", false);
-		document.getElementById("mapa_menu_lock").hidden = false;
-		document.getElementById("mapa_menu_lock_logout").hidden = false;
-		document.getElementById("mapa_menu_lock_window").hidden = false;
-		document.getElementById("mapa_lock_separator").hidden = false;
+		$("mapa_menu_lock").hidden = false;
+		$("mapa_menu_lock_logout").hidden = false;
+		$("mapa_menu_lock_window").hidden = false;
+		$("mapa_menu_noLockWindow").hidden = false;
+		$("mapa_lock_separator").hidden = false;
 	}
 	else
 	{
 		this.setTooltip("SetMasterPassword");
 		this.setAttr("mapa_menu_changemp", "hidden", true);
-		document.getElementById("mapa_menu_lock").hidden = true;
-		document.getElementById("mapa_menu_lock_logout").hidden = true;
-		document.getElementById("mapa_menu_lock_window").hidden = true;
-		document.getElementById("mapa_lock_separator").hidden = true;
+		$("mapa_menu_lock").hidden = true;
+		$("mapa_menu_lock_logout").hidden = true;
+		$("mapa_menu_lock_window").hidden = true;
+		$("mapa_menu_noLockWindow").hidden = true;
+		$("mapa_lock_separator").hidden = true;
 	}
 	this.last = status;
 	this.setStyle(status);
@@ -1092,6 +1129,9 @@ mapaPlus.listKeys = function()
 
 mapaPlus.mouseDown = function(e)
 {
+	if (e.target.id == "masterPasswordPlusUnLockInput")
+		return;
+
 	if (mapaPlus.locked && e.target.id.indexOf("masterPasswordPlus") == -1)
 	{
 		e.preventDefault();
@@ -1104,31 +1144,110 @@ mapaPlus.mouseDown = function(e)
 		r = false;
 		e.preventDefault();
 		e.stopPropagation();
+		$("masterPasswordPlusUnLockInput").focus();
+/*
 		if (!mapaPlus.core.windowFirst("Dialog"))
 			mapaPlus.unlock();
 		else
 			mapaPlus.core.windowFocus("Dialog");
+*/
 	}
 	return r;
 }
+
+mapaPlus.unlockIncorrect = function(disable)
+{
+	if (disable && disable !== "false")
+	{
+		$("masterPasswordPlusUnLockInput").disabled = true;
+		let timeoutMultiply = 1,
+				attempts = mapaPlusCore.pref("failedattempts"),
+				time = mapaPlusCore.pref("failedattemptstime");
+
+		if (time < 0)
+		{
+			time *= -1;
+			timeoutMultiply = 1 << (Math.ceil(mapaPlusCore.unlockIncorrect / attempts) - 1);
+		}
+		mapaPlusCore.unlockimputtimer = mapaPlusCore.async(
+			function()
+			{
+				mapaPlusCore.windowAction("unlockIncorrect")
+			}, 1000 * time * timeoutMultiply, mapaPlusCore.unlockimputtimer);
+		$("masterPasswordPlusUnLockInput").setAttribute("placeholder", this.strings.toomanyincorrect.replace("#", (time * timeoutMultiply)));
+log(mapaPlusCore.unlockIncorrect + " failed attempts. Disabling input for " + (time * timeoutMultiply) + " seconds");
+	}
+	else
+	{
+		$("masterPasswordPlusUnLockInput").disabled = false;
+		$("masterPasswordPlusUnLockInput").removeAttribute("placeholder");
+		if (mapaPlusCore.unlockimputtimer)
+			mapaPlusCore.unlockimputtimer.cancel();
+
+		if (disable === false || disable === "false")
+			mapaPlusCore.unlockIncorrect = 0;
+	}
+}
+mapaPlus.unlockIncorrectCheck = function(add)
+{
+log.debug();
+	let attempts = mapaPlusCore.pref("failedattempts");
+
+	if (add)
+		mapaPlusCore.unlockIncorrect++;
+
+	if (attempts && mapaPlusCore.pref("failedattemptstime") && mapaPlusCore.unlockIncorrect && mapaPlusCore.unlockIncorrect % attempts == 0)
+		mapaPlusCore.windowAction("unlockIncorrect", true);
+//	else if (!add || !attempts)
+//		mapaPlusCore.windowAction("unlockIncorrect");
+
+}
+
 mapaPlus.hotkeyPress = function(e)
 {
 	if (mapaPlus.locked)
 	{
 		mapaPlusCore.eventKeypress = e;
-		e.preventDefault();
-		e.stopPropagation();
+//		e.preventDefault();
+//		e.stopPropagation();
+
+		if (e.keyCode == e.DOM_VK_RETURN)
+			mapaPlus.unlockEnter();
+
 		return false;
 	}
 	return true;
 }
+
+mapaPlus.unlockEnter = function()
+{
+	if ($("masterPasswordPlusUnLockInput").value === "")
+		return;
+
+	if (mapaPlusCore.tokenDB.checkPassword($("masterPasswordPlusUnLockInput").value))
+	{
+		mapaPlusCore._v = $("masterPasswordPlusUnLockInput").value;
+		mapaPlus.unlock(true);
+		delete mapaPlusCore._v;
+	}
+	else
+	{
+		mapaPlus.unlockIncorrectCheck(true);
+	}
+	$("masterPasswordPlusUnLockInput").value = "";
+}//unlockEnter()
+
 mapaPlus.hotkeyDown = function(e, g)
 {
+//log.debug(e)
 	if (e.target.id.indexOf("masterPasswordPlus") != -1)
 		return true;
 
 	if (mapaPlus.locked)
 	{
+		$("masterPasswordPlusUnLockInput").focus();
+		return;
+/*
 		e.preventDefault();
 		e.stopPropagation();
 		//we must exit this function before modal dialog showed, otherwise event won't be properly canceled.
@@ -1141,6 +1260,7 @@ mapaPlus.hotkeyDown = function(e, g)
 				mapaPlus.core.windowFocus("Dialog");
 		}}, 0, timer.TYPE_ONE_SHOT);
 		return false;
+*/
 	}
 	var keys = mapaPlus.core.getKeys(e);
 	if (mapaPlus.core.matchKeys(mapaPlus.lastKeyDown, keys[0], 2)) //prevent repeats
@@ -1150,7 +1270,7 @@ mapaPlus.hotkeyDown = function(e, g)
 	var r = true;
 	if (mapaPlus.core.matchKeys(keys[0], mapaPlus.core.prefLockHotkey, 2))
 	{
-		if (!mapaPlus.core.prefLockHotkeyEnabled || (mapaPlus.core.prefLockHotkeyEnabled == 1 && mapaPlus.loadedManualy))
+		if (!mapaPlus.core.pref("lockhotkeyenabled") || (mapaPlus.core.pref("lockhotkeyenabled") == 1 && mapaPlus.loadedManualy))
 			return true;
 
 		r = false;
@@ -1160,7 +1280,7 @@ mapaPlus.hotkeyDown = function(e, g)
 	}
 	else if (mapaPlus.core.matchKeys(keys[0], mapaPlus.core.prefLogoutHotkey, 2))
 	{
-		if (!mapaPlus.core.prefLogoutHotkeyEnabled || (mapaPlus.core.prefLogoutHotkeyEnabled == 1 && mapaPlus.loadedManualy))
+		if (!mapaPlus.core.pref("logouthotkeyenabled") || (mapaPlus.core.pref("logouthotkeyenabled") == 1 && mapaPlus.loadedManualy))
 			return true;
 
 		r = false;
@@ -1172,7 +1292,7 @@ mapaPlus.hotkeyDown = function(e, g)
 //	else if (!mapaPlus.core.isTB && mapaPlus.core.matchKeys(keys[0], mapaPlus.core.prefLockWinHotkey, 2))
 	else if (mapaPlus.core.matchKeys(keys[0], mapaPlus.core.prefLockWinHotkey, 2))
 	{
-		if (!mapaPlus.core.prefLockWinHotkeyEnabled || (mapaPlus.core.prefLockWinHotkeyEnabled == 1 && mapaPlus.loadedManualy))
+		if (!mapaPlus.core.pref("lockwinhotkeyenabled") || (mapaPlus.core.pref("lockwinhotkeyenabled") == 1 && mapaPlus.loadedManualy))
 			return true;
 
 		r = false;
@@ -1182,7 +1302,7 @@ mapaPlus.hotkeyDown = function(e, g)
 	}
 	else if (mapaPlus.core.matchKeys(keys[0], mapaPlus.core.prefLockLogoutHotkey, 2))
 	{
-		if (!mapaPlus.core.prefLockLogoutHotkeyEnabled || (mapaPlus.core.prefLockLogoutHotkeyEnabled == 1 && mapaPlus.loadedManualy))
+		if (!mapaPlus.core.pref("locklogouthotkeyenabled") || (mapaPlus.core.pref("locklogouthotkeyenabled") == 1 && mapaPlus.loadedManualy))
 			return true;
 
 		r = false;
@@ -1201,14 +1321,14 @@ mapaPlus.hotkeyUp = function(e)
 
 mapaPlus.hotkeyInit = function()
 {
-	var keyset = document.getElementById("mapaPlus_keyset");
+	var keyset = $("mapaPlus_keyset");
 	var n = document.createElement("keyset");
 	n.id = "mapaPlus_keyset";
 	keyset.parentNode.replaceChild(n, keyset);
-	this.hotkeyAppend(this.core.prefLogoutHotkey, "Logout", this.core.prefLogoutHotkeyEnabled);
-	this.hotkeyAppend(this.core.prefLockHotkey, "Lock", this.core.prefLockHotkeyEnabled);
-	this.hotkeyAppend(this.core.prefLockWinHotkey, "LockWin", this.core.prefLockWinHotkeyEnabled);
-	this.hotkeyAppend(this.core.prefLockLogoutHotkey, "LockLogout", this.core.prefLockLogoutHotkeyEnabled);
+	this.hotkeyAppend(this.core.prefLogoutHotkey, "Logout", this.core.pref("logouthotkeyenabled"));
+	this.hotkeyAppend(this.core.prefLockHotkey, "Lock", this.core.pref("lockhotkeyenabled"));
+	this.hotkeyAppend(this.core.prefLockWinHotkey, "LockWin", this.core.pref("lockwinhotkeyenabled"));
+	this.hotkeyAppend(this.core.prefLockLogoutHotkey, "LockLogout", this.core.pref("locklogouthotkeyenabled"));
 }
 
 mapaPlus.hotkeyAppend = function(keys, id, enabled)
@@ -1217,7 +1337,7 @@ mapaPlus.hotkeyAppend = function(keys, id, enabled)
 		return;
 
 	var m = keys.slice()
-	var keyset = document.getElementById("mapaPlus_keyset");
+	var keyset = $("mapaPlus_keyset");
 	var k = document.createElement("key");
 	k.id = "mapaPlus_key_" + id;
 	k.setAttribute("key", m[m.length-1]);
@@ -1247,11 +1367,11 @@ mapaPlus.load = function()
 mapaPlus.showMenu = function(e)
 {
 	e.stopPropagation();
-	document.getElementById("mapa_menu").openPopup(e.target.parentNode, "after_start");
+	$("mapa_menu").openPopup(e.target.parentNode, "after_start");
 /*
-	document.getElementById("mapa_menu").firstChild.focus();
+	$("mapa_menu").firstChild.focus();
 	let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
-	timer.init({observe: function(){document.getElementById("mapa_menu").firstChild.focus();}}, 1000, timer.TYPE_ONE_SHOT);
+	timer.init({observe: function(){$("mapa_menu").firstChild.focus();}}, 1000, timer.TYPE_ONE_SHOT);
 */
 }
 
@@ -1259,7 +1379,7 @@ mapaPlus.showMenu = function(e)
 mapaPlus.popupshowing = function(e)
 {
 	let children = e.target.children,
-			cmd = "mapa_menu_" + mapaPlus.commands[this.core.prefCommand];
+			cmd = "mapa_menu_" + mapaPlus.commands[this.core.pref("command")];
 	for (let i = 0; i < children.length; i++)
 	{
 		if (children[i].id && children[i].id == cmd)
@@ -1276,10 +1396,12 @@ mapaPlus.close = function(aEvent)
 	mapaPlus.core.windowRemove(mapaPlus.windowID);
 	if (this.first)
 	{
+/*
 		window.removeEventListener("mousemove", this.core.resetTimer, false);
 		window.removeEventListener("keydown", this.core.resetTimer, false);
 		window.removeEventListener("mousedown", this.core.resetTimer, false);
 		window.removeEventListener("DOMMouseScroll", this.core.resetTimer, false);
+*/
 	}
 	if (this.initialized)
 	{
@@ -1298,7 +1420,7 @@ mapaPlus.onLoadAdd = function(func)
 		if (func)
 			mapaPlus.onLoadArray.push(func);
 
-		for (let [, func] in Iterator(mapaPlus.onLoadArray)) try{func && func()}catch(e){mapaPlus.dump(e, 1)};
+		for (let [, func] in Iterator(mapaPlus.onLoadArray)) try{func && func()}catch(e){log(e, 1)};
 		mapaPlus.onLoadArray = [];
 	}
 	else
@@ -1309,7 +1431,7 @@ mapaPlus.upgrade = function()
 {
 	let compare = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
 									.getService(Components.interfaces.nsIVersionComparator).compare,
-			version = this.core.pref.getCharPref("version");
+			version = this.core.pref("version");
 
 
 	mapaPlus.core.prevVersion = version;
@@ -1341,12 +1463,12 @@ return old setting, null if failed
 		p.getChildList(o, aCount);
 		if( aCount.value != 0 )
 		{
-			try{r = p['get' + g + 'Pref'](o)}catch(e){r=null;mapaPlus.dump(o + " (" + g + ") doesn't exist")};
+			try{r = p['get' + g + 'Pref'](o)}catch(e){r=null;log(o + " (" + g + ") doesn't exist")};
 			if (d)
 				try{p.deleteBranch(o)}catch(e){};
 
 			if (n !== null && r !== null)
-				try{mapaPlus.core.pref['set' + s + 'Pref'](n, c(r))}catch(e){mapaPlus.dump("error converting " + o + " (" + g + ") = " + r + " to " + n + " (" + s + ") = " + c(r))}
+				try{mapaPlus.core.pref['set' + s + 'Pref'](n, c(r))}catch(e){log("error converting " + o + " (" + g + ") = " + r + " to " + n + " (" + s + ") = " + c(r))}
 		}
 		return r;
 	}
@@ -1366,7 +1488,7 @@ return old setting, null if failed
 	{
 		let startupFail = upgradeMS("extensions.masterPasswordPlus.startupfail");
 		startupFail = startupFail ? this.core.STARTUP_QUIT : this.core.STARTUP_DONOTHING;
-		this.core.pref.setIntPref("startupfail", startupFail);
+		this.core.prefs.setIntPref("startupfail", startupFail);
 	}
 	if (compare(version, "1.16") < 0)
 	{
@@ -1389,10 +1511,8 @@ return old setting, null if failed
 	if (compare(version, "1.21.2") < 0)
 	{
 		let p = Components.classes["@mozilla.org/preferences-service;1"]
-						.getService(Components.interfaces.nsIPrefService).getDefaultBranch(mapaPlusCore.PREF_BRANCH),
-				str = Components.classes["@mozilla.org/supports-string;1"].createInstance(Components.interfaces.nsISupportsString);
-		str.data = p.getComplexValue("forceprompt", Components.interfaces.nsISupportsString).data;
-		this.core.pref.setComplexValue("forceprompt", Components.interfaces.nsISupportsString, str);
+						.getService(Components.interfaces.nsIPrefService).getDefaultBranch(mapaPlusCore.PREF_BRANCH);
+		this.core.pref("forceprompt", p.getComplexValue("forceprompt", Components.interfaces.nsISupportsString).data);
 	}
 	if (compare(version, "1.21.4") < 0)
 	{
@@ -1401,25 +1521,25 @@ return old setting, null if failed
 			return val ? mapaPlus.CHANGESLOG_FULL : 0;
 		});
 	}
-this.core.pref.setCharPref("version", this.core.addon.version);
-if (!this.core.changeLogShown)
-{
-	this.core.changeLogShown = true;
-	this.onLoadAdd(function()
+	this.core.pref("version", this.core.addon.version);
+	if (!this.core.changeLogShown)
 	{
-		mapaPlusCore.openChangesTimer = mapaPlusCore.async(function(){mapaPlus.openChanges()}, 1000, mapaPlusCore.openChangesTimer);
-	});
-}
+		this.core.changeLogShown = true;
+		this.onLoadAdd(function()
+		{
+			mapaPlusCore.openChangesTimer = mapaPlusCore.async(function(){mapaPlus.openChanges()}, 1000, mapaPlusCore.openChangesTimer);
+		});
+	}
 }
 
 mapaPlus.lockSetTransparent = function(v)
 {
-	document.getElementById("masterPasswordPlusLockBox2").setAttribute("transparent", v);
+	$("masterPasswordPlusLockBox2").setAttribute("transparent", v);
 }
 
 mapaPlus.lockSetBgImage = function(v)
 {
-	document.getElementById("masterPasswordPlusLockBox2").setAttribute("bgimage", v);
+	$("masterPasswordPlusLockBox2").setAttribute("bgimage", v);
 }
 mapaPlus.screenRestored = true;
 mapaPlus.windowMinimizedForced = false;
@@ -1491,7 +1611,7 @@ mapaPlus.isMinimized = function()
 mapaPlus.isMinimized = function()
 {
 	return;
-mapaPlus.dump([mapaPlus.windowState, window.windowState, windowState, mapaPlus.screenX, mapaPlus.screenY, window.screenX, window.screenY, "ok"]);
+log([mapaPlus.windowState, window.windowState, windowState, mapaPlus.screenX, mapaPlus.screenY, window.screenX, window.screenY, "ok"]);
 	if (mapaPlus.windowMinimizedForced || mapaPlus.windowMinimizedRestoring)
 		return;
 
@@ -1501,17 +1621,17 @@ mapaPlus.dump([mapaPlus.windowState, window.windowState, windowState, mapaPlus.s
 
 	if (windowState != window.STATE_MINIMIZED && mapaPlus.screenRestored)
 	{
-		mapaPlus.dump("set");
-		mapaPlus.dump([mapaPlus.screenX, mapaPlus.screenY]);
+		log("set");
+		log([mapaPlus.screenX, mapaPlus.screenY]);
 		mapaPlus.screenX = window.screenX;
 		mapaPlus.screenY = window.screenY;
-		mapaPlus.dump([mapaPlus.screenX, mapaPlus.screenY]);
+		log([mapaPlus.screenX, mapaPlus.screenY]);
 	}
 	if (mapaPlus.windowState == windowState)
 	{
 		return;
 	}
-mapaPlus.dump([mapaPlus.windowState, window.windowState, windowState, mapaPlus.screenX, mapaPlus.screenY, window.screenX, window.screenY]);
+log([mapaPlus.windowState, window.windowState, windowState, mapaPlus.screenX, mapaPlus.screenY, window.screenX, window.screenY]);
 
 	mapaPlus.windowState = windowState;
 	if (windowState == window.STATE_MINIMIZED)
@@ -1530,7 +1650,7 @@ mapaPlus.dump([mapaPlus.windowState, window.windowState, windowState, mapaPlus.s
 			timer.init({observe:function()
 			{
 				mapaPlus.windowMinimizedRestoring = true;
-				mapaPlus.dump([mapaPlus.screenX, mapaPlus.screenY]);
+				log([mapaPlus.screenX, mapaPlus.screenY]);
 				window.screenX = mapaPlus.screenX;
 				window.screenY = mapaPlus.screenY;
 				if (mapaPlus.windowMaximized || mapaPlus.windowFullscreen)
@@ -1547,32 +1667,32 @@ mapaPlus.dump([mapaPlus.windowState, window.windowState, windowState, mapaPlus.s
 */
 mapaPlus.minimized = function()
 {
-	if (this.core.prefLogoutOnMinimize)
+	if (this.core.pref("logoutonminimize"))
 	{
 		this.logout();
 	}
 
-	switch(this.core.prefLockOnMinimize)
+	switch(this.core.pref("lockonminimize"))
 	{
 		case 1:
-			this.lock();
+			this.core.async(this.lock)
 			break;
 		case 2:
-			this.lock(true);
+			this.core.async(function(){mapaPlus.lock(true)})
 			break;
 	}
 }
 
 mapaPlus.init = function()
 {
-this.dump.debug();
+log.debug();
 		mapaPlus.upgrade();
 	if (!this.core.initialized)
 	{
 		this.core.init(false, this);
 		this.listKeys();
 		this.core.windowListener.observe(window, "domwindowopened", true);
-		this.core.lockOverlay = document.getElementById("masterPasswordPlusLock").parentNode.cloneNode(true);
+		this.core.lockOverlay = $("masterPasswordPlusLock").parentNode.cloneNode(true);
 		this.first = true;
 	}
 	if (this.initialized)
@@ -1580,11 +1700,11 @@ this.dump.debug();
 
 	this.windowID = this.core.windowAdd(this, this.loadedManualy ? "WindowGeneric" : "");
 	this.initialized = true;
-	document.getElementById("masterPasswordPlusUnLockInfo").value = document.getElementById("masterPasswordPlusUnLockInfo").value.replace("#", mapaPlus.core.appInfo.name);
+	$("masterPasswordPlusUnLockInfo").value = $("masterPasswordPlusUnLockInfo").value.replace("#", mapaPlus.core.appInfo.name);
 
 	if (this.core.isTB)
 	{
-//			document.getElementById("mapa_menu_lock_window").collapsed = true;
+//			$("mapa_menu_lock_window").collapsed = true;
 		this.lockList = [];
 	}
 	else
@@ -1595,14 +1715,18 @@ this.dump.debug();
 			exclude: []
 		},
 		{
-			id: "titlebar-content",
-			exclude: ["titlebar-buttonbox-container", "titlebar-spacer", "aero-titlebar-stack"]
+			id: "appmenu-button-container",
+			exclude: []
+		},
+		{
+			id: "titlebar",
+			exclude: ["titlebar-buttonbox-container", "titlebar-spacer", "aero-titlebar-stack", "titlebar", "titlebar-content"]
 		}];
 	}
-//		document.getElementById("masterPasswordPlusLock").addEventListener("keypress", function(e){e.stopPropagation();e.preventDefault();return false;}, true);
-	var locked = this.core.pref.getBoolPref("locked");
-	this.lockSetTransparent(this.core.pref.getBoolPref("locktransparent"));
-	this.lockSetBgImage(this.core.pref.getBoolPref("lockbgimage"));
+//		$("masterPasswordPlusLock").addEventListener("keypress", function(e){e.stopPropagation();e.preventDefault();return false;}, true);
+	let locked = this.core.pref("locked");
+	this.lockSetTransparent(this.core.pref("locktransparent"));
+	this.lockSetBgImage(this.core.pref("lockbgimage"));
 
 	const WINTASKBAR_CONTRACTID = "@mozilla.org/windows-taskbar;1";
 	if (!this.core.isTB && WINTASKBAR_CONTRACTID in Components.classes &&
@@ -1648,15 +1772,25 @@ this.dump.debug();
 	let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
 	timer.init({observe: function()
 	{
-		var wasLocked = false;
+		let wasLocked = false,
+				wasNoLock = false;
 		try
 		{
 			if (!mapaPlus.loadedManualy)
+			{
 				wasLocked = mapaPlus.ss.getWindowValue(window, "lockedWindow") == "true";
+				if (mapaPlusCore.pref("persistnolock"))
+					wasNoLock = mapaPlus.ss.getWindowValue(window, "noLockWindow") == "true";
+			}
 		}
 		catch(e){};
-		var lockedWindow = !mapaPlus.core.isTB && wasLocked;
-		if (mapaPlus.core.pref.getBoolPref("lockrestore") && (mapaPlus.core.locked || lockedWindow || (locked && mapaPlus.core.status == 2)))
+		let lockedWindow = !mapaPlus.core.isTB && wasLocked;
+		mapaPlus.noLockWindow = !mapaPlus.core.isTB && wasNoLock;
+		if (mapaPlus.noLockWindow)
+		{
+			try{$("mapa_menu_noLockWindow").setAttribute("checked", true)}catch(e){}
+		}
+		if (mapaPlus.core.pref("lockrestore") && (mapaPlus.core.locked || lockedWindow || (locked && mapaPlus.core.status == 2)))
 			mapaPlus.lock(lockedWindow, 1);
 
 	}}, 100, timer.TYPE_ONE_SHOT);
@@ -1678,5 +1812,6 @@ this.dump.debug();
 	this.update(true);
 }
 
-
 window.addEventListener("load", mapaPlus.load, false);
+
+})();

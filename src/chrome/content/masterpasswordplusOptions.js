@@ -1,6 +1,11 @@
+(function(){
+function $(id)
+{
+	return document.getElementById(id);
+}
 mapaPlus.window = window;
 mapaPlus.protect = false; //ask for password
-mapaPlus.protected = false;//mapaPlus.core.pref.getBoolPref("protect");
+mapaPlus.protected = false;//mapaPlus.core.prefs.getBoolPref("protect");
 mapaPlus.protectedBegin = true;
 mapaPlus.pass = false;
 mapaPlus.windowType = "options";
@@ -11,11 +16,11 @@ mapaPlus.saveOptions = function ()
 	this.core.prefNoObserve = true;
 	var sel = this.getOrder("urlbar-icons");
 	if (sel)
-		this.core.pref.setCharPref("urlbarpos", (sel.dir?1:0)+sel.id);
+		this.core.prefs.setCharPref("urlbarpos", (sel.dir?1:0)+sel.id);
 
 	sel = this.getOrder("status-bar");
 	if (sel)
-		this.core.pref.setCharPref("statusbarpos", (sel.dir?1:0)+sel.id);
+		this.core.prefs.setCharPref("statusbarpos", (sel.dir?1:0)+sel.id);
 
 	if (document.getElementById("mapaPlusSuppressPopup").getAttribute("indeterminate") == "true")
 		document.getElementById("mapaPlusSuppressPopup").checked = true;
@@ -31,6 +36,9 @@ mapaPlus.saveOptions = function ()
 	this.core.windowUpdate(true,true);
 	this.core.init(true, this);
 	this.core.windowAction("updateTitle", null, "Dialog");
+	this.debugSave();
+	this.changesLogSave();
+
 }
 
 //Initialize options
@@ -171,6 +179,6 @@ mapaPlus.enableDisable = function(e)
 		n[i].collapsed = mapaPlus.core.status;
 
 	mapaPlus.suppress();
-}
+}//enableDisable()
 
-
+})();
