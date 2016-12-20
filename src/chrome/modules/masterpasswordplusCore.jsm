@@ -6,7 +6,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 
 var self = this,
-		_dump = function(){},
+		log = function(){},
 		mapaPlusCore = {
 	GUID: 'masterpasswordtimeoutplus@vano',
 	app: null,
@@ -121,7 +121,7 @@ var self = this,
 		}
 		this.windowID[t]++;
 		this.window[t][this.windowID[t]] = win;
-//		this.dump(t + " added: " + this.windowID[t])
+log.debug(t + " added id: " + this.windowID[t])
 		return this.windowID[t];
 	},
 
@@ -766,7 +766,7 @@ this.windowAction("test", {blah:109}, "Dialog");
 					catch(e){return;}
 					try
 					{
-						var s = mapaPlus.ss.getWindowValue(mapaPlus.window, "AeroBuddy");
+						let s = mapaPlus.ss.getWindowValue(mapaPlus.window, "AeroBuddy");
 						if (s === "")
 							return;
 
@@ -778,8 +778,11 @@ this.windowAction("test", {blah:109}, "Dialog");
 
 				off: function(mapaPlus)
 				{
-					var w = mapaPlusCore.window["Window"];
-					let l = 0;
+					let w = mapaPlusCore.window["Window"],
+							l = 0;
+					if (!w)
+						return;
+
 					for(let i = 1; i < w.length; i++)
 						if (w[i] != null && w[i].locked)
 							l++;
@@ -1032,6 +1035,9 @@ if (!init)
 
 			if (aKey == "forceprompt")
 				self.prefNoWorkAround = v.split(",");
+
+//			if (aKey == "failedattempts" || aKey == "failedattemptstime")
+//				mapaPlusCore.unlockIncorrect = 0;
 
 			if (aKey == "forceprompt")
 			{
@@ -1289,8 +1295,7 @@ timer.init({observe: function(e)
 							{
 								window.mapaPlus = window.mapaPlus || {};
 								window.mapaPlus.noOverlayLoaded = true;
-								let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
-								timer.init({observe:function()
+								mapaPlusCore.async(function()
 								{
 									window.mapaPlus.loadedManualy = true;
 									try
@@ -1306,7 +1311,7 @@ timer.init({observe: function(e)
 											window.addEventListener("mousedown", window.mapaPlus.mouseDown, true);
 										window.mapaPlusEventsAdded = true;
 									}
-								}}, 100, timer.TYPE_ONE_SHOT);
+								}, 100);
 							}});
 						}
 					}
@@ -1406,9 +1411,84 @@ timer.init({observe: function(e)
 		}
 	},
 
-	asyncMap: new Map(),
+	_asyncMap: function()
+	{
+		this._map = [];
+		Object.defineProperty(this, "size", {
+			get: function() { return this._map.length; },
+			enumerable: true,
+			configurable: true
+		});
+
+
+		this.set = function(key, val)
+		{
+			let obj = {},
+					i = this.size;
+			if (this.has(key))
+			{
+				i = this.getIndex(key);
+				obj = this._map[i];
+			}
+			obj = {
+				key: key,
+				val: val
+			};
+			this._map[i] = obj;
+		}
+
+		this.has = function(key)
+		{
+			let r = false
+			this._map.forEach(function(val, i, array)
+			{
+				if (val.key === key)
+					r = true;
+			});
+			return r;
+		}
+
+		this.delete = function(key)
+		{
+			let l = [];
+			this._map.forEach(function(val, i, array)
+			{
+				if (val.key === key)
+				{
+					array.splice(i, 1);
+				}
+			})
+		}
+
+		this.getIndex = function(key)
+		{
+			let r = -1;
+			this._map.forEach(function(val, i, array)
+			{
+				if (val.key === key)
+					r = i;
+			});
+			return r;
+		}
+	},
+	__asyncMap: null,
+	get asyncMap()
+	{
+		if (!this.__asyncMap)
+		{
+			try
+			{
+				this.__asyncMap = new Map();
+			}catch(e)
+			{
+				this.__asyncMap = new this._asyncMap();
+			}
+		}
+		return this.__asyncMap;
+	},
 	async: function async(callback, delay, timer, noreset)
 	{
+//log.debug();
 		if (!timer)
 			timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 
@@ -1438,58 +1518,80 @@ timer.init({observe: function(e)
 
 	openConsole: function openConsole()
 	{
-		function toOpenWindowByType(inType, uri, features)
+log.debug();
+		AddonManager.getAllAddons(function(addons)
 		{
-			let win = Services.wm.getMostRecentWindow(inType),
-					ww = Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher);
-			if (win)
+			let win = null;
+			function toOpenWindowByType(inType, uri, features)
+			{
+					let win = Services.wm.getMostRecentWindow(inType),
+							ww = Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher);
+				try
+				{
+					if (win)
+						return win;
+					else if (features)
+						win = ww.openWindow(null, uri, inType, features, null);
+					else
+						win = ww.openWindow(null, uri, inType, "chrome,extrachrome,menubar,resizable,scrollbars,status,toolbar", null);
+				}
+				catch(e){log.error(e)}
+
 				return win;
-			else if (features)
-				win = ww.openWindow(null, uri, inType, features, null);
-			else
-				win = ww.openWindow(null, uri, inType, "chrome,extrachrome,menubar,resizable,scrollbars,status,toolbar", null);
+			}
+			addons.forEach(function(addon)
+			{
+				if (!addon.isActive || addon.id != "{1280606b-2510-4fe0-97ef-9b5a22eafe80}")
+					return;
 
-			return win;
-		}
-		try
-		{
-			Object.defineProperty(self, "HUDService", {
-				get: function HUDService_getter() {
-					let devtools = Cu.import("resource://devtools/shared/Loader.jsm", {}).devtools;
-					return devtools.require("devtools/client/webconsole/hudservice");
-				},
-				configurable: true,
-				enumerable: true
-			});
-		}
-		catch(e){};
-		let win;
-		try
-		{
-			win = toOpenWindowByType("global:console", "chrome://console2/content/console2.xul");
-		}
-		catch(e){log.error(e)}
-		if (win)
-			return;
+				try
+				{
+					win = toOpenWindowByType("global:console", "chrome://console2/content/console2.xul");
+				}
+				catch(e)
+				{
+		//			log.error(e)
+				}
+			})
+			if (win)
+				return;
 
-		try
-		{
-			win = HUDService.getBrowserConsole();
-//				HUDService.openBrowserConsoleOrFocus();
-			if (!win)
-				win = HUDService.toggleBrowserConsole();
-		}
-		catch(e){log.error(e)}
+			try
+			{
+				Object.defineProperty(self, "HUDService", {
+					get: function HUDService_getter() {
+						let devtools = Cu.import("resource://devtools/shared/Loader.jsm", {}).devtools;
+						return devtools.require("devtools/client/webconsole/hudservice");
+					},
+					configurable: true,
+					enumerable: true
+				});
+			}
+			catch(e){};
+			try
+			{
+				win = HUDService.getBrowserConsole();
+	//				HUDService.openBrowserConsoleOrFocus();
+				if (!win)
+					win = HUDService.toggleBrowserConsole();
+			}
+			catch(e)
+			{
+	//			log.error(e)
+			}
 
-		if (win)
-			return;
+			if (win)
+				return;
 
-		try
-		{
-			win = toOpenWindowByType("global:console", "chrome://global/content/console.xul")
-		}
-		catch(e){log.error(e)}
-
+			try
+			{
+				win = toOpenWindowByType("global:console", "chrome://global/content/console.xul")
+			}
+			catch(e)
+			{
+	//			log.error(e)
+			}
+		});
 	},//openConsole()
 }//mapaPlusCore
 
@@ -1497,7 +1599,7 @@ function include(path)
 {
 	Services.scriptloader.loadSubScript(mapaPlusCore.addon.getResourceURI(path).spec, self);
 }
-var __dumpName__ = "_dump";
+var __dumpName__ = "log";
 
 mapaPlusCore.pref.timers = {};
 mapaPlusCore.pref.prefs = {}; //this will hold cached preferences.
@@ -1506,14 +1608,19 @@ mapaPlusCore.pref.types = {
 	number: "Int",
 //	string: "Char"
 }
-Services.scriptloader.loadSubScript("chrome://mapaplus/content/dump.js");
-mapaPlusCore.log = _dump;
-mapaPlusCore.dump = _dump;
-var log = _dump;
+Services.scriptloader.loadSubScript("chrome://mapaplus/content/dump.js", log);
+/*
+var mozIJSSubScriptLoader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
+                            .getService(Components.interfaces.mozIJSSubScriptLoader);
+mozIJSSubScriptLoader.loadSubScript("chrome://mapaplus/content/dump.js", log)
+*/
+mapaPlusCore.log = log;
+mapaPlusCore.dump = log;
 log.folder = "";
 log.title = "MP+";
 log.showCaller = 3;
 log.logLevel = 1;
+
 let l = mapaPlusCore.prefs.getChildList("");
 
 for(let i in l)

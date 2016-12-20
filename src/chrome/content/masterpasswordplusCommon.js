@@ -178,7 +178,7 @@ log([type, type & mapaPlus.CHANGESLOG_FULL]);
 		if (typeof(type) == "undefined" || type & mapaPlus.CHANGESLOG_FULL)
 		{
 			if (mapaPlus.getOpenURL)
-				mapaPlus.getOpenURL("chrome://mapaplus/content/changes.xul", true);
+				mapaPlus.getOpenURL(mapaPlus.CHANGESLOG_URL, true);
 		}
 	
 		let addon = this.core.addon;
@@ -272,6 +272,7 @@ mapaPlus.notificationAvailable = (mapaPlus.notification && mapaPlus.notification
 mapaPlus.CHANGESLOG_NONE = 0;
 mapaPlus.CHANGESLOG_FULL = 2;
 mapaPlus.CHANGESLOG_NOTIFICATION = 1;
+mapaPlus.CHANGESLOG_URL = "chrome://mapaplus/content/changes.xul";
 
 })();
 

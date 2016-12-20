@@ -1,4 +1,9 @@
 (function(){
+try
+{
+	var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
+}catch(e){}
+
 function $(id)
 {
 	return document.getElementById(id);
@@ -487,10 +492,15 @@ mapaPlus.initCommon = function(id)
 
 	$("mapaPlusDebug").addEventListener("command", this.debugClick, true);
 	$("mapaPlusChangesLog").addEventListener("command", this.changesLogClick, true);
-	$("mapaPlusShowChangesLog_button").addEventListener("click", function(e)
+	let obj = $("mapaPlusShowChangesLog_button");
+	obj.setAttribute("linkCopy", mapaPlus.CHANGESLOG_URL);
+	obj.addEventListener("click", function(e)
 	{
 		if (e.button != 2)
 			mapaPlus.showChangesLog()
+
+		e.stopPropagation();
+		e.preventDefault();
 	}, true);
 	this.debugMenu();
 	this.changesLogMenu();
@@ -1087,6 +1097,18 @@ mapaPlus.linkClick = function linkClick(obj, e)
 	}
 	return false;
 }//linkClick()
+
+mapaPlus.copyMenu = function(e)
+{
+	mapaPlus.copy(document.popupNode.hasAttribute("linkCopy") ? document.popupNode.getAttribute("linkCopy") : document.popupNode.getAttribute("link"));
+}
+
+mapaPlus.copy = function(txt)
+{
+	Cc["@mozilla.org/widget/clipboardhelper;1"]
+		.getService(Ci.nsIClipboardHelper)
+		.copyString(txt);
+}
 
 mapaPlus.loadArgs();
 

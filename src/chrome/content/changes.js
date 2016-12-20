@@ -253,14 +253,14 @@ var self = this,
 		this.onResize();
 	},
 
-	_expandAll: function(e)
+	_expandAll: function _expandAll(e)
 	{
 log.debug();
 		let val = this.checkboxSet(e.target.id)
 		this.showExpandAll(true);
 	},
 
-	showExpandAll: function(init)
+	showExpandAll: function showExpandAll(init)
 	{
 log.debug();
 		if (!$("changesLog"))
@@ -334,9 +334,9 @@ log.debug();
 		}
 	},
 
-	onload: function()
+	onload: function onload()
 	{
-log.debug("onload()");
+log.debug();
 		if (!("arguments" in window) || !window.arguments)
 			document.documentElement._buttons.accept.hidden = true;
 		else
@@ -377,24 +377,25 @@ log.debug("onload()");
 		let l = this.pref.getChildList(""),
 				r = {};
 		l.sort();
-		for (let i of l)
+		for (let i = 0; i < l.length; i++)
 		{
-			if (/^template/.test(i))
+			let s = l[i];
+			if (/^template/.test(s))
 				continue;
 
-			switch(this.pref.getPrefType(i))
+			switch(this.pref.getPrefType(s))
 			{
 				case Ci.nsIPrefBranch.PREF_BOOL:
-					r[i] = this.pref.getBoolPref(i);
+					r[s] = this.pref.getBoolPref(s);
 					break;
 				case Ci.nsIPrefBranch.PREF_INT:
-					r[i] = this.pref.getIntPref(i);
+					r[s] = this.pref.getIntPref(s);
 					break;
 				case Ci.nsIPrefBranch.PREF_STRING:
-					r[i] = this.pref.getComplexValue(i, Ci.nsISupportsString).data;
+					r[s] = this.pref.getComplexValue(s, Ci.nsISupportsString).data;
 /*
-					if (/^template/.test(i))
-						r[i] = r[i].replace(/\s{2,}/g, " ");
+					if (/^template/.test(s))
+						r[s] = r[s].replace(/\s{2,}/g, " ");
 */
 					break;
 			}
@@ -435,9 +436,9 @@ log.debug("onload()");
 		return url;
 	}, //fixUrl()
 
-	init: function()
+	init: function init()
 	{
-log.debug("init()");
+log.debug();
 		this.pref = Services.prefs.getBranch(this.PREF_BRANCH);
 		let changesLogObj = $("changesLog"),
 				aURL = this.addon.getResourceURI("changes.txt").spec,

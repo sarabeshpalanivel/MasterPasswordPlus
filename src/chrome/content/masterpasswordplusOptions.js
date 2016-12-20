@@ -22,8 +22,8 @@ mapaPlus.saveOptions = function ()
 	if (sel)
 		this.core.prefs.setCharPref("statusbarpos", (sel.dir?1:0)+sel.id);
 
-	if (document.getElementById("mapaPlusSuppressPopup").getAttribute("indeterminate") == "true")
-		document.getElementById("mapaPlusSuppressPopup").checked = true;
+	if ($("mapaPlusSuppressPopup").getAttribute("indeterminate") == "true")
+		$("mapaPlusSuppressPopup").checked = true;
 	else
 		this.core.suppressedPopupStop = false;
 
@@ -48,26 +48,26 @@ mapaPlus.load = function ()
 }
 mapaPlus.init = function()
 {
-	document.getElementById("mapaPlusContextmenu").hidden = this.core.isTB;
-	document.getElementById("mapaPlusUrlbarBox").hidden = this.core.isTB;
-	document.getElementById("mapaPlusString").value = document.getElementById("mapaPlusString").value.replace("#", this.core.appInfo.name);
+	$("mapaPlusContextmenu").hidden = this.core.isTB;
+	$("mapaPlusUrlbarBox").hidden = this.core.isTB;
+	$("mapaPlusString").value = $("mapaPlusString").value.replace("#", this.core.appInfo.name);
 	if (this.core.isFF4)
-		document.getElementById("prompt-one").collapsed = document.getElementById("one.info").collapsed = true;
+		$("prompt-one").collapsed = $("one.info").collapsed = true;
 
 	if (!this.core.isTB)
 	{
 		if (this.iniIcons("urlbar-icons", "mapa_urlbar", "urlbar", "mapaPlusUrlbar"))
-			document.getElementById("urlbar-container").collapsed = false;
+			$("urlbar-container").collapsed = false;
 
-		document.getElementById("panelDisplay").addEventListener("mousemove", this.showSelected, true);
-		document.getElementById("mapaPlusSuppressPopupBox").collapsed = false;
-		if (document.getElementById("mapaPlusSuppressPopup").checked && this.core.suppressedPopupStop)
+		$("panelDisplay").addEventListener("mousemove", this.showSelected, true);
+		$("mapaPlusSuppressPopupBox").collapsed = false;
+		if ($("mapaPlusSuppressPopup").checked && this.core.suppressedPopupStop)
 		{
-			document.getElementById("mapaPlusSuppressPopup").setAttribute("indeterminate", true);
-			document.getElementById("mapaPlusSuppressPopup").checked = false; //we want first click check the checkbox, not uncheck it.
+			$("mapaPlusSuppressPopup").setAttribute("indeterminate", true);
+			$("mapaPlusSuppressPopup").checked = false; //we want first click check the checkbox, not uncheck it.
 		}
-		document.getElementById("urlbar").boxObject.firstChild.setAttribute("flex", 0);
-		document.getElementById("options").setAttribute("options", true);
+		$("urlbar").boxObject.firstChild.setAttribute("flex", 0);
+		$("options").setAttribute("options", true);
 	}
 	let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
 	timer.init({observe:function()
@@ -75,20 +75,20 @@ mapaPlus.init = function()
 		let x, y;
 		if (!mapaPlus.core.isTB)
 		{
-			if (document.getElementById("urlbar").boxObject.firstChild.boxObject.width > document.getElementById("urlbar").boxObject.width)
+			if ($("urlbar").boxObject.firstChild.boxObject.width > $("urlbar").boxObject.width)
 			{
-				x = document.getElementById("urlbar").boxObject.firstChild.boxObject.width - document.getElementById("urlbar").boxObject.width;
+				x = $("urlbar").boxObject.firstChild.boxObject.width - $("urlbar").boxObject.width;
 				window.resizeBy(x, 0);
 			}
-			document.getElementById("urlbar").boxObject.firstChild.setAttribute("flex", 1);
+			$("urlbar").boxObject.firstChild.setAttribute("flex", 1);
 		}
 		x = document.documentElement.boxObject.width > window.screen.availWidth ? document.documentElement.boxObject.width - window.screen.availWidth : 0;
 		y = document.documentElement.boxObject.height > window.screen.availHeight ? document.documentElement.boxObject.height - window.screen.availHeight : 0;
 		if (x || y)
 		{
 			window.resizeBy(x, y);
-			document.getElementById("masterPasswordPlusOptions").boxObject.parentBox.boxObject.parentBox.style.overflow = "auto";
-			document.getElementById("masterPasswordPlusOptions").boxObject.parentBox.setAttribute("flex", 0);
+			$("masterPasswordPlusOptions").boxObject.parentBox.boxObject.parentBox.style.overflow = "auto";
+			$("masterPasswordPlusOptions").boxObject.parentBox.setAttribute("flex", 0);
 			let pix = window.getComputedStyle(document.documentElement, null).paddingRight;
 			document.documentElement.style.paddingRight = 0;
 			let r = null;
@@ -109,14 +109,16 @@ mapaPlus.init = function()
 //	this.setProtect("protected", false)
 	this.loadArgs();
 
+	replace_validateValue($("mapaPlusFailedAttempts"));
+	replace_validateValue($("mapaPlusFailedAttemptsTime"));
 }
 
 
 mapaPlus.suppress = function()
 {
-	var status = document.getElementById("mapaPlusSuppress").value == 0 || document.getElementById("mapaPlusSuppress").disabled || mapaPlus.isLocked;
+	var status = $("mapaPlusSuppress").value == 0 || $("mapaPlusSuppress").disabled || mapaPlus.isLocked;
 	mapaPlus.setAttribute("mapaPlusSuppressBox", "disabled", status, !status, "mapaPlusSuppressPopup");
-	status = ((!document.getElementById("mapaPlusSuppressPopup").checked && document.getElementById("mapaPlusSuppressPopup").getAttribute("indeterminate") != "true") || document.getElementById("mapaPlusSuppressPopup").disabled || mapaPlus.locked);
+	status = ((!$("mapaPlusSuppressPopup").checked && $("mapaPlusSuppressPopup").getAttribute("indeterminate") != "true") || $("mapaPlusSuppressPopup").disabled || mapaPlus.locked);
 	mapaPlus.setAttribute("mapaPlusSuppressPopupRemoveBox", "disabled", status, !status);
 }
 
@@ -130,9 +132,9 @@ mapaPlus.enableDisable = function(e)
 		startup = true;
 		lock = true;
 		minimize = true;
-		document.getElementById("mapaPlusEnabled").disabled = true;
-		document.getElementById("mapaPlusStartup").disabled = true;
-		document.getElementById("mapaPlusLockTimer").disabled = true;
+		$("mapaPlusEnabled").disabled = true;
+		$("mapaPlusStartup").disabled = true;
+		$("mapaPlusLockTimer").disabled = true;
 		document.documentElement.getButton("accept").disabled = true;
 		document.documentElement.getButton("disclosure").disabled = true;
 		document.documentElement.getButton("extra1").hidden = false;
@@ -140,20 +142,20 @@ mapaPlus.enableDisable = function(e)
 	}
 	else
 	{
-		document.getElementById("mapaPlusEnabled").disabled = false;
-		document.getElementById("mapaPlusStartup").disabled = false;
+		$("mapaPlusEnabled").disabled = false;
+		$("mapaPlusStartup").disabled = false;
 		document.documentElement.getButton("accept").disabled = false;
 		document.documentElement.getButton("disclosure").disabled = false;
 		document.documentElement.getButton("extra1").hidden = true;
-		document.getElementById("mapaPlusLockTimer").disabled = false;
-		status = !document.getElementById("mapaPlusEnabled").checked;
-		startup = !document.getElementById("mapaPlusStartup").checked;
-		lock = !document.getElementById("mapaPlusLockTimer").checked;
+		$("mapaPlusLockTimer").disabled = false;
+		status = !$("mapaPlusEnabled").checked;
+		startup = !$("mapaPlusStartup").checked;
+		lock = !$("mapaPlusLockTimer").checked;
 		disable = false;
-		minimize = !document.getElementById("mapaPlusLockMinimize").checked || lock;
+		minimize = !$("mapaPlusLockMinimize").checked || lock;
 	}
-	document.getElementById("mapaPlusSuppressLabel").disabled = locked;
-	document.getElementById("mapaPlusSuppress").disabled = locked;
+	$("mapaPlusSuppressLabel").disabled = locked;
+	$("mapaPlusSuppress").disabled = locked;
 	mapaPlus.setAttribute("panelGeneral", "disabled", locked, !locked);
 	mapaPlus.setAttribute("mapaPlusTimeoutBox", "disabled", status, !status);
 	mapaPlus.setAttribute("mapaPlusLogoutOnMinimize", "disabled", disable, !disable);
@@ -165,8 +167,8 @@ mapaPlus.enableDisable = function(e)
 	mapaPlus.setAttribute("mapaPlusSuppressBlinkBox", "disabled", disable, !disable);
 	mapaPlus.setAttribute("mapaPlusSuppressPopupBox", "disabled", disable, !disable);
 	mapaPlus.setAttribute("mapaPlusSuppressSoundBox", "disabled", disable, !disable);
-	document.getElementById("mapaPlusLockMinimizeBlur").disabled = minimize;
-	let urlbar = !document.getElementById("mapaPlusUrlbar").checked || locked;
+	$("mapaPlusLockMinimizeBlur").disabled = minimize;
+	let urlbar = !$("mapaPlusUrlbar").checked || locked;
 	mapaPlus.setAttribute("urlbar-container", "disabled", urlbar, !urlbar);
 
 /*
@@ -180,5 +182,38 @@ mapaPlus.enableDisable = function(e)
 
 	mapaPlus.suppress();
 }//enableDisable()
+
+
+function replace_validateValue(obj)
+{
+	obj.prev = [0, 0, obj._value];
+	obj._validateValue = function(aValue, aIsIncDec)
+	{
+		let min = obj.min,
+				max = obj.max,
+				val = String(aValue).replace(/[^0-9\-]/g, "");
+		val = val.replace(/[\-]{2,}/g, "-");
+		val = val.replace(/([0-9]+)[\-]+/g, "$1");
+		if (val == "-")
+			aValue = val;
+		else
+			aValue = Number(val) || 0;
+
+		if (aValue < min)
+			aValue = min;
+		else if (aValue > max)
+			aValue = obj._value > max ? max : obj._value;
+
+		aValue = "" + aValue;
+		obj._valueEntered = false;
+		obj._value = aValue == "-" ? aValue : Number(aValue);
+		obj.prev.push(obj._value);
+		obj.prev.splice(0,1);
+		obj.inputField.value = Number(aValue) || aValue == "-" ? aValue : mapaPlus.strings.disabled;
+		obj._enableDisableButtons();
+		return aValue;
+	}
+	obj.value = obj.value;
+} //replace_validateValue()
 
 })();

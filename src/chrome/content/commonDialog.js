@@ -26,7 +26,7 @@ commonDialogOnLoad = function(){};
 mapaPlus._commonDialogOnUnload = commonDialogOnUnload;
 commonDialogOnUnload = function(){};
 
-mapaPlus.check = function ()
+mapaPlus.check = function check()
 {
 	let string;
 	try

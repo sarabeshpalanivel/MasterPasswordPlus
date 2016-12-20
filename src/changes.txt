@@ -7,21 +7,23 @@ Legend:
 * = Changed
 - = Removed
 
-v1.23b1 (2016--)
+v1.23b2 (2016-12-20)
 	+ MP prompt inside locked window (issue #83)
 	+ new options to disable password field in locked windows after NN failed attempts for NN seconds.
 	+ new option to lock/logout when computer goes to sleep (not all systems supported https://bugzilla.mozilla.org/show_bug.cgi?id=758848) (issue #68)
-	+ ability prevent individual window from getting locked when global lock initiated (it doesn't affect locking as individual windows) extensions.masterPasswordPlus.nolockpersist hidden setting controls if such flag restored after restart (issue #99)
+	+ ability prevent individual window from getting locked when global lock initiated (it still allows use "lock this window") extensions.masterPasswordPlus.nolockpersist hidden setting controls if such flag restored after restart (issue #99)
 	+ help tab in options
+	+ debug options (when activated debug, browser console automatically opens)
 	! incorrect default action used on toollbar button (issue #100)
 	! MP prompt buttons didn't fit into window (issue #102)
 	! window minimize/maximize/exit buttons are not visible when window is locked and browser.tabs.drawInTitlebar enabled
 	! window size changed when lock on minimize enabled and window minimized
+	! Window title not restored after locked window unlocked (issue #91)
+	! postbox v5.x support (issue #101)
 	- extensions.masterPasswordPlus.lockignorefirstkey setting (issue #90)
-	- dropped support for FF 14 and older
 	* user activity is now detected globally - even when FF/TB not in focus (issue #95)
-	* optimized handling of prefences changes
-	* submitting empty password no longer considered as incorrect
+	* optimized handling of changes in preferences via about:config
+	* submitting empty password no longer considered as incorrect and doesn't count towards failed attempts.
 
 v1.22 (2016-08-01)
 	+ experimental postbox support (https://www.postbox-inc.com)
