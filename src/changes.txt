@@ -7,7 +7,7 @@ Legend:
 * = Changed
 - = Removed
 
-v1.23b2 (2016-12-20)
+v1.23 (2016-12-20)
 	+ MP prompt inside locked window (issue #83)
 	+ new options to disable password field in locked windows after NN failed attempts for NN seconds.
 	+ new option to lock/logout when computer goes to sleep (not all systems supported https://bugzilla.mozilla.org/show_bug.cgi?id=758848) (issue #68)
