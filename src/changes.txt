@@ -20,6 +20,8 @@ v1.23 (2016-12-20)
 	! window size changed when lock on minimize enabled and window minimized
 	! Window title not restored after locked window unlocked (issue #91)
 	! postbox v5.x support (issue #101)
+	! changes log popup shows incorrect changes preview when more then one window opened on startup
+	! Unable unlock when enabled Lock on minimize all windows and a window still minimized (issue #105)
 	- extensions.masterPasswordPlus.lockignorefirstkey setting (issue #90)
 	* user activity is now detected globally - even when FF/TB not in focus (issue #95)
 	* optimized handling of changes in preferences via about:config

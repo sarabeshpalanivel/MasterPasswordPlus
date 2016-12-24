@@ -1,6 +1,6 @@
 if (mapaPlus.core.status == 2 && (mapaPlus.core.pref(supress) == 2 || mapaPlus.core.pref_SuppressTemp))
 {
-	var b = mapaPlus.core.dialogForce, ok = false;
+	let b = mapaPlus.core.dialogForce, ok = false;
 	mapaPlus.core.dialogForce = true;
 	try
 	{

@@ -1,7 +1,9 @@
-try
+var changesLog;
+(function()
 {
-	var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
-}catch(e){};
+let {classes: Cc, interfaces: Ci, utils: Cu} = Components,
+		self = this,
+		log = mapaPlusCore.log;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://mapaplus/masterpasswordplusCore.jsm");
@@ -10,9 +12,7 @@ function $(id)
 {
 	return document.getElementById(id);
 }
-var self = this,
-		log = mapaPlusCore.log,
-		changesLog = {
+changesLog = {
 	addon: null,
 	PREF_BRANCH: mapaPlusCore.PREF_BRANCH,
 	GUID: mapaPlusCore.GUID,
@@ -1065,3 +1065,4 @@ AddonManager.getAddonByID(changesLog.GUID, function(addon)
 	changesLog.showExpandAll();
 	changesLog.checkboxGet("changesLogCopyIssueUrl");
 });
+})();

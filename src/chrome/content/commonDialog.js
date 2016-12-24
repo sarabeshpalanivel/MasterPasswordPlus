@@ -1,6 +1,7 @@
 (function()
 {
-var log = mapaPlusCore.log;
+let {classes: Cc, interfaces: Ci, utils: Cu} = Components,
+		log = mapaPlusCore.log;
 function $ (id)
 {
 	return document.getElementById(id);
@@ -17,8 +18,8 @@ mapaPlus.loaded = false;
 mapaPlus.gecko4 = false;
 mapaPlus.titleOriginal = "";
 mapaPlus.titleSuffix = "";
-mapaPlus.mainWindow = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-												.getService(Components.interfaces.nsIWindowMediator)
+mapaPlus.mainWindow = Cc["@mozilla.org/appshell/window-mediator;1"]
+												.getService(Ci.nsIWindowMediator)
 												.getMostRecentWindow((mapaPlus.core.isTB ? "mail:3pane" : "navigator:browser"));
 
 mapaPlus._commonDialogOnLoad = commonDialogOnLoad;
@@ -56,12 +57,12 @@ mapaPlus.check = function check()
 //double check if it's the master password and not generic password prompt
 	if (this.pass)
 	{
-		let modules = Components.classes["@mozilla.org/security/pkcs11moduledb;1"]
-									.getService(Components.interfaces.nsIPKCS11ModuleDB).listModules(),
+		let modules = Cc["@mozilla.org/security/pkcs11moduledb;1"]
+									.getService(Ci.nsIPKCS11ModuleDB).listModules(),
 				slotnames = [],
 				match = false,
-				text = Components.classes["@mozilla.org/intl/stringbundle;1"].getService()
-								.QueryInterface(Components.interfaces.nsIStringBundleService)
+				text = Cc["@mozilla.org/intl/stringbundle;1"].getService()
+								.QueryInterface(Ci.nsIStringBundleService)
 								.createBundle("chrome://pipnss/locale/pipnss.properties")
 								.GetStringFromName("CertPassPrompt");
 		try
@@ -69,11 +70,11 @@ mapaPlus.check = function check()
 			let slotsMore = true;
 			while(modules.hasMoreElements())
 			{
-				let module = modules.getNext().QueryInterface(Components.interfaces.nsIPKCS11Module),
+				let module = modules.getNext().QueryInterface(Ci.nsIPKCS11Module),
 						slots = module.listSlots();
 				while(slots.hasMoreElements())
 				{
-					let slot = slots.getNext().QueryInterface(Components.interfaces.nsIPKCS11Slot);
+					let slot = slots.getNext().QueryInterface(Ci.nsIPKCS11Slot);
 					slotnames.push(slot.tokenName ? slot.tokenName : slot.name);
 				}
 			}
@@ -84,7 +85,7 @@ mapaPlus.check = function check()
 					slotsMore = true;
 			while(modulesMore)
 			{
-				let module = modules.currentItem().QueryInterface(Components.interfaces.nsIPKCS11Module);
+				let module = modules.currentItem().QueryInterface(Ci.nsIPKCS11Module);
 				if (module)
 				{
 					let slots = module.listSlots();
@@ -95,7 +96,7 @@ mapaPlus.check = function check()
 							let slot = null;
 							try
 							{
-								slot = slots.currentItem().QueryInterface(Components.interfaces.nsIPKCS11Slot);
+								slot = slots.currentItem().QueryInterface(Ci.nsIPKCS11Slot);
 							}
 							catch(e){}
 							if (slot != null)
@@ -329,7 +330,7 @@ mapaPlus.commonDialogOnLoad = function()
 		$("password1Textbox").addEventListener("input", this.nonLatin, true);
 		this.observer.init();
 
-		var timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+		var timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 		timer.init({observe: function()
 		{
 			if (!mapaPlus.core.pref("showlang") || (mapaPlus.core.pref("showlang") == 2 && !mapaPlus.core.windowFullScreen()))
@@ -507,8 +508,8 @@ mapaPlus.checkTemp = function()
 }
 
 mapaPlus.observer = {
-	_observerService: Components.classes["@mozilla.org/observer-service;1"]
-														.getService(Components.interfaces.nsIObserverService),
+	_observerService: Cc["@mozilla.org/observer-service;1"]
+														.getService(Ci.nsIObserverService),
 	_name: null,
 	init: function()
 	{
@@ -524,7 +525,7 @@ mapaPlus.observer = {
 
 	observe: function(aSubject, aTopic, aData)
 	{
-		aSubject.QueryInterface(Components.interfaces.nsISupportsString);
+		aSubject.QueryInterface(Ci.nsISupportsString);
 //mapaPlus.dump(aTopic + " | " + aSubject.data + " | " + aData);
 		if (aTopic != this._name || !mapaPlus[aSubject.data] || typeof(mapaPlus[aSubject.data]) != "function")
 			return;

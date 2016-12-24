@@ -1,17 +1,18 @@
 (function()
 {
+let {classes: Cc, interfaces: Ci, utils: Cu} = Components,
+		log = mapaPlus.core.log;
 function $(id)
 {
 	return document.getElementById(id);
 }
-var log = mapaPlus.core.log;
 if (!mapaPlus.core.startupPassed)
 {
 	window.close();
 }
 if (!mapaPlus.core.isTB)
-	mapaPlus.ss = Components.classes["@mozilla.org/browser/sessionstore;1"]
-								.getService(Components.interfaces.nsISessionStore);
+	mapaPlus.ss = Cc["@mozilla.org/browser/sessionstore;1"]
+								.getService(Ci.nsISessionStore);
 mapaPlus.last = null;
 mapaPlus.initialized = false;
 mapaPlus.windowID = 0;
@@ -36,7 +37,7 @@ mapaPlus.showUnlockArray = [];
 mapaPlus.commands = ["action", "lock_window", "lock", "lock_logout", "logout", "notset"];
 mapaPlus.windowState = null;
 mapaPlus.styleBackup = {};
-mapaPlus.titleTimer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+mapaPlus.titleTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 mapaPlus.loaded = new Date();
 mapaPlus.loadedManualy = false;
 mapaPlus.Win7Features = null;
@@ -44,8 +45,8 @@ mapaPlus.MinTrayR = null;
 mapaPlus.noLockWindow = false;
 
 (mapaPlus.observer = {
-	_observerService: Components.classes["@mozilla.org/observer-service;1"]
-														.getService(Components.interfaces.nsIObserverService),
+	_observerService: Cc["@mozilla.org/observer-service;1"]
+														.getService(Ci.nsIObserverService),
 	_name: "mapaPlusWindow",
 	init: function()
 	{
@@ -60,7 +61,7 @@ mapaPlus.noLockWindow = false;
 
 	observe: function(aSubject, aTopic, aData)
 	{
-		aSubject.QueryInterface(Components.interfaces.nsISupportsString);
+		aSubject.QueryInterface(Ci.nsISupportsString);
 //	log("observe: " + aSubject.data, true);
 		if (aTopic != this._name || !mapaPlus[aSubject.data])
 			return;
@@ -229,7 +230,7 @@ mapaPlus.showTooltip = function()
 }
 
 mapaPlus.tooltip = {
-	timer: Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer),
+	timer: Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer),
 	init: function()
 	{
 		if (mapaPlus.showTooltip())
@@ -392,7 +393,7 @@ mapaPlus.suppressedPopupRemoveTimer = function(t, box, boxId)
 	}
 	else
 	{
-		timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+		timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 		this.suppressedPopupBox[boxId.id] = timer;
 	}
 	timer.init({observe: function() {try{mapaPlus.suppressedPopupBox[boxId.id]=null;box.removeNotification(boxId)}catch(e){}}}, t*1000, timer.TYPE_ONE_SHOT);
@@ -505,11 +506,11 @@ mapaPlus.minimizedLockFix = function(restore)
 		window.screenY = -32000;
 	}
 
-	let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+	let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 	timer.init({observe:function()
 	{
 		window.minimize();
-		let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+		let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 		timer.init({observe:function()
 		{
 			mapaPlus.windowMinimizedForced = false;
@@ -535,7 +536,7 @@ mapaPlus.minimizedLockFix = function(restore)
 	if (mapaPlus.MinTrayR)
 		return;
 
-	let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+	let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 	timer.init({observe:function()
 	{
 		window.minimize();
@@ -574,7 +575,7 @@ if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome:
 	if (self.core.pref("lockhidetitle"))
 	{
 
-		let title = self.lockedTitle;
+		let title = $("masterPasswordPlusUnLockInfo").value;
 		try
 		{
 			let l = window.location.href.toString();
@@ -588,28 +589,29 @@ if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome:
 
 			let titleUpdate = function()
 			{
-				let titleObj = mapaPlus.lockedTitleObj;
+				let titleObj = self.lockedTitleObj;
 				try
 				{
-					var t = mapaPlus.lockedTitleAttr ? titleObj.getAttribute("title") : titleObj.title;
+					let t = self.lockedTitleAttr ? titleObj.getAttribute("title") : titleObj.title;
 					if (t != title)
 					{
-						mapaPlus.lockedTitle = t;
+						self.lockedTitle = t;
 
-						if (mapaPlus.lockedTitleAttr)
+						if (self.lockedTitleAttr)
 							titleObj.setAttribute("title", title);
 						else
 							titleObj.title = title;
 
 					}
 				}
-				catch(e){mapaPlus.titleTimer.cancel();}
+				catch(e){log.error(e);self.titleTimer.cancel();}
 			}
 			titleUpdate();
 			self.titleTimer.init({observe:titleUpdate}, 100, self.titleTimer.TYPE_REPEATING_SLACK);
 			window.addEventListener("unload", self.titleTimer.cancel, false);
+log(title);
 		}
-		catch(e){}
+		catch(e){log.error(e);}
 	}
 	let o = $("titlebar"); //FF4 with no menubar
 	if (o)
@@ -623,12 +625,12 @@ if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome:
 	$('masterPasswordPlusLock').parentNode.hidden = false;
 	$('masterPasswordPlusUnLockInput').focus();
 	let win = document.documentElement;
-	if (mapaPlus.core.style.MozAppearance)
+	if (self.core.style.MozAppearance)
 	{
-		mapaPlus.styleBackup.MozAppearance = win.style.MozAppearance;
-		mapaPlus.styleBackup.backgroundColor = win.style.backgroundColor;
-		win.style.MozAppearance = mapaPlus.core.style.MozAppearance;
-		win.style.backgroundColor = mapaPlus.core.style.backgroundColor;
+		self.styleBackup.MozAppearance = win.style.MozAppearance;
+		self.styleBackup.backgroundColor = win.style.backgroundColor;
+		win.style.MozAppearance = self.core.style.MozAppearance;
+		win.style.backgroundColor = self.core.style.backgroundColor;
 	}
 
 	let n = win.childNodes;
@@ -644,7 +646,7 @@ if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome:
 			n[i].style.visibility = "hidden";
 		}
 	}
-	mapaPlus.extraElements.forEach(function hide(c, i, t, o)
+	self.extraElements.forEach(function hide(c, i, t, o)
 	{
 		if (c == "_buttons")
 		{
@@ -721,14 +723,14 @@ if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome:
 						windowState = window.STATE_MINIMIZED;
 */
 					let min = windowState == window.STATE_MINIMIZED;
-					try{mapaPlus.Win7Features.AeroPeek.onCloseWindow(window)}catch(e){}
+					try{self.Win7Features.AeroPeek.onCloseWindow(window)}catch(e){}
 					if (min)
-						mapaPlus.minimizedLockFix();
+						self.minimizedLockFix();
 				}catch(e){};
 			}
 			if (delay)
 			{
-				let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+				let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 				timer.init({observe:remove}, 100, timer.TYPE_ONE_SHOT);
 			}
 			else
@@ -1258,7 +1260,7 @@ mapaPlus.hotkeyDown = function hotkeyDown(e, g)
 		e.preventDefault();
 		e.stopPropagation();
 		//we must exit this function before modal dialog showed, otherwise event won't be properly canceled.
-		let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+		let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 		timer.init({observe:function()
 		{
 			if (!mapaPlus.core.windowFirst("Dialog"))
@@ -1362,7 +1364,7 @@ mapaPlus.load = function()
 
 	window.removeEventListener("load", mapaPlus.load, false);
 	mapaPlus.init();
-	let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+	let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 	timer.init({observe:function()
 	{
 		window.removeEventListener("unload", timer.cancel, false);
@@ -1377,7 +1379,7 @@ mapaPlus.showMenu = function(e)
 	$("mapa_menu").openPopup(e.target.parentNode, "after_start");
 /*
 	$("mapa_menu").firstChild.focus();
-	let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+	let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 	timer.init({observe: function(){$("mapa_menu").firstChild.focus();}}, 1000, timer.TYPE_ONE_SHOT);
 */
 }
@@ -1434,16 +1436,19 @@ mapaPlus.onLoadAdd = function(func)
 		mapaPlus.onLoadArray.push(func);
 }
 
-mapaPlus.upgrade = function()
+mapaPlus.upgrade = function upgrade()
 {
-	let compare = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
-									.getService(Components.interfaces.nsIVersionComparator).compare,
+log.debug();
+	let compare = Cc["@mozilla.org/xpcom/version-comparator;1"]
+									.getService(Ci.nsIVersionComparator).compare,
 			version = this.core.pref("version");
 
 
-	mapaPlus.core.prevVersion = version;
-	if (version == "firstinstall"	|| (!this.core.addon.firstRun && version == this.core.addon.version))
+	if (this.core.upgradeRun || version == "firstinstall" || (!this.core.addon.firstRun && version == this.core.addon.version))
 		return;
+
+	this.core.prevVersion = version;
+	this.core.upgradeRun = true;
 /*
 function upgradeMS(
 	full old setting name,
@@ -1463,10 +1468,10 @@ return old setting, null if failed
 		g = g || "Bool";
 		s = s || g;
 		c = c || function(r){return r;}
-		var aCount = {value:0};
-		var r = null;
-		var p = Components.classes["@mozilla.org/preferences-service;1"]
-						.getService(Components.interfaces.nsIPrefService).getBranch("");
+		let aCount = {value:0},
+				r = null,
+				p = Cc["@mozilla.org/preferences-service;1"]
+						.getService(Ci.nsIPrefService).getBranch("");
 		p.getChildList(o, aCount);
 		if( aCount.value != 0 )
 		{
@@ -1475,7 +1480,7 @@ return old setting, null if failed
 				try{p.deleteBranch(o)}catch(e){};
 
 			if (n !== null && r !== null)
-				try{mapaPlus.core.pref['set' + s + 'Pref'](n, c(r))}catch(e){log("error converting " + o + " (" + g + ") = " + r + " to " + n + " (" + s + ") = " + c(r))}
+				try{mapaPlus.core.prefs['set' + s + 'Pref'](n, c(r))}catch(e){log("error converting " + o + " (" + g + ") = " + r + " to " + n + " (" + s + ") = " + c(r))}
 		}
 		return r;
 	}
@@ -1517,13 +1522,21 @@ return old setting, null if failed
 
 	if (compare(version, "1.21.2") < 0)
 	{
-		let p = Components.classes["@mozilla.org/preferences-service;1"]
-						.getService(Components.interfaces.nsIPrefService).getDefaultBranch(mapaPlusCore.PREF_BRANCH);
-		this.core.pref("forceprompt", p.getComplexValue("forceprompt", Components.interfaces.nsISupportsString).data);
+		let p = Cc["@mozilla.org/preferences-service;1"]
+						.getService(Ci.nsIPrefService).getDefaultBranch(mapaPlusCore.PREF_BRANCH);
+		this.core.pref("forceprompt", p.getComplexValue("forceprompt", Ci.nsISupportsString).data);
 	}
 	if (compare(version, "1.21.4") < 0)
 	{
 		upgradeMS(mapaPlusCore.PREF_BRANCH + "showchangeslog", "showchangeslog", false, "Bool", "Int", function(val)
+		{
+			return val ? mapaPlus.CHANGESLOG_FULL : 0;
+		});
+	}
+	if (compare(version, "1.24") < 0)
+	{
+		try{p.deleteBranch(o)}catch(e){};
+		upgradeMS("extensions.masterPasswordPlus.lockignorefirstkey", "showchangeslog", false, "Bool", "Int", function(val)
 		{
 			return val ? mapaPlus.CHANGESLOG_FULL : 0;
 		});
@@ -1572,8 +1585,8 @@ mapaPlus.isMinimized = function()
 					mapaPlus.screenY = window.screenY;
 				}
 				mapaPlus.screenRestored = false;
+				mapaPlus.minimized();
 			}
-			mapaPlus.minimized();
 		}
 		else if (mapaPlus.Win7Features)
 		{
@@ -1582,7 +1595,7 @@ mapaPlus.isMinimized = function()
 
 			if (!mapaPlus.windowMinimizedForced && !mapaPlus.screenRestored)
 			{
-				let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+				let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 				timer.init({observe:function()
 				{
 					mapaPlus.windowMinimizedForced = true;
@@ -1653,7 +1666,7 @@ log([mapaPlus.windowState, window.windowState, windowState, mapaPlus.screenX, ma
 
 		if (!mapaPlus.screenRestored)
 		{
-			let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+			let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 			timer.init({observe:function()
 			{
 				mapaPlus.windowMinimizedRestoring = true;
@@ -1739,21 +1752,21 @@ log.debug();
 	self.lockSetBgImage(self.core.pref("lockbgimage"));
 
 	const WINTASKBAR_CONTRACTID = "@mozilla.org/windows-taskbar;1";
-	if (!self.core.isTB && WINTASKBAR_CONTRACTID in Components.classes &&
-			Components.classes[WINTASKBAR_CONTRACTID].getService(Components.interfaces.nsIWinTaskbar).available)
+	if (!self.core.isTB && WINTASKBAR_CONTRACTID in Cc &&
+			Cc[WINTASKBAR_CONTRACTID].getService(Ci.nsIWinTaskbar).available)
 	{
 			let temp = {};
 			try
 			{
 				//Windows 7
-				Components.utils.import("resource://gre/modules/WindowsPreviewPerTab.jsm", temp);
+				Cu.import("resource://gre/modules/WindowsPreviewPerTab.jsm", temp);
 			}
 			catch(e)
 			{
 				//Windows 10
 				try
 				{
-					Components.utils.import("resource:///modules/WindowsPreviewPerTab.jsm", temp);
+					Cu.import("resource:///modules/WindowsPreviewPerTab.jsm", temp);
 				}
 				catch(e){}
 			}
@@ -1779,7 +1792,7 @@ log.debug();
 	if (!self.loadedManualy && !("__SSi" in window) || !window.__SSi)
 		self.ss.init(window);
 */
-	let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+	let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 	timer.init({observe: function()
 	{
 		let wasLocked = false,
@@ -1807,11 +1820,11 @@ log.debug();
 	self.hotkeyInit();
 
 	self.MinTrayR = "gMinTrayR" in window;
-	if (self.MinTrayR || Components.classes["@mozilla.org/xpcom/version-comparator;1"]
-			.getService(Components.interfaces.nsIVersionComparator)
+	if (self.MinTrayR || Cc["@mozilla.org/xpcom/version-comparator;1"]
+			.getService(Ci.nsIVersionComparator)
 			.compare(mapaPlus.core.appInfo.version, "8.0") < 0)
 	{
-		let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+		let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 		timer.init({observe:mapaPlus.isMinimized}, 500, timer.TYPE_REPEATING_SLACK);
 		window.addEventListener("unload", timer.cancel, false);
 	}

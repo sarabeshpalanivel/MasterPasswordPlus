@@ -69,6 +69,7 @@ var self = this,
 	timerLockTime: null,
 
 	initialized: false,
+	prevVersion: "",
 	timerFocus: {
 		timer: Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer),
 		init: function(t)

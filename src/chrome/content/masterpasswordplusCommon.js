@@ -1,15 +1,16 @@
-var mapaPlus, log;
+var mapaPlus, mapaPlusCore;
 (function()
 {
-	mapaPlus ={
+let {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+mapaPlus = {
 	locked: false,
 	windowType: "window",
 	loadCore: function()
 	{
-		Components.utils.import("resource://mapaplus/masterpasswordplusCore.jsm");
+		Cu.import("resource://mapaplus/masterpasswordplusCore.jsm");
 		this.core = mapaPlusCore;
-		this.dump = this.core.dump;
-		log = this.core.dump;
+		this.log = this.core.log;
+		log = this.core.log;
 	},
 
 	ss: {
@@ -43,7 +44,7 @@ var mapaPlus, log;
 		NUM_LOCK: "NumLock"
 	},
 
-	dump: null,
+	log: null,
 
 	changemp: function()
 	{
@@ -63,7 +64,7 @@ var mapaPlus, log;
 		if (mapaPlus.locked)
 			return null;
 
-		var wm = Components.classes['@mozilla.org/appshell/window-mediator;1'].getService(Components.interfaces.nsIWindowMediator);
+		var wm = Cc['@mozilla.org/appshell/window-mediator;1'].getService(Ci.nsIWindowMediator);
 		var browsers = wm.getZOrderDOMWindowEnumerator('', false);
 		while (browsers.hasMoreElements())
 		{
@@ -74,8 +75,8 @@ var mapaPlus, log;
 				return browser;
 			}
 		}
-		return Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-						.getService(Components.interfaces.nsIWindowWatcher)
+		return Cc["@mozilla.org/embedcomp/window-watcher;1"]
+						.getService(Ci.nsIWindowWatcher)
 						.openWindow(null, a, b, c, arg);
 
 //		window.openDialog(a, b, c, arg);
@@ -151,19 +152,19 @@ log.error(e);
 	},
 
 	AeroPeek: false,
-	notification: Components.classes['@mozilla.org/alerts-service;1'].getService(Components.interfaces.nsIAlertsService),
+	notification: Cc['@mozilla.org/alerts-service;1'].getService(Ci.nsIAlertsService),
 	openChanges: function()
 	{
 		mapaPlus.showChangesLog(mapaPlus.core.pref("showchangeslog"));
 	},
 	get getOpenURL ()
 	{
-		let	win = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-							.getInterface(Components.interfaces.nsIWebNavigation)
-							.QueryInterface(Components.interfaces.nsIDocShellTreeItem)
+		let	win = window.QueryInterface(Ci.nsIInterfaceRequestor)
+							.getInterface(Ci.nsIWebNavigation)
+							.QueryInterface(Ci.nsIDocShellTreeItem)
 							.rootTreeItem
-							.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-							.getInterface(Components.interfaces.nsIDOMWindow),
+							.QueryInterface(Ci.nsIInterfaceRequestor)
+							.getInterface(Ci.nsIDOMWindow),
 				first = mapaPlus.core.windowFirst(),
 				func = win.switchToTabHavingURI;
 		if (!func && first !== null)
@@ -174,7 +175,7 @@ log.error(e);
 	},
 	showChangesLog: function(type, demo)
 	{
-log([type, type & mapaPlus.CHANGESLOG_FULL]);
+//log([type, type & mapaPlus.CHANGESLOG_FULL]);
 		if (typeof(type) == "undefined" || type & mapaPlus.CHANGESLOG_FULL)
 		{
 			if (mapaPlus.getOpenURL)
@@ -187,6 +188,7 @@ log([type, type & mapaPlus.CHANGESLOG_FULL]);
 			{
 				let str = "",
 						mp = mapaPlus,
+						prevV = this.core.prevVersion || addon.version,
 						notifListener = {
 							observe: function(aSubject, aTopic, aData)
 							{
@@ -196,13 +198,13 @@ log([type, type & mapaPlus.CHANGESLOG_FULL]);
 								}
 							}
 						};
-				if (Components.classes["@mozilla.org/xpcom/version-comparator;1"]
-						.getService(Components.interfaces.nsIVersionComparator)
+				if (Cc["@mozilla.org/xpcom/version-comparator;1"]
+						.getService(Ci.nsIVersionComparator)
 						.compare(this.core.appInfo.version, "8.0") > 0)
 				{
-					let	utf8Converter = Components.classes["@mozilla.org/intl/utf8converterservice;1"].getService(Components.interfaces.nsIUTF8ConverterService),
-							ioService = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService),
-							scriptableStream = Components.classes["@mozilla.org/scriptableinputstream;1"].getService(Components.interfaces.nsIScriptableInputStream),
+					let	utf8Converter = Cc["@mozilla.org/intl/utf8converterservice;1"].getService(Ci.nsIUTF8ConverterService),
+							ioService = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService),
+							scriptableStream = Cc["@mozilla.org/scriptableinputstream;1"].getService(Ci.nsIScriptableInputStream),
 							aURL = addon.getResourceURI("changes.txt").spec,
 							channel,
 							input
@@ -216,8 +218,8 @@ log([type, type & mapaPlus.CHANGESLOG_FULL]);
 																						null,      // aLoadingNode
 																						Services.scriptSecurityManager.getSystemPrincipal(),
 																						null,      // aTriggeringPrincipal
-																						Components.interfaces.nsILoadInfo.SEC_NORMAL,
-																						Components.interfaces.nsIContentPolicy.TYPE_INTERNAL_IMAGE
+																						Ci.nsILoadInfo.SEC_NORMAL,
+																						Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE
 						);
 					}
 					input = channel.open();
@@ -228,16 +230,22 @@ log([type, type & mapaPlus.CHANGESLOG_FULL]);
 					input.close();
 					str = utf8Converter.convertURISpecToUTF8 (str, "UTF-8");
 					str = str.replace(/\t/g, "  ");
+					str = str.replace(/\r\n/g, "\n");
 					function RegExpEscape(string)
 					{
 						return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 					}
-					let strV = (new RegExp("(^v" + RegExpEscape(addon.version) + " \\([\\s\\S]+)" , "m")).exec(str),
-							prevVersion = mapaPlus.core.prevVersion.replace("-signed", "");
-		
+//					let strV = (new RegExp("(^v" + RegExpEscape(addon.version) + " \\([\\s\\S]+)" , "m")).exec(str),
+					let strV = (new RegExp("(^v[0-9\\.a-z]+ \\([\\s\\S]+)" , "m")).exec(str),
+							prevVersion = prevV.replace("-signed", "");
+
+//					if (!strV)
+//						strV = (new RegExp("(^v" + RegExpEscape(addon.version).replace(/[\-a-z][0-9]$/, '') + " \\([\\s\\S]+)" , "m")).exec(str)
+
 					if (strV)
 					{
 						str = strV[1];
+/*
 						if (demo && prevVersion == addon.version)
 						{
 							let v,l = [],
@@ -249,57 +257,59 @@ log([type, type & mapaPlus.CHANGESLOG_FULL]);
 								prevVersion = l[Math.floor(Math.random() * l.length)];
 		
 						}
+*/
 						strV = (new RegExp("([\\s\\S]+)^v" + RegExpEscape(prevVersion) + " \\(" , "m")).exec(str);
+						if (!strV)
+							strV = (new RegExp("([\\s\\S]+)^v" + RegExpEscape(prevVersion).replace(/[\-a-z][0-9]$/, '') + " \\(" , "m")).exec(str);
+
+						if (!strV)
+							strV = (new RegExp("((\\S\\s|.)*)(\\s+^v[0-9\\.ab]+ \\()" , "m")).exec(str);
+
 						if (strV)
 							str = strV[1];
-		
 					}
 				}
 
 				mapaPlus.notification.showAlertNotification(	'chrome://mapaPlus/skin/images/masterpasswordplus.png',
-																											addon.name + " " + mapaPlus._("updated").replace("{old}", "v" + mapaPlus.core.prevVersion).replace("{new}", "v" + addon.version),
+																											addon.name + " " + mapaPlus._("updated").replace("{old}", "v" + prevV).replace("{new}", "v" + addon.version),
 																											str.replace(/^\s+|\s+$/g, ""),
 																											true,
 																											null,
 																											notifListener,
 																											addon.name + " " + mapaPlus._("updated"));
-			}catch(e){mapaPlus.dump(e, 1);}
+			}catch(e){log(e, 1);}
 	
 	}//openChanges()
 }
-mapaPlus.notification = Components.classes['@mozilla.org/alerts-service;1'].getService(Components.interfaces.nsIAlertsService);
+mapaPlus.notification = Cc['@mozilla.org/alerts-service;1'].getService(Ci.nsIAlertsService);
 mapaPlus.notificationAvailable = (mapaPlus.notification && mapaPlus.notification.showAlertNotification);
 mapaPlus.CHANGESLOG_NONE = 0;
 mapaPlus.CHANGESLOG_FULL = 2;
 mapaPlus.CHANGESLOG_NOTIFICATION = 1;
 mapaPlus.CHANGESLOG_URL = "chrome://mapaplus/content/changes.xul";
 
-})();
-
 mapaPlus.loadCore();
-switch (Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch("ui.key.").getIntPref("accelKey"))
+switch (Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService).getBranch("ui.key.").getIntPref("accelKey"))
 {
 	case 17:  mapaPlus.core.accel = "CONTROL"; break;
 	case 18:  mapaPlus.core.accel = "ALT"; break;
 	case 224: mapaPlus.core.accel = "META"; break;
 	default:  mapaPlus.core.accel = (window.navigator.platform.search("Mac") == 0 ? "META" : "CONTROL");
 }
-var mapaPlusCore = mapaPlus.core;
+mapaPlusCore = mapaPlus.core;
 
-(function()
+let _strings = Cc["@mozilla.org/intl/stringbundle;1"]
+					.getService(Ci.nsIStringBundleService)
+					.createBundle("chrome://" + (mapaPlus.core.ADDONDOMAIN || "mapaplus") + "/locale/main.properties");
+mapaPlus._ = function(s)
 {
-	let _strings = Components.classes["@mozilla.org/intl/stringbundle;1"]
-						.getService(Components.interfaces.nsIStringBundleService)
-						.createBundle("chrome://" + (mapaPlus.core.ADDONDOMAIN || "mapaplus") + "/locale/main.properties");
-	mapaPlus._ = function(s)
+	try
 	{
-		try
-		{
-			return _strings.GetStringFromName(s);
-		}
-		catch(e)
-		{
-			return mapaPlus.strings[s];
-		}
-	};
+		return _strings.GetStringFromName(s);
+	}
+	catch(e)
+	{
+		return mapaPlus.strings[s];
+	}
+};
 })();

@@ -1,8 +1,6 @@
 (function(){
-try
-{
-	var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
-}catch(e){}
+let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components,
+		log = mapaPlus.core.log;
 
 function $(id)
 {
@@ -228,7 +226,7 @@ mapaPlus.cloneStyle = function(orig, obj)
 		}
 		catch(e)
 		{
-			mapaPlus.dump(e);
+			log.error(e);
 		}
 	}
 	obj.className += " clone";
@@ -246,8 +244,8 @@ mapaPlus.cloneClass = function(orig, obj)
 }
 mapaPlus.cleanClone =	function(obj)
 {
-	var skipId = ["statusbar-display", "show_location_drag_icon"];
-	var skipTag = ["tooltip", "popup", "prefpane"];
+	let skipId = ["statusbar-display", "show_location_drag_icon"],
+			skipTag = ["tooltip", "popup", "prefpane"];
 	obj.display = "";
 	obj.hidden = false;
 	obj.collapsed = false;
@@ -299,16 +297,17 @@ mapaPlus.cleanClone =	function(obj)
 
 mapaPlus.getOrder = function(obj)
 {
-	var id = "";
-	var dir = false;
-	var sel = null;
-	var c = $(obj);
+	let id = "",
+			dir = false,
+			sel = null,
+			c = $(obj),
+			first, last;
+
 	if (!c)
 		return false;
 
 	c = c.childNodes;
-	var first, last;
-	for(var i = 0; i < c.length; i++)
+	for(let i = 0; i < c.length; i++)
 	{
 		if (c[i].id.match(/^mapapl-/))
 		{
@@ -329,6 +328,7 @@ mapaPlus.getOrder = function(obj)
 		dir = sel.getAttribute("direction") == "true";
 		if ((id == first.id && !dir) || (id == last.id && dir))
 			id = "mapapl";
+
 		return {id: id, dir: dir};
 	}
 	return false;
@@ -621,11 +621,11 @@ mapaPlus.observer = {
 	observe: function(aSubject, aTopic, aData)
 	{
 		aSubject.QueryInterface(Components.interfaces.nsISupportsString);
-//mapaPlus.dump("commonop observe " + aSubject.data);
+//log("commonop observe " + aSubject.data);
 		if (aTopic != this._name || !mapaPlus[aSubject.data])
 			return;
 
-//mapaPlus.dump("commonop "+aData);
+//log("commonop "+aData);
 		mapaPlus[aSubject.data](aData);
 	},
 }
@@ -764,7 +764,7 @@ mapaPlus.hotkeyShow = function(keys, obj, type)
 	var fKeys = r[1];
 	r = r[0];
 	
-//mapaPlus.core.dump(type + "\n-\n" + keys[0] + "\n-\n" + keys[1] + "\n-\n" + obj.keys)
+//log(type + "\n-\n" + keys[0] + "\n-\n" + keys[1] + "\n-\n" + obj.keys)
 	if ((type != "down" && keys[0].length < 2))
 	{
 		r = "";
