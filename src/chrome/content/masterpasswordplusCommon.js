@@ -135,14 +135,15 @@ log.error(e);
 		if (typeof(obj) == "string")
 			obj = document.getElementById(obj);
 
-		var c = obj.childNodes;
-		var command = remove ? "removeAttribute" : "setAttribute";
+		let	c = obj.childNodes,
+				command = remove ? "removeAttribute" : "setAttribute";
+
 		if (!obj.id || ignore.indexOf(obj.id) == -1)
 			obj[command](attr, value);
 
-		for(var i = 0; i < c.length; i++)
+		for(let i = 0; i < c.length; i++)
 		{
-			var n = !c[i].id || ignore.indexOf(c[i].id) == -1;
+			let n = !c[i].id || ignore.indexOf(c[i].id) == -1;
 			if (c[i][command] && n)
 				c[i][command](attr, value);
 

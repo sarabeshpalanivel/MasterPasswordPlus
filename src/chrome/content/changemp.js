@@ -1,3 +1,10 @@
+(function()
+{
+
+function $(id)
+{
+	return document.getElementById(id);
+}
 mapaPlus.window = window;
 mapaPlus.checkPasswords = checkPasswords;
 mapaPlus.setPassword = setPassword;
@@ -16,96 +23,34 @@ mapaPlus.load = function()
 	mapaPlus.init();
 }
 
-mapaPlus.init = function()
+mapaPlus.init = function init()
 {
+log.debug();
 	this.windowID = this.core.windowAdd(mapaPlus, "changemp");
-	this.bundle = document.getElementById("bundlePreferences");
-	document.getElementById("masterPasswordPlusOptions").setAttribute("changemp", true);
-	document.getElementById("changemp").setAttribute("ondialogaccept", "return setPassword();");
-	document.getElementById("oldpw").setAttribute("oninput", "checkPasswords();");
-	document.getElementById("mapaPlusString").setAttribute("tooltiptext", document.getElementById("mapaPlusString").getAttribute("tooltiptext").replace("#", this.core.appInfo.name));
+	this.bundle = $("bundlePreferences");
+	$("masterPasswordPlusOptions").setAttribute("changemp", true);
+	$("changemp").setAttribute("ondialogaccept", "return setPassword();");
+	$("oldpw").setAttribute("oninput", "checkPasswords();");
+	$("mapaPlusString").setAttribute("tooltiptext", $("mapaPlusString").getAttribute("tooltiptext").replace("#", this.core.appInfo.name));
 
 	if (this.core.isFF4)
-		document.getElementById("prompt-one").collapsed = document.getElementById("one.info").collapsed = true;
+		$("prompt-one").collapsed = $("one.info").collapsed = true;
 
-	document.getElementById("mapaPlusContextmenu").hidden = this.core.isTB;
-	document.getElementById("mapaPlusUrlbarBox").hidden = this.core.isTB;
-	if (!this.core.isTB)
-	{
-		if (this.iniIcons("urlbar-icons", "mapa_urlbar", "urlbar", "mapaPlusUrlbar"))
-			document.getElementById("urlbar-container").collapsed = false;
-
-		document.getElementById("panelDisplay").addEventListener("mousemove", this.showSelected, true);
-		document.getElementById("mapaPlusSuppressPopupBox").collapsed = false;
-		document.getElementById("mapaPlusSuppressPopupBox").setAttribute("suspended", this.core.suppressedPopupStop);
-		if (document.getElementById("mapaPlusSuppressPopup").checked && this.core.suppressedPopupStop)
-		{
-			document.getElementById("mapaPlusSuppressPopup").setAttribute("indeterminate", true);
-			document.getElementById("mapaPlusSuppressPopup").checked = false; //we want first click check the checkbox, not uncheck it.
-		}
-		document.getElementById("urlbar").boxObject.firstChild.setAttribute("flex", 0);
-	}
-	var timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
-	timer.init({observe: function()
-	{
-		let x, y;
-		if (document.getElementById("options").boxObject.width + 5 != document.getElementById("masterPasswordPlusOptions").boxObject.width)
-		{
-			x = (document.getElementById("options").boxObject.width + 5 - document.getElementById("masterPasswordPlusOptions").boxObject.width) + (document.width - document.getElementById("masterPasswordPlusOptions").boxObject.width);
-			window.resizeBy(x, 0);
-		}
-
-		if (document.getElementById("options").boxObject.height + 15 != document.getElementById("masterPasswordPlusOptions").boxObject.height)
-		{
-			y = document.getElementById("options").boxObject.height - document.getElementById("masterPasswordPlusOptions").boxObject.height + 15;
-			window.resizeBy(0, y);
-		}
-		if (document.getElementById("mapaPlusHotkeysBox").boxObject.width > document.getElementById("mapaPlusHotkeysBox").parentNode.boxObject.width)
-		{
-			x = document.getElementById("mapaPlusHotkeysBox").boxObject.width - document.getElementById("mapaPlusHotkeysBox").parentNode.boxObject.width;
-			window.resizeBy(x, 0);
-		}
-		if (!mapaPlus.core.isTB)
-		{
-			if (document.getElementById("urlbar").boxObject.firstChild.boxObject.width > document.getElementById("urlbar").boxObject.width)
-			{
-				x = document.getElementById("urlbar").boxObject.firstChild.boxObject.width - document.getElementById("urlbar").boxObject.width;
-				window.resizeBy(x, 0);
-			}
-			document.getElementById("urlbar").boxObject.firstChild.setAttribute("flex", 1);
-		}
-		x = document.documentElement.boxObject.width > window.screen.availWidth ? document.documentElement.boxObject.width - window.screen.availWidth : 0;
-		y = document.documentElement.boxObject.height > window.screen.availHeight ? document.documentElement.boxObject.height - window.screen.availHeight : 0;
-		if (x || y)
-		{
-			window.resizeBy(x, y);
-			document.getElementById("masterPasswordPlusOptions").boxObject.parentBox.style.overflow = "auto";
-			let pix = window.getComputedStyle(document.documentElement, null).paddingRight;
-			document.documentElement.style.paddingRight = 0;
-			let r = null;
-			for(let b in document.documentElement._buttons)
-			{
-				b = document.documentElement._buttons[b];
-				if (!r || b.boxObject.x > r.boxObject.x)
-					r = b
-			}
-			r.style.marginRight = pix;
-		}
-	}}, 0, timer.TYPE_ONE_SHOT);
+	$("mapaPlusContextmenu").hidden = this.core.isTB;
+	$("mapaPlusUrlbarBox").hidden = this.core.isTB;
 	this.okButton = document.documentElement.getButton("accept");
 	this.okButtonLabel = this.okButton.label;
 
 	setPassword = function ()
 	{
-		var pk11db = Components.classes["@mozilla.org/security/pk11tokendb;1"].getService(Components.interfaces.nsIPK11TokenDB);
 		var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 																	.getService(Components.interfaces.nsIPromptService);
-		var token = pk11db.findTokenByName(tokenName);
+		var token = Components.classes["@mozilla.org/security/pk11tokendb;1"].getService(Components.interfaces.nsIPK11TokenDB).getInternalKeyToken();
 		dump("*** TOKEN!!!! (name = |" + token + "|\n");
 
-		var oldpwbox = document.getElementById("oldpw");
+		var oldpwbox = $("oldpw");
 		var initpw = oldpwbox.getAttribute("inited");
-		var bundle = document.getElementById("bundlePreferences");
+		var bundle = $("bundlePreferences");
 		var success = false;
 
 		if (initpw == "false" || initpw == "empty") {
@@ -189,12 +134,12 @@ mapaPlus.init = function()
 	checkPasswords = function ()
 	{
 		mapaPlus.checkPasswords();
-		if (!document.getElementById("oldpw").hidden)
+		if (!$("oldpw").hidden)
 		{
-			document.documentElement.getButton("accept").disabled = !((!document.getElementById("oldpw").value
-																																	&& document.getElementById("pw1").value == ""
-																																	&& document.getElementById("pw2").value == "")
-																															|| (document.getElementById("oldpw").value
+			document.documentElement.getButton("accept").disabled = !((!$("oldpw").value
+																																	&& $("pw1").value == ""
+																																	&& $("pw2").value == "")
+																															|| ($("oldpw").value
 																																	&& !document.documentElement.getButton("accept").disabled));
 
 //			mapaPlus.core.tokenDB.logoutAndDropAuthenticatedResources();
@@ -211,18 +156,21 @@ mapaPlus.init = function()
 
 mapaPlus.suppress = function()
 {
-	var status = document.getElementById("mapaPlusSuppress").value == 0 || document.getElementById("mapaPlusSuppress").disabled || mapaPlus.isLocked;
+	var status = $("mapaPlusSuppress").value == 0 || $("mapaPlusSuppress").disabled || mapaPlus.isLocked;
 	mapaPlus.setAttribute("mapaPlusSuppressBox", "disabled", status, !status);
-	status = ((!document.getElementById("mapaPlusSuppressPopup").checked && document.getElementById("mapaPlusSuppressPopup").getAttribute("indeterminate") != "true") || document.getElementById("mapaPlusSuppressPopup").disabled) || mapaPlus.isLocked;
+	status = ((!$("mapaPlusSuppressPopup").checked && $("mapaPlusSuppressPopup").getAttribute("indeterminate") != "true") || $("mapaPlusSuppressPopup").disabled) || mapaPlus.isLocked;
 	mapaPlus.setAttribute("mapaPlusSuppressPopupRemoveBox", "disabled", status, !status);
 }
 
-mapaPlus.enableDisable = function(e)
+mapaPlus._enableDisable = function enableDisable(e)
 {
-	var status, startup, lock, disable, display, minimize;
-	var del = (document.getElementById("oldpw").value != ""
-			&& document.getElementById("pw1").value == "" && document.getElementById("pw2").value == "");
-	var locked = (mapaPlus.protected || mapaPlus.isLocked);
+log.debug();
+	let	status, startup, lock, disable, display, minimize,
+			locked = (mapaPlus.protected || mapaPlus.isLocked),
+			del = ($("oldpw").value != ""
+						&& $("pw1").value == ""
+						&& $("pw2").value == "");
+
 	if (del || locked)
 	{
 		status = true;
@@ -231,29 +179,29 @@ mapaPlus.enableDisable = function(e)
 		disable = true;
 		display = locked ? true : false;
 		minimize = true;
-		document.getElementById("mapaPlusEnabled").disabled = true;
-		document.getElementById("mapaPlusStartup").disabled = true;
+		$("mapaPlusEnabled").disabled = true;
+		$("mapaPlusStartup").disabled = true;
 		if (!del)
 			document.documentElement.getButton("extra1").hidden = false;
 
-		document.getElementById("mapaPlusLockTimer").disabled = true;
+		$("mapaPlusLockTimer").disabled = true;
 	}
 	else
 	{
-		document.getElementById("mapaPlusEnabled").disabled = false;
-		document.getElementById("mapaPlusStartup").disabled = false;
+		$("mapaPlusEnabled").disabled = false;
+		$("mapaPlusStartup").disabled = false;
 		document.documentElement.getButton("extra1").hidden = true;
-		document.getElementById("mapaPlusLockTimer").disabled = false;
-		status = !document.getElementById("mapaPlusEnabled").checked;
-		startup = !document.getElementById("mapaPlusStartup").checked;
-		lock = !document.getElementById("mapaPlusLockTimer").checked;
+		$("mapaPlusLockTimer").disabled = false;
+		status = !$("mapaPlusEnabled").checked;
+		startup = !$("mapaPlusStartup").checked;
+		lock = !$("mapaPlusLockTimer").checked;
 		disable = false;
 		display = false;
-		minimize = !document.getElementById("mapaPlusLockMinimize").checked || lock;
+		minimize = !$("mapaPlusLockMinimize").checked || lock;
 	}
 	mapaPlus.okButton.label = del ? mapaPlus.bundle.getString("pw_remove_button") : mapaPlus.okButtonLabel;
-	document.getElementById("mapaPlusSuppressLabel").disabled = disable;
-	document.getElementById("mapaPlusSuppress").disabled = disable;
+	$("mapaPlusSuppressLabel").disabled = disable;
+	$("mapaPlusSuppress").disabled = disable;
 	mapaPlus.setAttribute("panelGeneral", "disabled", disable, !disable);
 	mapaPlus.setAttribute("panelDisplay", "disabled", display, !display);
 
@@ -266,9 +214,9 @@ mapaPlus.enableDisable = function(e)
 	mapaPlus.setAttribute("mapaPlusSuppressBlinkBox", "disabled", disable, !disable);
 	mapaPlus.setAttribute("mapaPlusSuppressPopupBox", "disabled", disable, !disable);
 	mapaPlus.setAttribute("mapaPlusSuppressSoundBox", "disabled", disable, !disable);
-	let urlbar = !document.getElementById("mapaPlusUrlbar").checked || locked;
+	let urlbar = !$("mapaPlusUrlbar").checked || locked;
 	mapaPlus.setAttribute("urlbar-container", "disabled", urlbar, !urlbar);
-	document.getElementById("mapaPlusLockMinimizeBlur").disabled = minimize;
+	$("mapaPlusLockMinimizeBlur").disabled = minimize;
 
 /*
 	if (e !== false && !del)
@@ -284,8 +232,8 @@ mapaPlus.saveOptions = function()
 	// we don't want save new settings if options locked
 	if (!this.isLocked)
 	{
-		if (document.getElementById("mapaPlusSuppressPopup").getAttribute("indeterminate") == "true")
-			document.getElementById("mapaPlusSuppressPopup").checked = true;
+		if ($("mapaPlusSuppressPopup").getAttribute("indeterminate") == "true")
+			$("mapaPlusSuppressPopup").checked = true;
 		else
 			this.core.suppressedPopupStop = false;
 
@@ -294,39 +242,28 @@ mapaPlus.saveOptions = function()
 		this.hotkeySave("mapaPlusLockWinHotkey", "lockwinhotkey");
 		this.hotkeySave("mapaPlusLockLogoutHotkey", "locklogouthotkey");
 
-		var el = document.getElementById("options").getElementsByTagName('*');
-		var pref, prefType, prefValue, prefExtra;
-		for(var i = 0; i < el.length; i++)
+		let el = $("options").getElementsByTagName('*'),
+				pref, prefType, prefValue, prefExtra;
+
+		for(let i = 0; i < el.length; i++)
 		{
-			prefType = null;
-			prefValue = null;
-			prefExtra = null;
 			pref = el[i].getAttribute("preference");
 			if (!pref)
 				continue;
 
-			if (document.getElementById(pref))
-				prefType = document.getElementById(pref).getAttribute("type");
+			let prefValue;
+			if ($(pref))
+				prefType = $(pref).getAttribute("type");
 
 			switch (prefType)
 			{
 				case "bool":
-						prefType = "setBoolPref";
 						prefValue = el[i].checked;
 					break;
 				case "int":
-						prefType = "setIntPref";
-						prefValue = el[i].value;
-					break;
 				case "char":
-						prefType = "setCharPref";
-						prefValue = el[i].value;
-					break;
 				case "unichar":
-						prefType = "setComplexValue";
-						prefValue = Components.interfaces.nsISupportsString;
-						prefExtra = Components.classes["@mozilla.org/supports-string;1"].createInstance(prefValue);
-						prefExtra.data = el[i].value;
+						prefValue = el[i].value;
 					break;
 				default:
 						prefType = null;
@@ -334,13 +271,10 @@ mapaPlus.saveOptions = function()
 			if (!prefType)
 				continue;
 
-			this.core.pref[prefType](pref, prefValue, prefExtra);
+			this.core.pref(pref, prefValue);
 		}
-
-
-
 	}
-	var sel = this.getOrder("urlbar-icons");
+	let sel = this.getOrder("urlbar-icons");
 	if (sel)
 		this.core.pref("urlbarpos", (sel.dir?1:0)+sel.id);
 
@@ -356,10 +290,10 @@ mapaPlus.saveOptions = function()
 mapaPlus.close = function(e)
 {
 	mapaPlus.core.windowRemove(mapaPlus.windowID, "changemp");
-	window.close();
+//	window.close();
 }
 
-var first = mapaPlus.core.windowFirst("changemp");
+let first = mapaPlus.core.windowFirst("changemp");
 if (first)
 {
 	mapaPlus.core.timerFocus.init("changemp");
@@ -370,3 +304,4 @@ else
 	window.addEventListener("load", mapaPlus.load, false);
 	window.addEventListener("unload", mapaPlus.close, false);
 }
+})()

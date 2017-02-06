@@ -4,6 +4,7 @@ locale		mapaplus	ru-RU				chrome/locale/ru-RU/
 locale		mapaplus	zh-CN				chrome/locale/zh-CN/
 locale		mapaplus	es-ES				chrome/locale/es-ES/
 locale		mapaplus	de-DE				chrome/locale/de-DE/
+locale		mapaplus	uk-UA				chrome/locale/uk-UA/
 skin			mapaplus	classic/1.0	chrome/skin/
 resource	mapaplus							chrome/modules/
 component	{3F6CF5B4-39AE-11E3-9DB0-5FED6188709B}	components/masterPasswordPlusComponents.js

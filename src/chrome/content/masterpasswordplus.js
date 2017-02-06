@@ -23,7 +23,7 @@ mapaPlus.locked = false;
 mapaPlus.lockedWindow = false;
 mapaPlus.lockedWindowClicked = false;
 mapaPlus.lockedLogout = false;
-mapaPlus.lockedTitle = null;
+mapaPlus.lockedTitleOrig = null;
 mapaPlus.lockedAttr = null;
 mapaPlus.lockedTitleObj = null;
 mapaPlus.workAround = {};
@@ -70,8 +70,9 @@ mapaPlus.noLockWindow = false;
 	},
 }).init();
 
-mapaPlus.show = function()
+mapaPlus.show = function show()
 {
+log.debug();
 	if ($("mapa_statusbar"))
 		$("mapa_statusbar").hidden = !this.core.pref("statusbar");
 
@@ -87,14 +88,14 @@ mapaPlus.show = function()
 		{
 			$("mapa_urlbar").hidden = !this.core.pref("urlbar");
 
-			var id = this.core.pref("urlbarpos");
-			var direction = id.substr(0,1) == "1";
+			let id = this.core.pref("urlbarpos"),
+					direction = id.substr(0,1) == "1";
 			id = id.substr(1, id.length);
 			if (id)
 				this.setIcon({container:"urlbar-icons", element:"mapa_urlbar", idDefault:"go-button", directionDefault:0, id:id, direction:direction});
 
-			var id = this.core.pref("statusbarpos");
-			var direction = id.substr(0,1) == "1";
+			id = this.core.pref("statusbarpos");
+			direction = id.substr(0,1) == "1";
 			id = id.substr(1, id.length);
 			if (id)
 				this.setIcon({container:"status-bar", element:"mapa_statusbar", idDefault:"", directionDefault:1, id:id, direction:direction});
@@ -385,7 +386,7 @@ mapaPlus.suppressedResetTemp = function()
 
 mapaPlus.suppressedPopupRemoveTimer = function(t, box, boxId)
 {
-	var timer;
+	let timer;
 	if (this.suppressedPopupBox[boxId.id])
 	{
 		timer = this.suppressedPopupBox[boxId.id];
@@ -494,28 +495,54 @@ mapaPlus.logout = function()
 mapaPlus.minimizedLockFix = function(restore)
 {
 	mapaPlus.windowMinimizedForced = true;
-	window.screenX = -32000;
-	window.screenY = -32000;
-	window.restore();
+	let	x = mapaPlus.screenX,
+			y = mapaPlus.screenY;
+
+	if (mapaPlus.core.pref("minimizenoflicker"))
+		x = y = -32000;
+
+	window.screenX = x;
+	window.screenY = y;
+	window.document.documentElement.setAttribute("screenX", mapaPlus.screenX)
+	window.document.documentElement.setAttribute("screenY", mapaPlus.screenY)
+//	window.restore();
 	if (restore)
 	{
+/*
 		window.screenX = mapaPlus.screenX;
 		window.screenY = mapaPlus.screenY;
-		try{this.Win7Features.AeroPeek.onOpenWindow(window)}catch(e){};
-		window.screenX = -32000;
-		window.screenY = -32000;
+try
+{
+	mapaPlus.Win7Features.AeroPeek.previews.forEach(function(preview)
+	{
+		let controller = preview.controller.wrappedJSObject;
+		if (controller.win == window)
+			controller.destroy();
+	});
+}catch(e){};
+*/
+//		try{mapaPlus.Win7Features.AeroPeek.onCloseWindow(window)}catch(e){log.error(e)};
+/*
+for(let i =0, w=mapaPlus.Win7Features.AeroPeek.windows; i < w.length; i++)
+{
+	if (w[i].win == window)
+		w.splice(i, 1);
+}
+*/
+		try{mapaPlus.Win7Features.AeroPeek.onOpenWindow(window)}catch(e){};
+		window.screenX = x;
+		window.screenY = y;
+		window.document.documentElement.setAttribute("screenX", mapaPlus.screenX)
+		window.document.documentElement.setAttribute("screenY", mapaPlus.screenY)
 	}
-
-	let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-	timer.init({observe:function()
+	mapaPlus.core.async(function()
 	{
 		window.minimize();
-		let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-		timer.init({observe:function()
+		mapaPlus.core.async(function()
 		{
 			mapaPlus.windowMinimizedForced = false;
-		}}, 0, timer.TYPE_ONE_SHOT);
-	}}, 0, timer.TYPE_ONE_SHOT);
+		});
+	},100);
 }
 
 /*
@@ -556,6 +583,13 @@ log.debug();
 	if (!self.initialized)
 		self.init();
 
+	let identify = mapaPlus.core.appInfo.name;
+	if (self.core.pref("identify"))
+		identify = self.core.pref("identify");
+
+	let title = self.strings.lockinfo.replace("#", identify);
+	$("masterPasswordPlusUnLockInfo").value = title;
+
 if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome://inspector/")) return;
 //	log("showlock");
 	if (self.locked || (!self.lockedWindow && self.noLockWindow))
@@ -575,7 +609,6 @@ if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome:
 	if (self.core.pref("lockhidetitle"))
 	{
 
-		let title = $("masterPasswordPlusUnLockInfo").value;
 		try
 		{
 			let l = window.location.href.toString();
@@ -595,7 +628,7 @@ if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome:
 					let t = self.lockedTitleAttr ? titleObj.getAttribute("title") : titleObj.title;
 					if (t != title)
 					{
-						self.lockedTitle = t;
+						self.lockedTitleOrig = t;
 
 						if (self.lockedTitleAttr)
 							titleObj.setAttribute("title", title);
@@ -609,7 +642,6 @@ if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome:
 			titleUpdate();
 			self.titleTimer.init({observe:titleUpdate}, 100, self.titleTimer.TYPE_REPEATING_SLACK);
 			window.addEventListener("unload", self.titleTimer.cancel, false);
-log(title);
 		}
 		catch(e){log.error(e);}
 	}
@@ -639,6 +671,9 @@ log(title);
 		if (n[i].id != "masterPasswordPlusLock" && n[i].id != "titlebar")
 		{
 			if (n[i].firstChild && n[i].firstChild.id == "masterPasswordPlusLock")
+				continue;
+
+			if (!n[i].style)
 				continue;
 
 			n[i]._mapaVisibility = n[i].style.visibility;
@@ -712,6 +747,7 @@ log(title);
 	{
 		if (self.Win7Features)
 		{
+			try{self.Win7Features.AeroPeek.onCloseWindow(window)}catch(e){}
 			function remove()
 			{
 				try
@@ -723,15 +759,36 @@ log(title);
 						windowState = window.STATE_MINIMIZED;
 */
 					let min = windowState == window.STATE_MINIMIZED;
-					try{self.Win7Features.AeroPeek.onCloseWindow(window)}catch(e){}
+					
+/*
+mapaPlus.Win7Features.AeroPeek.previews.forEach(function(preview)
+{
+	let controller = preview.controller.wrappedJSObject;
+	if (controller.win == window)
+		controller.resetCanvasPreview();
+});
+*/
+/*
+for(let i =0, w=self.Win7Features.AeroPeek.windows; i < w.length; i++)
+{
+	if (w[i].win == window)
+	{
+		w[i].previews.forEach(function(val, key, map)
+		{
+log([val, key, map]);
+//w[i].enabled = false;
+		})
+//		w[i].destroy();
+	}
+}
+*/
 					if (min)
-						self.minimizedLockFix();
-				}catch(e){};
+						self.core.async(self.minimizedLockFix);
+				}catch(e){log.error(e)};
 			}
 			if (delay)
 			{
-				let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-				timer.init({observe:remove}, 100, timer.TYPE_ONE_SHOT);
+				self.core.async(remove, 100);
 			}
 			else
 				remove();
@@ -773,11 +830,11 @@ mapaPlus.showUnlock = function(f)
 		{
 			if (this.lockedTitleObj)
 				if (this.lockedTitleAttr)
-					this.lockedTitleObj.setAttribute("title", this.lockedTitle);
+					this.lockedTitleObj.setAttribute("title", this.lockedTitleOrig);
 				else
-					this.lockedTitleObj.title = this.lockedTitle;
+					this.lockedTitleObj.title = this.lockedTitleOrig;
 
-		}catch(e){}
+		}catch(e){log.error(e)}
 	}
 	this.core.workAround.do("on", this);
 	$('masterPasswordPlusLock').parentNode.hidden = true;
@@ -879,8 +936,8 @@ mapaPlus.showUnlock = function(f)
 
 		if (min)
 			mapaPlus.minimizedLockFix(1);
-
-		try{this.Win7Features.AeroPeek.onOpenWindow(window)}catch(e){};
+		else
+			try{this.Win7Features.AeroPeek.onOpenWindow(window)}catch(e){};
 
 	}
 	if (this.showUnlockArray.length)
@@ -888,7 +945,7 @@ mapaPlus.showUnlock = function(f)
 		for (let [, func] in Iterator(this.showUnlockArray)) try{func && func()}catch(e){};
 		this.showUnlockArray = [];
 	}
-}
+}//showUnlock()
 
 /*
 mapaPlus.menuAddHotkeys = function()
@@ -1087,7 +1144,7 @@ mapaPlus.update = function(f)
 		this.loadCore();
 	}
 */
-	var status = this.core.status;
+	let status = this.core.status;
 
 	if (f)
 		this.show();
@@ -1178,11 +1235,10 @@ mapaPlus.unlockIncorrect = function(disable)
 			time *= -1;
 			timeoutMultiply = 1 << (Math.ceil(mapaPlusCore.unlockIncorrect / attempts) - 1);
 		}
-		mapaPlusCore.unlockimputtimer = mapaPlusCore.async(
-			function()
-			{
-				mapaPlusCore.windowAction("unlockIncorrect")
-			}, 1000 * time * timeoutMultiply, mapaPlusCore.unlockimputtimer);
+		mapaPlusCore.unlockimputtimer = mapaPlusCore.async(function()
+		{
+			mapaPlusCore.windowAction("unlockIncorrect")
+		}, 1000 * time * timeoutMultiply, mapaPlusCore.unlockimputtimer);
 		$("masterPasswordPlusUnLockInput").setAttribute("placeholder", this.strings.toomanyincorrect.replace("#", (time * timeoutMultiply)));
 log(mapaPlusCore.unlockIncorrect + " failed attempts. Disabling input for " + (time * timeoutMultiply) + " seconds");
 	}
@@ -1221,7 +1277,11 @@ mapaPlus.hotkeyPress = function(e)
 //		e.stopPropagation();
 
 		if (e.keyCode == e.DOM_VK_RETURN)
+		{
+			e.preventDefault();
+			e.stopPropagation();
 			mapaPlus.unlockEnter();
+		}
 
 		return false;
 	}
@@ -1364,13 +1424,13 @@ mapaPlus.load = function()
 
 	window.removeEventListener("load", mapaPlus.load, false);
 	mapaPlus.init();
-	let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-	timer.init({observe:function()
+	let timer = {};
+	timer.timer = mapaPlus.core.async(function()
 	{
-		window.removeEventListener("unload", timer.cancel, false);
+		window.removeEventListener("unload", timer.timer.cancel, false);
 		mapaPlus.onLoadAdd()
-	}}, 100, timer.TYPE_ONE_SHOT);
-	window.addEventListener("unload", timer.cancel, false);
+	}, 100);
+	window.addEventListener("unload", timer.timer.cancel, false);
 }
 
 mapaPlus.showMenu = function(e)
@@ -1400,26 +1460,34 @@ mapaPlus.popupshowing = function(e)
 
 mapaPlus.close = function(aEvent)
 {
-//	mapaPlus.core.countdownReset();
-//	mapaPlus.core.countdownResetLock();
-	mapaPlus.core.windowRemove(mapaPlus.windowID);
-	if (this.first)
+	let self = mapaPlus;
+//	self.core.countdownReset();
+//	self.core.countdownResetLock();
+	self.core.windowRemove(self.windowID);
+	if (self.first)
 	{
 /*
-		window.removeEventListener("mousemove", this.core.resetTimer, false);
-		window.removeEventListener("keydown", this.core.resetTimer, false);
-		window.removeEventListener("mousedown", this.core.resetTimer, false);
-		window.removeEventListener("DOMMouseScroll", this.core.resetTimer, false);
+		window.removeEventListener("mousemove", self.core.resetTimer, false);
+		window.removeEventListener("keydown", self.core.resetTimer, false);
+		window.removeEventListener("mousedown", self.core.resetTimer, false);
+		window.removeEventListener("DOMMouseScroll", self.core.resetTimer, false);
 */
 	}
-	if (this.initialized)
+	if (self.initialized)
 	{
-		window.removeEventListener("keydown", this.hotkeyDown, true);
-		window.removeEventListener("keypress", this.hotkeyPress, true);
-		window.removeEventListener("keyup", this.hotkeyUp, true);
-		window.removeEventListener("close", this.close, true);
-		window.removeEventListener("focus", this.core.windowFocused, true);
+		window.removeEventListener("keydown", self.hotkeyDown, true);
+		window.removeEventListener("keypress", self.hotkeyPress, true);
+		window.removeEventListener("keyup", self.hotkeyUp, true);
+		window.removeEventListener("close", self.close, true);
+		window.removeEventListener("focus", self.core.windowFocused, true);
+		window.removeEventListener("sizemodechange", self.isMinimized, true);
 	}
+	if (window.windowState == window.STATE_MINIMIZED)
+	{
+		window.screenX = self.screenX;
+		window.screenY = self.screenY;
+	}
+
 }
 
 mapaPlus.onLoadAdd = function(func)
@@ -1595,8 +1663,7 @@ mapaPlus.isMinimized = function()
 
 			if (!mapaPlus.windowMinimizedForced && !mapaPlus.screenRestored)
 			{
-				let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-				timer.init({observe:function()
+				mapaPlus.core.async(function()
 				{
 					mapaPlus.windowMinimizedForced = true;
 					window.screenX = mapaPlus.screenX;
@@ -1608,7 +1675,7 @@ mapaPlus.isMinimized = function()
 					mapaPlus.windowMinimizedForced = false;
 					mapaPlus.screenRestored = true;
 					mapaPlus.setWindowState();
-				}}, 0, timer.TYPE_ONE_SHOT);
+				});
 			}
 		}
 	}
@@ -1722,8 +1789,6 @@ log.debug();
 	self.windowID = self.core.windowAdd(self, self.loadedManualy ? "WindowGeneric" : "");
 	self.initialized = true;
 //log([self.windowID, self.init.count, mapaPlus.core.appInfo.name, $("masterPasswordPlusUnLockInfo").value]);
-	self.lockedTitle = $("masterPasswordPlusUnLockInfo").value.replace("#", mapaPlus.core.appInfo.name);
-	$("masterPasswordPlusUnLockInfo").value = self.lockedTitle;
 
 	if (self.core.isTB)
 	{
@@ -1792,8 +1857,7 @@ log.debug();
 	if (!self.loadedManualy && !("__SSi" in window) || !window.__SSi)
 		self.ss.init(window);
 */
-	let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-	timer.init({observe: function()
+	mapaPlus.core.async(function()
 	{
 		let wasLocked = false,
 				wasNoLock = false;
@@ -1816,7 +1880,7 @@ log.debug();
 		if (mapaPlus.core.pref("lockrestore") && (mapaPlus.core.locked || lockedWindow || (locked && mapaPlus.core.status == 2)))
 			mapaPlus.lock(lockedWindow, 1);
 
-	}}, 100, timer.TYPE_ONE_SHOT);
+	}, 100);
 	self.hotkeyInit();
 
 	self.MinTrayR = "gMinTrayR" in window;

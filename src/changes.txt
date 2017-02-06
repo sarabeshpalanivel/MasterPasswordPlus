@@ -7,6 +7,19 @@ Legend:
 * = Changed
 - = Removed
 
+v1.24 (2017-02-06)
+	+ Ukrainian language. Thanks to Artem Polivanchuk (issue #108)
+	+ Window identification string shows in locked window (issue #109)
+	+ improved displaying "Show in Address bar" icons in options
+	! MP+ icon position in address bar not updated until browser restart
+	! new options introduced in v1.23 are not disabled when options window is "protected" (issue #107)
+	! opening new window after browser was locked on startup and then logged out, locks all windows again for no reason (issue #110)
+	! window title not restored after locked window was unlocked {crossed fingers} (issue #91)
+	! Unable unlock when locked on minimized option enabled and some windows already minimized {can't reproduce anymore} (issue #61)
+	! unlocking minimized windows multiply number of thumbnails at taskbar on Windows 7+
+	! minimized window looses it's original position on screen after restart (issue #111)
+	! Change Master Password window content doesn't fit when opened from Firefox options (issue #115)
+
 v1.23 (2016-12-20)
 	+ MP prompt inside locked window (issue #83)
 	+ new options to disable password field in locked windows after NN failed attempts for NN seconds.

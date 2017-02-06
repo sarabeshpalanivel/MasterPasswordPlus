@@ -67,7 +67,7 @@ changesLog = {
 
 	copyMenu: function(e)
 	{
-		changesLog.copy(document.popupNode.hasAttribute("linkCopy") ? document.popupNode.getAttribute("linkCopy") : document.popupNode.getAttribute("link"));
+		changesLog.copy(document.popupNode.hasAttribute("linkCopy") ? document.popupNode.getAttribute("linkCopy") : document.popupNode.hasAttribute("link") ? document.popupNode.getAttribute("link") : document.popupNode.getAttribute("href"));
 	},
 
 	copy: function(txt)
@@ -503,115 +503,120 @@ log.debug();
 			$("changesLogCopyLink").setAttribute("accesskey", _("menu_copy_url_key"));
 			$("changesLogLinkCopy").setAttribute("label", _("menu_copy_url"));
 		}
-		let sup = $("supportSite");
-		sup.setAttribute("href", SUPPORTSITE + SUPPORTSITEQUERY);
-		sup.setAttribute("link", SUPPORTSITE);
-		sup.setAttribute("tooltiptext", SUPPORTSITE);
-		sup = $("supportHomepage");
-		sup.setAttribute("href", HOMEPAGE);
-		sup.setAttribute("link", HOMEPAGE);
-		sup.setAttribute("tooltiptext", HOMEPAGE);
-		sup = $("supportEmail");
-//		sup.setAttribute("href", this.fixUrl("mailto:{NAME} support<{EMAIL}>?subject={NAME}+support&body=%0A%0A_______%0AAddon:+{NAME}+v{VER}%0AOS:+{OS}%0AApp:+{APP}"));
-		sup.setAttribute("link", this.fixUrl("{EMAIL}"));
-		sup.setAttribute("linkCopy", this.fixUrl("{NAMERAW} support<{EMAILRAW}>"));
-		sup.setAttribute("tooltiptext", this.fixUrl("{EMAIL}"));
-		function promptExtList (e)
+		let sup;
+		sup = $("supportSite");
+		if (sup)
 		{
-			if (e.button == 2)
-				return;
+			sup.setAttribute("href", SUPPORTSITE + SUPPORTSITEQUERY);
+			sup.setAttribute("link", SUPPORTSITE);
+			sup.setAttribute("tooltiptext", SUPPORTSITE);
+		}
+		sup = $("supportHomepage");
+		if (sup)
+		{
+			sup.setAttribute("href", HOMEPAGE);
+			sup.setAttribute("link", HOMEPAGE);
+			sup.setAttribute("tooltiptext", HOMEPAGE);
+		}
+		sup = $("supportEmail");
+		if (sup)
+		{
+//			sup.setAttribute("href", this.fixUrl("mailto:{NAME} support<{EMAIL}>?subject={NAME}+support&body=%0A%0A_______%0AAddon:+{NAME}+v{VER}%0AOS:+{OS}%0AApp:+{APP}"));
+			sup.setAttribute("link", this.fixUrl("{EMAIL}"));
+			sup.setAttribute("linkCopy", this.fixUrl("{NAMERAW} support<{EMAILRAW}>"));
+			sup.setAttribute("tooltiptext", this.fixUrl("{EMAIL}"));
+			function promptExtList (e)
+			{
+				if (e.button == 2 || e.target.diabled)
+					return;
 
-			if (e.target.hasAttribute("href"))
-			{
-				e.target.removeAttribute("href");
-				return false;
-			}
-			else
-			{
-				let promptService = Cc["@mozilla.org/embedcomp/prompt-service;1"].getService(Ci.nsIPromptService),
-						button = promptService.confirmEx(window,
-											_("addExtensionsTitle"),
-											_("addExtensions"),
-//											promptService.BUTTON_POS_0 * promptService.BUTTON_TITLE_IS_STRING + promptService.BUTTON_POS_1 * promptService.BUTTON_TITLE_IS_STRING + promptService.BUTTON_POS_2 * promptService.BUTTON_TITLE_IS_STRING + promptService.BUTTON_POS_0_DEFAULT,
-											promptService.BUTTON_POS_0 * promptService.BUTTON_TITLE_YES + promptService.BUTTON_POS_2 * promptService.BUTTON_TITLE_NO + promptService.BUTTON_POS_1 * promptService.BUTTON_TITLE_CANCEL + promptService.BUTTON_POS_0_DEFAULT,
-											null,
-											null,
-											null,
-											null,
-											{});
-				function callback(list)
+				if (e.target.hasAttribute("href"))
 				{
-					let href = changesLog.fixUrl("mailto:{NAME} support<{EMAIL}>"),
-							subject = changesLog.fixUrl("subject={NAME}"),
-							body = {
-								Addon: changesLog.fixUrl("{NAMERAW} v{VERRAW}"),
-								Program: changesLog.fixUrl("{APPRAW} ({LOCALERAW})"),
-								OS: changesLog.fixUrl("{OSRAW}"),
-								Preferences: changesLog.getPrefs(true)
-							},
-							extra = {};
+					e.target.removeAttribute("href");
+					return false;
+				}
+				else
+				{
+					let promptService = Cc["@mozilla.org/embedcomp/prompt-service;1"].getService(Ci.nsIPromptService),
+							button = promptService.confirmEx(window,
+												_("addExtensionsTitle"),
+												_("addExtensions"),
+	//											promptService.BUTTON_POS_0 * promptService.BUTTON_TITLE_IS_STRING + promptService.BUTTON_POS_1 * promptService.BUTTON_TITLE_IS_STRING + promptService.BUTTON_POS_2 * promptService.BUTTON_TITLE_IS_STRING + promptService.BUTTON_POS_0_DEFAULT,
+												promptService.BUTTON_POS_0 * promptService.BUTTON_TITLE_YES + promptService.BUTTON_POS_2 * promptService.BUTTON_TITLE_NO + promptService.BUTTON_POS_1 * promptService.BUTTON_TITLE_CANCEL + promptService.BUTTON_POS_0_DEFAULT,
+												null,
+												null,
+												null,
+												null,
+												{});
 
-					if (list.length && !button)
+					function callback(list, button)
 					{
-						for(let i in list)
+						let href = changesLog.fixUrl("mailto:{NAME} support<{EMAIL}>"),
+								subject = changesLog.fixUrl("subject={NAME}"),
+								body = changesLog.getEmailBody(list, button),
+								extra = {};
+
+						href += "?" + subject;
+						if (!button)
+							changesLog.copy(JSON.stringify(body, null));
+
+
+						if (Cc["@mozilla.org/xpcom/version-comparator;1"].getService(Ci.nsIVersionComparator)
+								.compare(mapaPlusCore.appInfo.version, "8.0") < 0)
 						{
-							if (list[i].isActive)
+							let aURI = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService)
+											.newURI(href, null, null);
+							Cc["@mozilla.org/messengercompose;1"].getService(Ci.nsIMsgComposeService)
+								.OpenComposeWindowWithURI(null, aURI);
+						}
+						else
+						{
+							e.target.setAttribute("href", href);
+							try
 							{
-								let type = list[i].type.charAt(0).toUpperCase() + list[i].type.slice(1);
-
-								if (!extra[type])
-									extra[type] = []
-
-								extra[type].push([list[i].name, list[i].version,  list[i].id.replace(/@/g, "{a}")]);
+								e.target.dispatchEvent(new window.MouseEvent('click', {
+									'view': window,
+									'bubbles': false,
+									'cancelable': true
+								}));
+							}
+							catch(err)
+							{
+								let evt = document.createEvent("MouseEvents");
+								evt.initMouseEvent("click", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null)
+								e.target.dispatchEvent(evt);
 							}
 						}
-					}
-					href += "?" + subject;
-					if (!button)
-					{
-						for(let i in extra)
-							body[i] = extra[i];
-
-						changesLog.copy(JSON.stringify(body, null));
-					}
-
-					if (Cc["@mozilla.org/xpcom/version-comparator;1"].getService(Ci.nsIVersionComparator)
-							.compare(mapaPlusCore.appInfo.version, "8.0") < 0)
-					{
-						let aURI = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService)
-										.newURI(href, null, null);
-						Cc["@mozilla.org/messengercompose;1"].getService(Ci.nsIMsgComposeService)
-							.OpenComposeWindowWithURI(null, aURI);
-					}
-					else
-					{
-						e.target.setAttribute("href", href);
-						try
+					}//else
+					if (button == 2)
+						callback([], button);
+					else if (!button)
+						AddonManager.getAllAddons(function(list)
 						{
-							e.target.dispatchEvent(new window.MouseEvent('click', {
-								'view': window,
-								'bubbles': false,
-								'cancelable': true
-							}));
-						}
-						catch(err)
-						{
-							let evt = document.createEvent("MouseEvents");
-							evt.initMouseEvent("click", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null)
-							e.target.dispatchEvent(evt);
-						}
-					}
-				}//else
-				if (button == 2)
-					callback([]);
-				else if (!button)
-					AddonManager.getAllAddons(callback);
+							callback(list, button)
+						});
 
-			}//promptExtList()
-			e.stopPropagation();
-			e.preventDefault();
+				}//promptExtList()
+				e.stopPropagation();
+				e.preventDefault();
+			}
+			sup.addEventListener("click", promptExtList, false);
 		}
-		sup.addEventListener("click", promptExtList, false);
+		sup = $("supportCopyInfo");
+		if (sup)
+		{
+			sup.addEventListener("click", function(e)
+			{
+				if (e.button || e.target.disabled)
+					return;
+
+				AddonManager.getAllAddons(function(list)
+				{
+					changesLog.copy(JSON.stringify(changesLog.getEmailBody(list), null));
+					window.alert(_("copied"));
+				});
+			}, false);
+		}
 		if (!isChangesLog)
 			return;
 
@@ -1045,7 +1050,40 @@ e.preventDefault();
 
 		mapaPlusCore.changesLog.versions[hbox.id].hide = hide; 
 		hbox.setAttribute("hide", hide);
-	}
+	},//showHideVersion()
+
+	getEmailBody: function(list, noExtra)
+	{
+		let r = {
+					Addon: changesLog.fixUrl("{NAMERAW} v{VERRAW}"),
+					Program: changesLog.fixUrl("{APPRAW} ({LOCALERAW})"),
+					OS: changesLog.fixUrl("{OSRAW}"),
+					Preferences: changesLog.getPrefs(true)
+				},
+				extra = {};
+
+		if (list.length && !noExtra)
+		{
+			for(let i in list)
+			{
+				if (list[i].isActive)
+				{
+					let type = list[i].type.charAt(0).toUpperCase() + list[i].type.slice(1);
+
+					if (!extra[type])
+						extra[type] = []
+
+					extra[type].push([list[i].name, list[i].version,  list[i].id.replace(/@/g, "{a}")]);
+				}
+			}
+		}
+		if (!noExtra)
+		{
+			for(let i in extra)
+				r[i] = extra[i];
+		}
+		return r;
+	}//getEmailBody()
 };
 AddonManager.getAddonByID(changesLog.GUID, function(addon)
 {

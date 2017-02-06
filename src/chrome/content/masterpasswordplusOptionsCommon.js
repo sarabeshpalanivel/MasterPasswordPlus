@@ -6,16 +6,16 @@ function $(id)
 {
 	return document.getElementById(id);
 }
-mapaPlus.mainWindow = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                   .getService(Components.interfaces.nsIWindowMediator)
+mapaPlus.mainWindow = Cc["@mozilla.org/appshell/window-mediator;1"]
+                   .getService(Ci.nsIWindowMediator)
                    .getMostRecentWindow((mapaPlus.core.isTB ? "mail:3pane" : "navigator:browser"));
 
 mapaPlus.iconSelected = {};
 Object.defineProperty(mapaPlus, "instantApply", {
 	get: function()
 	{
-		return Components.classes["@mozilla.org/preferences-service;1"]
-				.getService(Components.interfaces.nsIPrefBranch).getBoolPref("browser.preferences.instantApply");
+		return Cc["@mozilla.org/preferences-service;1"]
+				.getService(Ci.nsIPrefBranch).getBoolPref("browser.preferences.instantApply");
 	}
 });
 
@@ -30,87 +30,128 @@ mapaPlus.lastKeyDown = [];
 mapaPlus.hotkeyDownRepeat = false;
 
 //mapaPlus.iniIcons("urlbar-icons", "mapa_urlbar", "urlbar", "mapaPlusUrlbar")
-mapaPlus.iniIcons = function(objId, iconId, id, checkbox)
+mapaPlus.iniIcons = function iniIcons(objId, iconId, id, checkbox)
 {
-	var skipId = ["statusbar-display"];
-	var skipTag = ["tooltip", "popup", "prefpane"];
-	var clone;
-	var icon, vbox;
-	var urlBarIcons = this.mainWindow.document.getElementById(objId);
-	if (urlBarIcons)
+log.debug();
+	let	skipId = ["statusbar-display"],
+			skipTag = ["tooltip", "popup", "prefpane"],
+			self = this,
+			urlBarIcons = self.mainWindow.document.getElementById(objId),
+			clone, icon, vbox;
+
+	if (!urlBarIcons)
+		return null;
+
+	let children = urlBarIcons.childNodes;
+	icon = document.createElement("image");
+	icon.collapsed = false;
+	vbox = document.createElement("vbox");
+	vbox.className = "mapapl";
+	vbox.collapsed = true;
+	vbox.setAttribute("onclick", "mapaPlus.mouseClick(this);");
+	vbox.setAttribute("directionId", null);
+	vbox.setAttribute("direction", false);
+	vbox.setAttribute("selected", false);
+	vbox.id = "mapapl-"+id+"-" + children[0].id;
+	vbox.appendChild(icon);
+	let last = document.importNode(vbox, true);
+	$(objId).appendChild(last);
+	for (let i = 0; i < children.length; i++)
 	{
-		var children = urlBarIcons.childNodes;
-		icon = document.createElement("image");
-		icon.collapsed = false;
-		vbox = document.createElement("vbox");
-		vbox.className = "mapapl";
-		vbox.collapsed = true;
-		vbox.setAttribute("onclick", "mapaPlus.mouseClick(this);");
-		vbox.setAttribute("directionId", null);
-		vbox.setAttribute("direction", false);
-		vbox.setAttribute("selected", false);
-		vbox.id = "mapapl-"+id+"-" + children[0].id;
-		vbox.appendChild(icon);
-		var last = document.importNode(vbox, true);
-		$(objId).appendChild(last);
-		for (var i = 0; i < children.length; i++)
+		let	child = children[i];
+		if (skipId.indexOf(child.id) != -1 || skipTag.indexOf(child.tagName) != -1)
+			continue;
+
+		let	style = self.mainWindow.getComputedStyle(child, null),
+				hidden = child.hidden,
+				collapsed = child.collapsed,
+				label = child.label;
+		if (child.id == "urlbar-zoom-button" && child.hidden)
 		{
-			if (skipId.indexOf(children[i].id) != -1 || skipTag.indexOf(children[i].tagName) != -1)
-				continue;
+			child.label = "100%";
+		}
+		child.hidden = false;
+		child.collapsed = false;
+		clone = document.importNode(child, true);
+		clone._id = clone.id;
+		clone.id = "_" + clone.id;
+		if (clone._id == iconId)
+		{
+			self.iconSelected[id] = clone;
+			continue;
+		}
+		
+			self.cloneClass(child, clone);
+			self.cleanClone(clone);
 
-			clone = document.importNode(children[i], true);
-			if (clone.id == iconId)
+			clone.className = "";
+			for (let s = 0; s < style.length; s++)
 			{
-				this.iconSelected[id] = clone;
-				continue;
-			}
-			this.cloneClass(children[i], clone);
-			this.cleanClone(clone);
+				if (child.id == "urlbar-zoom-button" && style[s] == "transform")
+				{
+					clone.style[style[s]] = "";
+					continue;
+				}
+				if (["width", "height"].indexOf(style[s]) != -1)
+					continue;
 
+				clone.style[style[s]] = style[style[s]];
+			}
+
+			child.label = label;
+			child.hidden = hidden;
+			child.collapsed = collapsed;
+			clone.style.display = "block";
+			clone.hidden = false;
+			clone.collapsed = false;
 			clone.setAttribute("onclick", "mapaPlus.mouseClick(this);");
 			if (["label", "description"].indexOf(clone.tagName) != -1 && clone.getAttribute("value") == "")
 				clone.setAttribute("value", "??");
 
-			if (clone.style.listStyleImage == "none")
-			 clone.style.listStyleImage = 'url("resource://gre-resources/broken-image.png")';
+/*
+		if (clone.style.listStyleImage == "none")
+		 clone.style.listStyleImage = 'url("resource://gre-resources/broken-image.png")';
 
-			if (clone.children.length == 1 && clone.children[0].style.listStyleImage == "none")
-				clone.children[0].style.listStyleImage = clone.style.listStyleImage;
-			$(objId).appendChild(clone);
-			clone.addEventListener("mousemove", function(e)
-			{
-				if (!mapaPlus.isLocked && $(checkbox).checked)
-					mapaPlus.mouseMove(e);
-			}, false);
-			last = document.importNode(vbox, true);
-			last.setAttribute("directionId", clone.id);
-			last.id = "mapapl-"+ id + "-" + clone.id;
-			$(objId).appendChild(last);
-		};
-		if (this.iconSelected[id])
+		if (clone.children.length == 1 && clone.children[0].style.listStyleImage == "none")
+			clone.children[0].style.listStyleImage = clone.style.listStyleImage;
+*/
+		$(objId).appendChild(clone);
+		clone.addEventListener("mousemove", function(e)
 		{
-			var elId = this.iconSelected[id].getAttribute("insertafter");
-			var dir = 0
-			var el;
-			if (elId)
-			{
-				dir = 1;
-				if ($(elId))
-					el = $(elId).nextSibling;
-			}
-			else
-			{
-				elId = this.iconSelected[id].getAttribute("insertbefore");
-				if ($(elId))
-					el = $(elId).previousSibling;
-			}
-			if (el)
-			{
-				el.setAttribute("directionId", elId);
-				el.setAttribute("direction", dir);
-				el.setAttribute("selected", true);
-				el.collapsed = false;
-			}
+			if (!mapaPlus.isLocked && $(checkbox).checked)
+				mapaPlus.mouseMove(e);
+		}, false);
+		last = document.importNode(vbox, true);
+		last.setAttribute("directionId", clone._id);
+		last.id = "mapapl-"+ id + "-" + clone._id;
+		$(objId).appendChild(last);
+	}// for children
+	if (self.iconSelected[id])
+	{
+		let	elId = self.iconSelected[id].getAttribute("insertafter"),
+				dir = 0,
+				el;
+
+		if (elId)
+		{
+			dir = 1;
+			let obj = $("_" + elId);
+			if (obj)
+				el = obj.nextSibling;
+		}
+		else
+		{
+			elId = self.iconSelected[id].getAttribute("insertbefore");
+			let obj = $("_" + elId);
+			if (obj)
+				el = obj.previousSibling;
+		}
+		if (el)
+		{
+			el.setAttribute("directionId", elId);
+			el.setAttribute("direction", dir);
+			el.setAttribute("selected", true);
+			el.collapsed = false;
 		}
 	}
 	return urlBarIcons;
@@ -129,23 +170,26 @@ mapaPlus.showSelected = function (e)
 		pp = e.target.parentNode.parentNode.id;
 	}
 	catch(error){}
-	if (e.target.id.match(/^mapapl-/) || p == "urlbar-icons" || p == "status-bar" || pp == "urlbar-icons" || pp == "status-bar")
+	let id = e.target._id || e.target.id;
+	if (id.match(/^mapapl-/) || p == "urlbar-icons" || p == "status-bar" || pp == "urlbar-icons" || pp == "status-bar")
 		return;
 
-	var c = $("urlbar-icons").childNodes;
-	for(var i = 0; i < c.length; i++)
+	let c = $("urlbar-icons").childNodes;
+	for(let i = 0; i < c.length; i++)
 	{
-		if (c[i].id.match(/^mapapl-/))
+		let id = c[i]._id || c[i].id;
+		if (id.match(/^mapapl-/))
 		{
 			c[i].collapsed = c[i].getAttribute("selected") != "true";
 		}
 	}
 	if ($("status-bar"))
 	{
-		var c = $("status-bar").childNodes;
-		for(var i = 0; i < c.length; i++)
+		let c = $("status-bar").childNodes;
+		for(let i = 0; i < c.length; i++)
 		{
-			if (c[i].id.match(/^mapapl-/))
+			let id = c[i]._id || c[i].id;
+			if (id.match(/^mapapl-/))
 			{
 				c[i].collapsed = c[i].getAttribute("selected") != "true";
 			}
@@ -158,27 +202,31 @@ mapaPlus.mouseMove = function(event)
 	if (mapaPlus.protected)
 		return;
 
-	var dropTarget = event.target;
+	let dropTarget = event.target;
 	while(dropTarget.parentNode && dropTarget.parentNode.id != "urlbar-icons")
 		dropTarget = dropTarget.parentNode;
 
-	var direction = window.getComputedStyle(dropTarget.parentNode, null).direction;
-	var dropTargetCenter = dropTarget.boxObject.x + (dropTarget.boxObject.width / 2);
-	var dragAfter;
-	if (direction == "ltr")
-		dragAfter = event.clientX > dropTargetCenter;
-	else
-		dragAfter = event.clientX < dropTargetCenter;
+	let	direction = window.getComputedStyle(dropTarget.parentNode, null).direction,
+			dropTargetCenter = dropTarget.boxObject.x + (dropTarget.boxObject.width / 2),
+			dragAfter;
 
-	var c = dropTarget.parentNode.childNodes;
-	for(var i = 0; i < c.length; i++)
+	if (direction == "ltr")
+		dragAfter = event.clientX >= dropTargetCenter;
+	else
+		dragAfter = event.clientX <= dropTargetCenter;
+
+	let	c = dropTarget.parentNode.childNodes,
+			icon;
+
+	for(let i = 0; i < c.length; i++)
 	{
-		if (c[i].id.match(/^mapapl-/) && (c[i].getAttribute("directionId" != dropTarget.id) || c[i].getAttribute("direction") != dragAfter))
+//		if (c[i].id.match(/^mapapl-/) && (c[i].getAttribute("directionId" != dropTarget.id) || c[i].getAttribute("direction") != dragAfter))
+		let id = c[i]._id || c[i].id;
+		if (id.match(/^mapapl-/))
 		{
 			c[i].collapsed = true;
 		}
 	}
-	var icon;
 	if (dragAfter)
 	{
 		icon = dropTarget.nextSibling || dropTarget;
@@ -188,20 +236,27 @@ mapaPlus.mouseMove = function(event)
 		icon = dropTarget.previousSibling || dropTarget;
 	}
 	icon.collapsed = false;
-	icon.setAttribute("directionId", dropTarget.id);
+	let id = dropTarget._id || dropTarget.id;
+	icon.setAttribute("directionId", id);
 	icon.setAttribute("direction", dragAfter);
 }
 
-mapaPlus.mouseClick = function(obj)
+mapaPlus.mouseClick = function mouseClick(obj)
 {
-	var c = obj.parentNode.childNodes;
-	for(var i = 0; i < c.length; i++)
+log.debug();
+	if (obj.disabled)
+		return false;
+
+	let c = obj.parentNode.childNodes;
+	for(let i = 0; i < c.length; i++)
 	{
-		if (!c[i].id.match(/^mapapl-/))
+		let id = c[i]._id || c[i].id;
+		if (!id.match(/^mapapl-/))
 			continue;
+
 		if (!c[i].collapsed)
 		{
-			this.iconSelected[c[i].id.split("-")[1]] = c[i];
+			this.iconSelected["_" + id.split("-")[1]] = c[i];
 			c[i].setAttribute("selected", true);
 		}
 		else
@@ -242,10 +297,14 @@ mapaPlus.cloneClass = function(orig, obj)
 	for(let i = 0; i < orig.childNodes.length; i++)
 		mapaPlus.cloneClass(orig.childNodes[i], obj.childNodes[i]);
 }
-mapaPlus.cleanClone =	function(obj)
+
+mapaPlus.cleanClone =	function cleanClone(obj, leaveAttr)
 {
 	let skipId = ["statusbar-display", "show_location_drag_icon"],
 			skipTag = ["tooltip", "popup", "prefpane"];
+	if (!leaveAttr)
+		leaveAttr = [];
+
 	obj.display = "";
 	obj.hidden = false;
 	obj.collapsed = false;
@@ -259,14 +318,14 @@ mapaPlus.cleanClone =	function(obj)
 	if (obj.getAttribute("tooltiptext") == "")
 		obj.setAttribute("tooltiptext", obj.id);
 
-	for(let i = 0; i < obj.attributes.length; i++)
+	let r = [];
+	for(let i = 0, a = obj.attributes; i < a.length; i++)
 	{
-		if (obj.attributes[i].name.match(/^(on*|tooltip|context|ondblclick)$/))
-		{
-			obj.removeAttribute(obj.attributes[i].name);
-			i--;
-		}
+		if (/^(on.*|tooltip|context)$/i.exec(a[i].name) && leaveAttr.indexOf(a[i].name) == -1)
+			r.push(a[i].name);
 	}
+	for(let i = 0; i < r.length; i++)
+		obj.removeAttribute(r[i]);
 
 	let children = obj.childNodes;
 	for (let i = 0; i < children.length; i++)
@@ -335,7 +394,7 @@ mapaPlus.getOrder = function(obj)
 }
 
 mapaPlus.timer = {
-	timer: Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer),
+	timer: Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer),
 	init: function()
 	{
 		this.timer.init(this, 500, this.timer.TYPE_REPEATING_SLACK);
@@ -476,7 +535,7 @@ mapaPlus.setListeners = function()
 	}
 }
 
-mapaPlus.onLoadCommon = function()
+mapaPlus.onLoadCommon = function(e)
 {
 	mapaPlus.initCommon();
 }
@@ -490,13 +549,29 @@ mapaPlus.initCommon = function(id)
 	if (id == this.windowID)
 		return;
 
+	if (!this.core.isTB)
+	{
+		if (this.iniIcons("urlbar-icons", "mapa_urlbar", "urlbar", "mapaPlusUrlbar"))
+			$("urlbar-container").collapsed = false;
+
+		$("panelDisplay").addEventListener("mousemove", this.showSelected, true);
+		$("mapaPlusSuppressPopupBox").collapsed = false;
+		if ($("mapaPlusSuppressPopup").checked && this.core.suppressedPopupStop)
+		{
+			$("mapaPlusSuppressPopup").setAttribute("indeterminate", true);
+			$("mapaPlusSuppressPopup").checked = false; //we want first click check the checkbox, not uncheck it.
+		}
+		$("urlbar").boxObject.firstChild.setAttribute("flex", 0);
+		$("options").setAttribute("options", true);
+	}
+
 	$("mapaPlusDebug").addEventListener("command", this.debugClick, true);
 	$("mapaPlusChangesLog").addEventListener("command", this.changesLogClick, true);
 	let obj = $("mapaPlusShowChangesLog_button");
 	obj.setAttribute("linkCopy", mapaPlus.CHANGESLOG_URL);
 	obj.addEventListener("click", function(e)
 	{
-		if (e.button != 2)
+		if (e.button != 2 && !e.target.disabled)
 			mapaPlus.showChangesLog()
 
 		e.stopPropagation();
@@ -511,8 +586,8 @@ mapaPlus.initCommon = function(id)
 	$("mapaPlusStartupFail").setAttribute("prevset", this.core.pref("startupfail"));
 	window.addEventListener("CheckboxStateChange", this.checkboxTriState, false);
 	window.addEventListener("unload", this.closeCommon, false);
-	if (Components.classes["@mozilla.org/xpcom/version-comparator;1"]
-			.getService(Components.interfaces.nsIVersionComparator)
+	if (Cc["@mozilla.org/xpcom/version-comparator;1"]
+			.getService(Ci.nsIVersionComparator)
 			.compare(this.core.appInfo.version, "8.0") < 0)
 	{
 		$("mapaPlusAllPrefs").collapsed = true;
@@ -557,25 +632,41 @@ mapaPlus.initCommon = function(id)
 	else
 		this.enableDisable();
 
-	let sup = $("mapaPlusSupportSite");
-	sup.setAttribute("href", mapaPlusCore.SUPPORTSITE + mapaPlusCore.SUPPORTSITEQUERY);
-	sup.setAttribute("link", mapaPlusCore.SUPPORTSITE);
-	sup.setAttribute("tooltiptext", mapaPlusCore.SUPPORTSITE);
-	sup = $("mapaPlusSupportHomepage");
-	sup.setAttribute("href", mapaPlusCore.HOMEPAGE);
-	sup.setAttribute("link", mapaPlusCore.HOMEPAGE);
-	sup.setAttribute("tooltiptext", mapaPlusCore.HOMEPAGE);
-
 	if (this.core.isTB)
 		return;
 
-	var w = $("urlbar").inputField.parentNode.boxObject.width;
+/*
+	let w = $("urlbar").inputField.parentNode.boxObject.width;
 	$("urlbar").inputField.parentNode.style.minWidth = "140px";
-	var w2 = $("urlbar").inputField.parentNode.boxObject.width;
+	let w2 = $("urlbar").inputField.parentNode.boxObject.width;
 	if (w2 > w)
 	{
 		$("urlbar").width = $("urlbar").boxObject.width + (w2-w);
 	}
+*/
+	AddonManager.getAllAddons(function(list)
+	{
+		$("supportCopyInfoBox").value = JSON.stringify(changesLog.getEmailBody(list), null, 2);
+
+		//browser\omni\chrome\browser\content\browser\preferences\in-content\subdialogs.js
+		let box = window.parent.document.getElementById("dialogBox");
+		if (box)
+		{
+			let frame = window.parent.document.getElementById("dialogFrame");
+			// Do this on load to wait for the CSS to load and apply before calculating the size.
+			let docEl = frame.contentDocument.documentElement;
+			let groupBoxBody = document.getAnonymousElementByAttribute(box, "class", "groupbox-body");
+			// These are deduced from styles which we don't change, so it's safe to get them now:
+			let boxHorizontalPadding = 2 * parseFloat(getComputedStyle(groupBoxBody).paddingLeft);
+			let boxHorizontalBorder = 2 * parseFloat(getComputedStyle(box).borderLeftWidth);
+			// Then determine and set a bunch of width stuff:
+			let frameMinWidth = docEl.scrollWidth + "px";
+			let frameWidth = docEl.getAttribute("width") + "px";
+			frame.style.width = frameWidth;
+			box.style.minWidth = "calc(" + (boxHorizontalBorder + boxHorizontalPadding) + "px + " + frameMinWidth + ")";
+		}
+	});
+
 }//initCommon()
 
 mapaPlus.loadArgs = function()
@@ -603,8 +694,8 @@ mapaPlus.viewTogle = function(e)
 }
 
 mapaPlus.observer = {
-	_observerService: Components.classes["@mozilla.org/observer-service;1"]
-														.getService(Components.interfaces.nsIObserverService),
+	_observerService: Cc["@mozilla.org/observer-service;1"]
+														.getService(Ci.nsIObserverService),
 	_name: null,
 	init: function()
 	{
@@ -620,7 +711,7 @@ mapaPlus.observer = {
 
 	observe: function(aSubject, aTopic, aData)
 	{
-		aSubject.QueryInterface(Components.interfaces.nsISupportsString);
+		aSubject.QueryInterface(Ci.nsISupportsString);
 //log("commonop observe " + aSubject.data);
 		if (aTopic != this._name || !mapaPlus[aSubject.data])
 			return;
@@ -1042,6 +1133,9 @@ log.debug();
 
 mapaPlus.linkClick = function linkClick(obj, e)
 {
+	if (!e.target.disabled)
+		return false;
+
 	let url = obj.getAttribute("href");
 	let email = url.match(/^mailto:/);
 	if (!obj.fixed)
@@ -1073,11 +1167,11 @@ mapaPlus.linkClick = function linkClick(obj, e)
 			mapaPlus.core.openUILinkIn(url);
 		else if (email)
 		{
-			let aURI = Components.classes["@mozilla.org/network/io-service;1"]
-							.getService(Components.interfaces.nsIIOService)
+			let aURI = Cc["@mozilla.org/network/io-service;1"]
+							.getService(Ci.nsIIOService)
 							.newURI(url, null, null);
-			Components.classes["@mozilla.org/messengercompose;1"]
-				.getService(Components.interfaces.nsIMsgComposeService)
+			Cc["@mozilla.org/messengercompose;1"]
+				.getService(Ci.nsIMsgComposeService)
 				.OpenComposeWindowWithURI(null, aURI);
 		}
 		else
@@ -1109,6 +1203,79 @@ mapaPlus.copy = function(txt)
 		.getService(Ci.nsIClipboardHelper)
 		.copyString(txt);
 }
+
+mapaPlus.enableDisable = function enableDisable(e)
+{
+log.debug();
+	let	status, startup, lock, disable, minimize,
+			locked = (mapaPlus.protected || mapaPlus.isLocked),
+			isOptions = mapaPlus.windowType == "options";
+
+	if (locked)
+	{
+		status = true;
+		startup = true;
+		lock = true;
+		minimize = true;
+		$("mapaPlusEnabled").disabled = true;
+		$("mapaPlusStartup").disabled = true;
+		$("mapaPlusLockTimer").disabled = true;
+		if (isOptions)
+			document.documentElement.getButton("accept").disabled = true;
+
+		document.documentElement.getButton("disclosure").disabled = true;
+		document.documentElement.getButton("extra1").hidden = false;
+		disable = true;
+	}
+	else
+	{
+		$("mapaPlusEnabled").disabled = false;
+		$("mapaPlusStartup").disabled = false;
+		$("mapaPlusLockTimer").disabled = false;
+		if (isOptions)
+			document.documentElement.getButton("accept").disabled = false;
+
+		document.documentElement.getButton("disclosure").disabled = false;
+		document.documentElement.getButton("extra1").hidden = true;
+		status = !$("mapaPlusEnabled").checked;
+		startup = !$("mapaPlusStartup").checked;
+		lock = !$("mapaPlusLockTimer").checked;
+		disable = false;
+		minimize = !$("mapaPlusLockMinimize").checked || lock;
+	}
+	mapaPlus.setAttribute($("panelTimeout").firstChild, "disabled", locked, !locked);
+	mapaPlus.setAttribute($("panelLock").firstChild, "disabled", locked, !locked);
+	mapaPlus.setAttribute($("panelStartup").firstChild, "disabled", locked, !locked);
+	mapaPlus.setAttribute($("panelPrompt").firstChild, "disabled", locked, !locked);
+	mapaPlus.setAttribute($("panelDisplay").firstChild, "disabled", locked, !locked);
+	mapaPlus.setAttribute($("panelGeneral").firstChild, "disabled", locked, !locked);
+	mapaPlus.setAttribute($("panelHelp").firstChild, "disabled", locked, !locked);
+
+	mapaPlus.setAttribute("mapaPlusTimeoutBox", "disabled", status, !status);
+	mapaPlus.setAttribute("mapaPlusLogoutOnMinimize", "disabled", disable, !disable);
+	mapaPlus.setAttribute("mapaPlusStartupBox", "disabled", startup, !startup);
+	mapaPlus.setAttribute("mapaPlusLockBox", "disabled", lock, !lock);
+	mapaPlus.setAttribute("mapaPlusLockBox2", "disabled", disable, !disable);
+	mapaPlus.setAttribute("mapaPlusLockBox3", "disabled", disable, !disable);
+	mapaPlus.setAttribute("mapaPlusSuppressBlinkBox", "disabled", disable, !disable);
+	mapaPlus.setAttribute("mapaPlusSuppressPopupBox", "disabled", disable, !disable);
+	mapaPlus.setAttribute("mapaPlusSuppressSoundBox", "disabled", disable, !disable);
+
+	$("mapaPlusLockMinimizeBlur").disabled = minimize;
+	let urlbar = !$("mapaPlusUrlbar").checked || locked;
+	mapaPlus.setAttribute("urlbar-container", "disabled", urlbar, !urlbar);
+
+/*
+	if (e !== false)
+		mapaPlus.core.windowAction("lock", locked+"|"+mapaPlus.windowID, "Dialog");
+*/
+	
+	let n = document.getElementsByClassName("note");
+	for(let i = 0; i < n.length; i++)
+		n[i].collapsed = mapaPlus.core.status;
+
+	mapaPlus.suppress();
+}//enableDisable()
 
 mapaPlus.loadArgs();
 

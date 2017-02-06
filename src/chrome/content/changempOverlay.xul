@@ -7,8 +7,8 @@
 							buttonlabelextra1="&mapaPlus.options.unlock;"
 							ondialogextra1="mapaPlus.protectUnlock()"
 	>
+		<prefpane id="masterPasswordPlusOptions"/>
 		<script type="application/javascript" src="chrome://mapaplus/content/masterpasswordplusCommon.js"/>
 		<script type="application/javascript" src="chrome://mapaplus/content/changemp.js"/>
-		<prefpane id="masterPasswordPlusOptions"/>
 	</prefwindow>
 </overlay>

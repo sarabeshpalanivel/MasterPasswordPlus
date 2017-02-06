@@ -330,7 +330,7 @@ log.debug(t + " added id: " + this.windowID[t])
 			minimize = minimize || false;
 			this.locked = true;
 			this.prefNoObserve = true;
-			this.prefs.setBoolPref("locked", true);
+			this.pref("locked", true);
 			this.prefNoObserve = false;
 			this.windowAction("showLock");
 			this.dialogShow = false;
@@ -508,7 +508,7 @@ this.windowAction("test", {blah:109}, "Dialog");
 		this.windowAction("lock", false, "Dialog");
 		this.countdownResetLock();
 		this.prefNoObserve = true;
-		this.prefs.setBoolPref("locked", false);
+		this.pref("locked", false);
 		this.prefNoObserve = false;
 //		this.pref("suppress") = this.pref("suppress");
 		this.windowAction("showUnlock");
@@ -1504,7 +1504,11 @@ timer.init({observe: function(e)
 					observe: function()
 					{
 						timer.cancel();
-						this.callback();
+						if (typeof(this.callback) == "function")
+							this.callback();
+						else
+							log(this.callback, 1);
+
 						self.asyncMap.delete(timer);
 					}
 				}
@@ -1513,7 +1517,11 @@ timer.init({observe: function(e)
 		if (prev && noreset)
 			return timer;
 
-		timer.init(obj, delay || 0, timer.TYPE_ONE_SHOT);
+		if (delay > 0)
+			timer.init(obj, delay || 0, timer.TYPE_ONE_SHOT);
+		else
+			obj.observe();
+
 		return timer;
 	},//async()
 

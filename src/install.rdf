@@ -3,7 +3,7 @@
 
 	<Description about="urn:mozilla:install-manifest">
 		<em:id>masterpasswordtimeoutplus@vano</em:id>
-		<em:version>1.23</em:version>
+		<em:version>1.24</em:version>
 		<em:type>2</em:type>
 		<em:unpack>true</em:unpack>
 		<em:name>Master Password+</em:name>
@@ -16,6 +16,7 @@
 		<em:translator>Fang5566 (zh-CN)</em:translator>
 		<em:translator>Julián Andrés Osorio López (es-ES)</em:translator>
 		<em:translator>SN (de-DE)</em:translator>
+		<em:translator>Artem Polivanchuk (uk-UA)</em:translator>
 		<em:multiprocessCompatible>true</em:multiprocessCompatible>
 
 		<!-- Firefox -->
@@ -23,7 +24,7 @@
 			<Description>
 				<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
 				<em:minVersion>4.0</em:minVersion>
-				<em:maxVersion>53.0a1</em:maxVersion>
+				<em:maxVersion>54.0a1</em:maxVersion>
 			</Description>
 		</em:targetApplication>
 
@@ -32,12 +33,11 @@
 			<Description>
 				<em:id>{3550f703-e582-4d05-9a08-453d09bdfdc6}</em:id>
 				<em:minVersion>5.0</em:minVersion>
-				<em:maxVersion>53.0a1</em:maxVersion>
+				<em:maxVersion>54.0a1</em:maxVersion>
 			</Description>
 		</em:targetApplication>
 
 		<!-- Postbox -->
-
 		<em:targetApplication>
 				<Description>
 						<em:id>postbox@postbox-inc.com</em:id>
