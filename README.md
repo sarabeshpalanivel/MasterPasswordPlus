@@ -22,7 +22,7 @@
 
 
 <b>NOTE</b>
-There is a little inconvenience if MP+ set to block master password prompts - it will block them by canceling them before they appear on screen. Because of that if you open a web page that has login/autofill form and required master password, you'll need manually login via MP+ <b>and refresh the page</b> to get the available login information for the login/autofill form. The same thing applied to any other extensions, option windows, etc that use protect by master password data - if it's a window, you'll need reopen the window after you manually logged in with master password.
+There is a little inconvenience if MP+ set to block master password prompts - it will block them by canceling them before they appear on screen. Because of that if you open a web page that has login/autofill form and required master password, you'll need manually login via MP+ <b>and refresh the page</b> to get the available login information for the login/autofill form. The same thing applied to any other extensions, option windows, etc that use protected by master password data - if it's a window, you'll need reopen the window after you manually logged in with master password.
 
 
 <b>Disclaimer</b>
