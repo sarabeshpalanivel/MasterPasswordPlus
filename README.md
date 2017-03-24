@@ -1,8 +1,3 @@
-<i>Current version has an issue that prevents Firefox from unlocking, nothing happens when it's locked and user click or presses a button.
-As a work around this issue, press CTRL+N to open new window, then you'll be able unlock it.
-As of now I'm struggling to find what causing this. I need your help <a href="https://github.com/vanowm/MasterPasswordPlus/issues/85">issue #85</a></i>
-
-
 <b> Features:</b>
 <ul>
 <li> Ability to enable or disable timeout
@@ -37,6 +32,6 @@ You can find more about master password <a href="http://kb.mozillazine.org/Maste
 
 
 
-<b><strong>Please report bugs and feature requests at <a href="http://goo.gl/d3xyv" target="_blank">http://goo.gl/d3xyv</a> or via email in the support section of addon page (<a href="http://goo.gl/Ipdep" target="_blank">http://goo.gl/Ipdep</a>)
+<b><strong>Please report bugs and feature requests at <a href="https://github.com/vanowm/MasterPasswordPlus/issues" target="_blank">support website</a> or via email in the support section of addon page (<a href="http://goo.gl/Ipdep" target="_blank">http://goo.gl/Ipdep</a>)
 
 <i>Bug reports or feature requests posted in review sections will be ignored and may be reported as spam.<i></strong></b>
