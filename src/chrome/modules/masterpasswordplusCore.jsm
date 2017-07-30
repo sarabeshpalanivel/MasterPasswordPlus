@@ -106,6 +106,7 @@ var self = this,
 	style: {},
 
 	strings: {
+		_notinited: true,
 		days: "d",
 		deleteSettings: "Delete all settings?"
 	},
@@ -340,7 +341,6 @@ log.debug(t + " added id: " + this.windowID[t])
 
 			this.timerCheck.observe();
 			this.windowAction("lock", true, "Dialog");
-this.windowAction("test", {blah:109}, "Dialog");
 
 			if (minimize && this.pref("lockminimize"))
 			{
@@ -361,11 +361,13 @@ this.windowAction("test", {blah:109}, "Dialog");
 							if (win.windowState != win.STATE_MINIMIZED)
 							{
 								win.minimize();
+/*
 								let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
 								timer.init({observe:function()
 								{
-//									win.minimize();
+									win.minimize();
 								}}, 0, timer.TYPE_ONE_SHOT);
+*/
 							}
 						}
 
@@ -502,8 +504,9 @@ this.windowAction("test", {blah:109}, "Dialog");
 
 	},
 
-	unlock: function()
+	unlock: function unlock()
 	{
+log.debug();
 		this.locked = false;
 		this.windowAction("lock", false, "Dialog");
 		this.countdownResetLock();
@@ -521,6 +524,13 @@ this.windowAction("test", {blah:109}, "Dialog");
 			});
 			this.lockPrefBackup = null;
 		}
+/*
+initiate sync
+this.async(function()
+{
+	Services.obs.notifyObservers(null, "cloudsync:user-sync", null);
+}, 3000)
+*/
 	},
 
 	suppressed: function()
@@ -541,7 +551,12 @@ this.windowAction("test", {blah:109}, "Dialog");
 
 	countdownResetLock: function()
 	{
-		var time = this.pref("locktimeout");
+		let time = this.pref("locktimeout");
+		if (time < 10)
+		{
+			time = 10;
+			this.pref("locktimeout", time);
+		}
 		time = new Date((parseInt((new Date().getTime()/1000))+time) * 1000) ;
 		this.timerLockTime = time;
 	},
@@ -555,22 +570,38 @@ this.windowAction("test", {blah:109}, "Dialog");
 			mapaPlusCore.countdownResetLock();
 	},
 
+	timeSplit: function (t)
+	{
+		return {
+			d: Math.floor( t / 86400000 ),
+			h: Math.floor( t / 3600000% 24 ),
+			m: Math.floor( t / 60000% 60 ),
+			s: Math.floor( t / 1000 % 60 ),
+			ms: Math.floor( t % 1000)
+		}
+	},//timeSplit()
+
 	timerToString: function(t, time)
 	{
-		var difference = t - time + 1000;
+		let difference = t - time + 1000;
 		if (!t || difference < 0)
 			return "";
 
-		var milliseconds = Math.floor( difference % 1000);
-		difference = difference / 1000;
-		var seconds = Math.floor( difference % 60 );
-		difference = difference / 60;
-		var minutes = Math.floor( difference % 60 );
-		difference = difference / 60;
-		var hours = Math.floor( difference % 24 );
-		difference = difference / 24;
-		var days = Math.floor( difference );
-		var r = (hours > 9 ? "" : "0") + hours + ":" + (minutes > 9 ? "" : "0") + minutes + ":" + (seconds > 9 ? "" : "0") + seconds;
+		let r = "";
+		time = this.timeSplit(difference);
+		if (time.d)
+			r += time.d;
+
+		if (r || time.h)
+			r += (r ? this.strings.days + " " : "") + (!r || time.h > 9 ? "" : "0") + time.h;
+
+		if (r || time.m)
+			r += (r ? ":" : "") + (!r || time.m > 9 ? "" : "0") + time.m;
+
+		if (r || time.s)
+			r += (r ? ":" : "") + (!r || time.s > 9 ? "" : "0") + time.s;
+
+//		let r += (hours > 9 ? "" : "0") + hours + ":" + (minutes > 9 ? "" : "0") + minutes + ":" + (seconds > 9 ? "" : "0") + seconds;
 //		mapaPlusCore.dump(r);
 		return r;
 	},
@@ -596,8 +627,9 @@ this.windowAction("test", {blah:109}, "Dialog");
 
 	timerCheckObserver: function()
 	{
-		if (idleService.idleTime < 500)
+		if (idleService.idleTime < (mapaPlusCore.pref("idle") * 200 + 100))
 		{
+//log(idleService.idleTime);
 			mapaPlusCore.resetTimer();
 		}
 		let time = new Date();
@@ -1471,8 +1503,10 @@ timer.init({observe: function(e)
 			});
 			return r;
 		}
-	},
+	},//_asyncMap()
+
 	__asyncMap: null,
+
 	get asyncMap()
 	{
 		if (!this.__asyncMap)
@@ -1487,6 +1521,7 @@ timer.init({observe: function(e)
 		}
 		return this.__asyncMap;
 	},
+
 	async: function async(callback, delay, timer, noreset)
 	{
 //log.debug();
@@ -1517,11 +1552,7 @@ timer.init({observe: function(e)
 		if (prev && noreset)
 			return timer;
 
-		if (delay > 0)
-			timer.init(obj, delay || 0, timer.TYPE_ONE_SHOT);
-		else
-			obj.observe();
-
+		timer.init(obj, delay || 0, timer.TYPE_ONE_SHOT);
 		return timer;
 	},//async()
 
@@ -1608,8 +1639,6 @@ function include(path)
 {
 	Services.scriptloader.loadSubScript(mapaPlusCore.addon.getResourceURI(path).spec, self);
 }
-var __dumpName__ = "log";
-
 mapaPlusCore.pref.timers = {};
 mapaPlusCore.pref.prefs = {}; //this will hold cached preferences.
 mapaPlusCore.pref.types = {
@@ -1617,6 +1646,8 @@ mapaPlusCore.pref.types = {
 	number: "Int",
 //	string: "Char"
 }
+
+var __dumpName__ = "log";
 Services.scriptloader.loadSubScript("chrome://mapaplus/content/dump.js", log);
 /*
 var mozIJSSubScriptLoader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
@@ -1709,6 +1740,7 @@ let idleService = Cc["@mozilla.org/widget/idleservice;1"].getService(Ci.nsIIdleS
 				}
 			}
 		};
+mapaPlusCore.idleService = idleService;
 
 //ask for master password on startup
 (mapaPlusCore.startupPass = function()
@@ -1792,9 +1824,113 @@ let listener = {
 	}
 }
 AddonManager.addAddonListener(listener);
-
+observerService.addObserver(sleep_notification, "sleep_notification", false);
+observerService.addObserver(sleep_notification, "wake_notification", false);
 Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher)
 	.registerNotification(mapaPlusCore.windowListener);
 
-observerService.addObserver(sleep_notification, "sleep_notification", false);
-observerService.addObserver(sleep_notification, "wake_notification", false);
+
+//attempt track opening xul windows inside a tab. Currently fails with e10s enabled.
+
+/*
+domObserver = {
+	observe:function observe(aSubject, aTopic, aData)
+	{
+log([aSubject, aTopic, aData, aSubject.location]);
+//log(aSubject, 1)
+		let window;
+		if (aTopic == "chrome-document-global-created")
+			window = aSubject;
+		else
+			window = aSubject.QueryInterface(Components.interfaces.nsIDOMWindow).content;
+//		log(window,1)
+		if (!window)
+			return;
+log([aSubject.location, window.location]);
+return;
+		let load = function load(e)
+		{
+if (window.mapaPlus && "__closing" in window.mapaPlus)
+log(window.mapaPlus, 1);
+			if (window.mapaPlus && window.mapaPlus.__closing)
+			{
+				window.close();
+				return;
+			}
+			let list = mapaPlusCore.prefForcePrompt;
+//log(list,1)
+log([window.document.readyState, window.location, window.mapaPlus])
+
+			for(let i = 0; i < list.length; i++)
+			{
+				if (!("enabled" in list[i])
+						|| (!("id" in list[i] && window.name && list[i].id == window.name)
+								&& !("url" in list[i] && window.location.href == list[i].url)))
+					continue;
+				let param = "";
+				if ("param" in list[i])
+				{
+					param = list[i].param.split("|");
+				}
+				let isParam = function(name)
+				{
+					return param.indexOf(name) != -1;
+				}
+if (!window.mapaPlus)
+	window.mapaPlus = {
+		__passed: false,
+		__closing: false
+	};
+
+log(window.mapaPlus, 1);
+				if (!window.mapaPlus.__passed && ((mapaPlusCore.status == 2
+						&& (mapaPlusCore.pref("suppress") == 2
+								|| mapaPlusCore.pref_SuppressTemp
+								|| (isParam("startup") && !mapaPlusCore.startupPassed)))
+						|| isParam("always")))
+				{
+log("OK");
+					let f = mapaPlusCore.dialogForce, t = mapaPlusCore.dialogTemp, ok = false;
+					mapaPlusCore.dialogForce = true;
+//									mapaPlusCore.dialogTemp = false;
+					try
+					{
+						mapaPlusCore.tokenDB.login(isParam("always"));
+						ok = true;
+					}catch(e){}
+					mapaPlusCore.dialogForce = f;
+//									mapaPlusCore.dialogTemp = t;
+					if (!ok && isParam("close"))
+					{
+						if (e)
+						{
+							e.stopPropagation();
+							e.preventDefault();
+						}
+						window.mapaPlus.__closing = true;
+						window.close();
+log("close");
+//log(window.document, 1);
+					}
+					if (ok)
+					{
+						window.mapaPlus.__passed = true;
+					}
+				}
+				break;
+			}//for
+		}//load()
+log([window.document.readyState, window.location, window.mapaPlus])
+		if (window.document.readyState != "complete")
+		{
+			window.addEventListener("load", load, false)
+		}
+		if (window.location.href != "about:blank")
+			load();
+	}
+}
+//Cc["@mozilla.org/observer-service;1"].getService(Ci.nsIObserverService)
+//	.addObserver(domObserver, "content-document-global-created", false);
+Cc["@mozilla.org/observer-service;1"].getService(Ci.nsIObserverService)
+	.addObserver(domObserver, "chrome-document-global-created", false);
+*/

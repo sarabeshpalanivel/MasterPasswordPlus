@@ -243,6 +243,10 @@ mapaPlus.saveOptions = function()
 		this.hotkeySave("mapaPlusLockWinHotkey", "lockwinhotkey");
 		this.hotkeySave("mapaPlusLockLogoutHotkey", "locklogouthotkey");
 
+		this.timeoutSave("logouttimeout");
+		this.timeoutSave("locktimeout");
+		this.timeoutSave("startuptimeout");
+
 		let el = $("options").getElementsByTagName('*'),
 				pref, prefType, prefValue, prefExtra;
 

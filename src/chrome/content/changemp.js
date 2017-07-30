@@ -1,6 +1,5 @@
 (function()
 {
-
 function $(id)
 {
 	return document.getElementById(id);
@@ -151,8 +150,8 @@ log.debug();
 	this.setListeners();
 //	checkPasswords();
 	this.suppress();
-
-}//init()
+}
+//init()
 
 mapaPlus.suppress = function()
 {
@@ -241,6 +240,10 @@ mapaPlus.saveOptions = function()
 		this.hotkeySave("mapaPlusLockHotkey", "lockhotkey");
 		this.hotkeySave("mapaPlusLockWinHotkey", "lockwinhotkey");
 		this.hotkeySave("mapaPlusLockLogoutHotkey", "locklogouthotkey");
+
+		this.timeoutSave("logouttimeout");
+		this.timeoutSave("locktimeout");
+		this.timeoutSave("startuptimeout");
 
 		let el = $("options").getElementsByTagName('*'),
 				pref, prefType, prefValue, prefExtra;

@@ -7,18 +7,24 @@ Legend:
 * = Changed
 - = Removed
 
-v1.24 (2017-02-06)
+v1.24 (2017-07-30)
 	+ Ukrainian language. Thanks to Artem Polivanchuk (issue #108)
 	+ Window identification string shows in locked window (issue #109)
 	+ improved displaying "Show in Address bar" icons in options
+	+ timeout input fields in options are now split into separate fields for days, hours, minutes and seconds
+	+ user idle sensitivy option
+	! Unable set/change master password (issue #120)
 	! MP+ icon position in address bar not updated until browser restart
 	! new options introduced in v1.23 are not disabled when options window is "protected" (issue #107)
 	! opening new window after browser was locked on startup and then logged out, locks all windows again for no reason (issue #110)
 	! window title not restored after locked window was unlocked {crossed fingers} (issue #91)
-	! Unable unlock when locked on minimized option enabled and some windows already minimized {can't reproduce anymore} (issue #61)
+	! Unable unlock when "locked on minimized" option enabled and some windows already minimized {can't reproduce anymore} (issue #61)
 	! unlocking minimized windows multiply number of thumbnails at taskbar on Windows 7+
 	! minimized window looses it's original position on screen after restart (issue #111)
 	! Change Master Password window content doesn't fit when opened from Firefox options (issue #115)
+	! timeout timer not properly displayed if set to over 24 hours
+	* browser console no longer locks when debug logging enabled
+	* timer in tooltip now show days and doesn't show "0" for hours/minutes
 
 v1.23 (2016-12-20)
 	+ MP prompt inside locked window (issue #83)

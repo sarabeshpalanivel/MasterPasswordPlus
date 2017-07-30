@@ -298,11 +298,13 @@ switch (Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService).g
 	default:  mapaPlus.core.accel = (window.navigator.platform.search("Mac") == 0 ? "META" : "CONTROL");
 }
 mapaPlusCore = mapaPlus.core;
+if (mapaPlus.strings && mapaPlus.core.strings._notinited)
+	mapaPlus.core.strings = mapaPlus.strings;
 
 let _strings = Cc["@mozilla.org/intl/stringbundle;1"]
 					.getService(Ci.nsIStringBundleService)
 					.createBundle("chrome://" + (mapaPlus.core.ADDONDOMAIN || "mapaplus") + "/locale/main.properties");
-mapaPlus._ = function(s)
+function _(s)
 {
 	try
 	{
@@ -312,5 +314,6 @@ mapaPlus._ = function(s)
 	{
 		return mapaPlus.strings[s];
 	}
-};
+}
+mapaPlus._ = _;
 })();

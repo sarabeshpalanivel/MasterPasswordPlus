@@ -2,6 +2,8 @@
 {
 let {classes: Cc, interfaces: Ci, utils: Cu} = Components,
 		log = mapaPlusCore.log;
+
+log.debug("dialog");
 function $ (id)
 {
 	return document.getElementById(id);
@@ -280,7 +282,7 @@ mapaPlus.commonDialogOptions = function()
 }
 mapaPlus.checkLatin = function(t)
 {
-	for(var i = 0; i < t.length; i++)
+	for(let i = 0; i < t.length; i++)
 		if (t.charCodeAt(i) > 127)
 			return true;
 
@@ -309,6 +311,7 @@ mapaPlus.updateTitle = function()
 }
 mapaPlus.commonDialogOnLoad = function()
 {
+//	log(window, 1)
 	this.loaded = true;
 	this.titleOriginal = document.title;
 	if (this.pass)

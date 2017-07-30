@@ -43,6 +43,7 @@ mapaPlus.loadedManualy = false;
 mapaPlus.Win7Features = null;
 mapaPlus.MinTrayR = null;
 mapaPlus.noLockWindow = false;
+mapaPlus.minimizeXY = -32000;
 
 (mapaPlus.observer = {
 	_observerService: Cc["@mozilla.org/observer-service;1"]
@@ -167,6 +168,11 @@ mapaPlus.setIcon = function(o)
 	$(o.element).removeAttribute(remove);
 }
 
+mapaPlus.setProp = function(id, name, value)
+{
+	if ($(id))
+		$(id)[name] = value;
+};
 mapaPlus.setAttr = function(id, name, value)
 {
 	if ($(id))
@@ -183,7 +189,7 @@ mapaPlus.setTooltip = function(t)
 {
 	var s = s || false;
 	t = this.strings[t];
-	$("mapa_tooltip_text").value = t;
+	this.setProp("mapa_tooltip_text", "value", t);
 	this.setAttr("mapa_menu_tools", "label", t);
 	this.setAttr("mapa_menu_context", "label", t);
 	this.setAttr("mapa_menu_action", "label", t);
@@ -481,7 +487,7 @@ mapaPlus.command = function(manual, button)
 	this.core.dialogTemp = true;
 	this.core.timerCheck.observe();
 	this.update();
-}
+}//command()
 
 mapaPlus.logout = function()
 {
@@ -496,13 +502,14 @@ mapaPlus.minimizedLockFix = function(restore)
 {
 	mapaPlus.windowMinimizedForced = true;
 	let	x = mapaPlus.screenX,
-			y = mapaPlus.screenY;
+			y = mapaPlus.screenY
 
 	if (mapaPlus.core.pref("minimizenoflicker"))
-		x = y = -32000;
+		x = y = mapaPlus.minimizeXY;
 
 	window.screenX = x;
 	window.screenY = y;
+log([mapaPlus.screenX, mapaPlus.screenY]);
 	window.document.documentElement.setAttribute("screenX", mapaPlus.screenX)
 	window.document.documentElement.setAttribute("screenY", mapaPlus.screenY)
 //	window.restore();
@@ -532,6 +539,7 @@ for(let i =0, w=mapaPlus.Win7Features.AeroPeek.windows; i < w.length; i++)
 		try{mapaPlus.Win7Features.AeroPeek.onOpenWindow(window)}catch(e){};
 		window.screenX = x;
 		window.screenY = y;
+log([mapaPlus.screenX, mapaPlus.screenY]);
 		window.document.documentElement.setAttribute("screenX", mapaPlus.screenX)
 		window.document.documentElement.setAttribute("screenY", mapaPlus.screenY)
 	}
@@ -590,8 +598,13 @@ log.debug();
 	let title = self.strings.lockinfo.replace("#", identify);
 	$("masterPasswordPlusUnLockInfo").value = title;
 
-if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome://inspector/")) return;
-//	log("showlock");
+//if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome://inspector/")) return;
+	if (mapaPlus.core.pref("debug") & 4
+			&& ["chrome://devtools/content/webconsole/webconsole.xul",
+					"chrome://console2/content/console2.xul",
+					].indexOf(window.location.toString()) > -1
+		) return;
+	log("showlock " + window.location.toString());
 	if (self.locked || (!self.lockedWindow && self.noLockWindow))
 		return;
 
@@ -794,8 +807,6 @@ log([val, key, map]);
 				remove();
 		}
 	}catch(e){log(e, 1)};
-//	$('masterPasswordPlusUnLock').focus();
-
 }//showLock()
 
 mapaPlus.showUnlock = function(f)
@@ -1135,7 +1146,7 @@ mapaPlus.login = function(temp, force, options, check)
 }
 
 
-mapaPlus.update = function(f)
+mapaPlus.update = function update(f)
 {
 /*
 	if (typeof(mapaPlus.core) == "undefined")
@@ -1144,6 +1155,7 @@ mapaPlus.update = function(f)
 		this.loadCore();
 	}
 */
+//log.debug();
 	let status = this.core.status;
 
 	if (f)
@@ -1631,7 +1643,7 @@ mapaPlus.lockSetBgImage = function(v)
 }
 mapaPlus.screenRestored = true;
 mapaPlus.windowMinimizedForced = false;
-(mapaPlus.setWindowState = function()
+(mapaPlus.setWindowState = function setWindowState()
 {
 	mapaPlus.windowMaximized = window.windowState == window.STATE_MAXIMIZED;
 	mapaPlus.windowMinimized = window.windowState == window.STATE_MINIMIZED;
@@ -1639,15 +1651,16 @@ mapaPlus.windowMinimizedForced = false;
 	mapaPlus.windowFullscreen = window.windowState == window.STATE_FULLSCREEN;
 })()
 
-mapaPlus.isMinimized = function()
+mapaPlus.isMinimized = function isMinimized()
 {
+log.debug();
 	if (mapaPlus.windowState != window.windowState)
 	{
 		if (window.windowState == window.STATE_MINIMIZED)
 		{
 			if (!mapaPlus.windowMinimizedForced)
 			{
-				if (window.screenX > -32000 && window.screenY > -32000)
+				if (window.screenX > mapaPlus.minimizeXY && window.screenY > mapaPlus.minimizeXY)
 				{
 					mapaPlus.screenX = window.screenX;
 					mapaPlus.screenY = window.screenY;

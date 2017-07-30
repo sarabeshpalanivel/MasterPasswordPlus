@@ -6,8 +6,9 @@
 	<prefwindow id="changemp"
 							buttonlabelextra1="&mapaPlus.options.unlock;"
 							ondialogextra1="mapaPlus.protectUnlock()"
+							style="min-height: 50em; max-width: 60em;"
 	>
-		<prefpane id="masterPasswordPlusOptions"/>
+		<prefpane id="masterPasswordPlusOptions" style="overflow:auto;min-height: 40em" flex="1"/>
 		<script type="application/javascript" src="chrome://mapaplus/content/masterpasswordplusCommon.js"/>
 		<script type="application/javascript" src="chrome://mapaplus/content/changemp.js"/>
 	</prefwindow>

@@ -11,8 +11,9 @@ mapaPlus.pass = false;
 mapaPlus.windowType = "options";
 mapaPlus.windowID = 0;
 
-mapaPlus.saveOptions = function ()
+mapaPlus.saveOptions = function saveOptions()
 {
+log.debug();
 	this.core.prefNoObserve = true;
 	var sel = this.getOrder("urlbar-icons");
 	if (sel)
@@ -32,6 +33,9 @@ mapaPlus.saveOptions = function ()
 	this.hotkeySave("mapaPlusLockWinHotkey", "lockwinhotkey");
 	this.hotkeySave("mapaPlusLockLogoutHotkey", "locklogouthotkey");
 
+	this.timeoutSave("logouttimeout");
+	this.timeoutSave("locktimeout");
+	this.timeoutSave("startuptimeout");
 	this.core.prefNoObserve = false;
 	this.core.windowUpdate(true,true);
 	this.core.init(true, this);

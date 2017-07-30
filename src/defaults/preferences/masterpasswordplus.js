@@ -59,7 +59,8 @@ pref("extensions.masterPasswordPlus.lockbgimage", true); //show locked backgroun
 pref("extensions.masterPasswordPlus.hidenewmailalert", true); //hide new email alert box (TB only)
 pref("extensions.masterPasswordPlus.hidenewmailballoon", true); //hide new email balloon popup (TB only)
 pref("extensions.masterPasswordPlus.persistnolock", true); //attempt remember the no-lock window flag between browser restart
-pref("extensions.masterPasswordPlus.minimizenoflicker", true); //a work around of "flickering" effect when locking/unlocking minimized windows on WIndows 7+
+pref("extensions.masterPasswordPlus.minimizenoflicker", true); //a work around of "flickering" effect when locking/unlocking minimized windows on WIndows 7+. When set to false, aero preview of minimized windows will not work properly
+pref("extensions.masterPasswordPlus.idle", 3); //idle sensitivity
 
 /*
 force MP login before listed windows opened.

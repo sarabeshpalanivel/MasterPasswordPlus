@@ -155,7 +155,7 @@ log.debug();
 		}
 	}
 	return urlBarIcons;
-}
+}//initIcons()
 
 mapaPlus.showSelected = function (e)
 {
@@ -407,6 +407,7 @@ mapaPlus.timer = {
 	observe: function()
 	{
 		$("mapaPlusIndicateIcon").setAttribute("suppressed", ($("mapaPlusSuppressBlink").checked ? !($("mapaPlusIndicateIcon").getAttribute("suppressed") == "true") : true));
+		$("mapaPlusIdleStatus").setAttribute("idle", mapaPlusCore.idleService.idleTime < ($("mapaPlusIdle").value * 200 + 100) ? 0 : 1);
 	}
 }
 
@@ -432,7 +433,8 @@ mapaPlus.suppressedPopup = function()
 mapaPlus.close = function()
 {
 	window.removeEventListener("mousemove", mapaPlus.showSelected, true);
-
+	$("masterPasswordPlusOptions").removeEventListener("DOMMouseScroll", mapaPlus.mouseScroll, true);
+	window.removeEventListener("focus", this.onFocus, true);
 }
 
 mapaPlus.confirmPasswordDone = {};
@@ -582,7 +584,15 @@ mapaPlus.initCommon = function(id)
 	this.hotkeyInit();
 	this.protectedBegin = this.core.pref("protect");
 
-	this.setAttribute("mapaPlusLockTimerBox", "tooltiptext", $("mapaPlusLockTimerBox").getAttribute("tooltiptext").replace("#", this.core.appInfo.name));
+	$("mapaPlusLockTimerBox").setAttribute("tooltiptext", $("mapaPlusLockTimerBox").getAttribute("tooltiptext").replace("#", this.core.appInfo.name));
+/*
+	this.setAttribute("mapaPlusLockTimerBox",
+										"tooltiptext",
+										$("mapaPlusLockTimerBox").getAttribute("tooltiptext").replace("#", this.core.appInfo.name),
+										false,
+										["mapaPlus_locktimeout_d", "mapaPlus_locktimeout_h", "mapaPlus_locktimeout_m", "mapaPlus_locktimeout_s"]
+	);
+*/
 	$("mapaPlusStartupFail").setAttribute("prevset", this.core.pref("startupfail"));
 	window.addEventListener("CheckboxStateChange", this.checkboxTriState, false);
 	window.addEventListener("unload", this.closeCommon, false);
@@ -627,6 +637,10 @@ mapaPlus.initCommon = function(id)
 	this.setProtect("protected", this.protectedBegin)
 
 	this.observer.init();
+	this.timeoutSet("logouttimeout");
+	this.timeoutSet("locktimeout");
+	this.timeoutSet("startuptimeout");
+	$("mapaPlusIdle").value = this.core.pref("idle");
 	if (this.core.locked)
 		this.lock(true);
 	else
@@ -666,6 +680,9 @@ mapaPlus.initCommon = function(id)
 			box.style.minWidth = "calc(" + (boxHorizontalBorder + boxHorizontalPadding) + "px + " + frameMinWidth + ")";
 		}
 	});
+
+	$("masterPasswordPlusOptions").addEventListener("DOMMouseScroll", this.mouseScroll, true);
+	window.addEventListener("focus", this.onFocus, true);
 
 }//initCommon()
 
@@ -1050,6 +1067,7 @@ log.debug();
 
 mapaPlus.debugMenu = function debugMenu(v)
 {
+log.debug();
 	v = typeof(v) == "undefined" ? mapaPlusCore.pref("debug") : v;
 	let c = $("mapaPlusDebugMenu"),
 			t = [];
@@ -1067,7 +1085,9 @@ mapaPlus.debugMenu = function debugMenu(v)
 			c[i].removeAttribute("checked");
 		}
 		if (val & 1)
-			c[i].disabled = (v & val);
+			c[i].hidden = (v & val);
+//			c[i].disabled = (v & val) ? true : false;
+//log([val, v, (val & 1), (v & val), c[i].disabled])
 	}
 }
 
@@ -1115,9 +1135,11 @@ log.debug();
 	for (let i = 0; i < c.length; i++)
 	{
 		if (c[i].getAttribute("value") == 1 && !mapaPlus.notificationAvailable)
-			c[i].disabled = true;
+			c[i].hidden = true;
+//			c[i].disabled = true;
 
-		if (!c[i].disabled && v & Number(c[i].getAttribute("value")))
+//		if (!c[i].disabled && v & Number(c[i].getAttribute("value")))
+		if (!c[i].hidden && v & Number(c[i].getAttribute("value")))
 		{
 			t.push(mapaPlus.strings["changesLog" + Number(c[i].getAttribute("value"))]);
 			c[i].setAttribute("checked", true);
@@ -1133,9 +1155,6 @@ log.debug();
 
 mapaPlus.linkClick = function linkClick(obj, e)
 {
-	if (!e.target.disabled)
-		return false;
-
 	let url = obj.getAttribute("href");
 	let email = url.match(/^mailto:/);
 	if (!obj.fixed)
@@ -1187,7 +1206,14 @@ mapaPlus.linkClick = function linkClick(obj, e)
 	}
 	catch(e)
 	{
-		try{mapaPlus.core.openUILinkIn(url)}catch(e){};
+		try
+		{
+			mapaPlus.core.openUILinkIn(url);
+		}
+		catch(e)
+		{
+			log.error(e);
+		};
 	}
 	return false;
 }//linkClick()
@@ -1250,7 +1276,6 @@ log.debug();
 	mapaPlus.setAttribute($("panelDisplay").firstChild, "disabled", locked, !locked);
 	mapaPlus.setAttribute($("panelGeneral").firstChild, "disabled", locked, !locked);
 	mapaPlus.setAttribute($("panelHelp").firstChild, "disabled", locked, !locked);
-
 	mapaPlus.setAttribute("mapaPlusTimeoutBox", "disabled", status, !status);
 	mapaPlus.setAttribute("mapaPlusLogoutOnMinimize", "disabled", disable, !disable);
 	mapaPlus.setAttribute("mapaPlusStartupBox", "disabled", startup, !startup);
@@ -1275,7 +1300,184 @@ log.debug();
 		n[i].collapsed = mapaPlus.core.status;
 
 	mapaPlus.suppress();
+
 }//enableDisable()
+
+mapaPlus.timeoutSet = function (name)
+{
+	let t = mapaPlus.core.pref(name),
+			time = mapaPlus.core.timeSplit(t*1000);
+	
+	$("mapaPlus_" + name + "_d").value = time.d;
+	$("mapaPlus_" + name + "_h").value = time.h;
+	$("mapaPlus_" + name + "_m").value = time.m;
+	$("mapaPlus_" + name + "_s").value = time.s;
+}
+mapaPlus.timeoutGet = function (name)
+{
+	return	Number($("mapaPlus_" + name + "_d").value) * 86400 +
+					Number($("mapaPlus_" + name + "_h").value) * 3600 +
+					Number($("mapaPlus_" + name + "_m").value) * 60 +
+					Number($("mapaPlus_" + name + "_s").value);
+}
+
+mapaPlus.timeoutSave = function timeoutSave(name, noasync)
+{
+log.debug();
+	let t = mapaPlus.timeoutGet(name),
+			func = function()
+			{
+				mapaPlus.core.pref(name, t);
+			};
+	if (t < 10)
+		t = 10;
+	if (noasync)
+		func();
+	else
+		mapaPlus.core.async(func, 100);
+}
+
+mapaPlus.spinValue = function spinValue(obj, val, step)
+{
+log.debug();
+	this.changeValue(obj, parseInt(val), step);
+	mapaPlus.numbersOnly({target: obj});
+	obj.select();
+	
+}
+mapaPlus.numbersOnly = function numbersOnly(e)
+{
+log.debug();
+	let start = e.target.selectionStart,
+			end = e.target.selectionEnd,
+			orig = e.target.value
+			val = parseInt(orig.replace(/[^0-9]*/g, ''));
+	if (isNaN(val))
+		val = 0;
+
+	e.target.value = val;
+	mapaPlus.changeValue(e.target, val);
+	if (e.target.value != orig)
+	{
+		start--;
+		end--;
+	}
+//	e.target.selectionStart = start;
+//	e.target.selectionEnd = end;
+	if (mapaPlus.instantApply)
+		mapaPlus.timeoutSave(e.target.id.replace(/mapaPlus_([^_]+)_.*/, "$1"));
+}
+mapaPlus.spinKeyEvent = function(e)
+{
+	let	r = true,
+			kC = e.code;
+
+	switch (kC)
+	{
+		case "ArrowUp":
+			if (!e.shiftKey && !e.ctrlKey && !e.altKey)
+			{
+				this.spinValue(e.target, parseInt(e.target.value), 1);
+				r = false;
+			}
+			break;
+
+		case "ArrowDown":
+			if (!e.shiftKey && !e.ctrlKey && !e.altKey)
+			{
+				this.spinValue(e.target, parseInt(e.target.value), -11);
+				r = false;
+			}
+			break;
+
+		case "PageUp":
+			if (!e.shiftKey && !e.ctrlKey && !e.altKey)
+			{
+				this.spinValue(e.target, parseInt(e.target.value), 10);
+				r = false;
+			}
+			break;
+
+		case "PageDown":
+			if (!e.shiftKey && !e.ctrlKey && !e.altKey)
+			{
+				this.spinValue(e.target, parseInt(e.target.value), -10);
+				r = false;
+			}
+			break;
+	}
+	return r;
+}
+
+mapaPlus.changeValue = function changeValue(o, value, add)
+{
+log.debug();
+	if (typeof(o) == "string")
+		o = document.getElementById(o);
+
+	let s = o.selectionStart,
+			e = o.selectionEnd;
+
+	if (typeof(add) == "undefined")
+		add = 0;
+
+	value = parseInt(value) + add;
+	let max = parseInt(o.getAttribute("max")),
+			min = parseInt(o.getAttribute("min")),
+			wrap = o.getAttribute("wraparound") == "true";
+
+	if (isNaN(value))
+		value = 0;
+
+	if (isNaN(max))
+		max = 0;
+
+	if (isNaN(min))
+		min = 0;
+
+	if (max && value > max)
+	{
+		if (wrap && add)
+			value = min;
+		else
+			value = max;
+		e = value.toString().length;
+		s = 0;
+	}
+	if (value < min)
+	{
+		if (wrap && add == -1)
+			value = max;
+		else
+			value = min;
+
+		e = value.toString().length;
+		s = 0;
+	}
+	o.value = value;
+	o.selectionEnd = e;
+	o.selectionStart = s;
+}
+
+mapaPlus.mouseScroll = function mouseScroll(e)
+{
+log.debug();
+	if (e.axis != e.VERTICAL_AXIS || e.timeStamp == mapaPlus.mouseScrollTimeStamp)
+		return true;
+
+	mapaPlus.mouseScrollTimeStamp = e.timeStamp;
+	if (!mapaPlus.focused || mapaPlus.focused.tagName != "textbox" || mapaPlus.focused.getAttribute("type") != "number" || mapaPlus.focused.disabled)
+		return true;
+
+	mapaPlus.spinValue(mapaPlus.focused, mapaPlus.focused.value, e.detail > 0 ? -1 : 1);
+
+}//mouseScroll()
+mapaPlus.onFocus = function onFocus(e)
+{
+	mapaPlus.focused = e.target;
+}
+
+
 
 mapaPlus.loadArgs();
 
