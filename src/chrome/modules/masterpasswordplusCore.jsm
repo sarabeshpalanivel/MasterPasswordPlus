@@ -12,7 +12,8 @@ var self = this,
 	app: null,
 
 	window: {},
-	windowID: {},
+//	windowID: {},
+	windowID: 0,
 	dialogShow: false,
 	dialogSuppressTimer: 0,
 	dialogSuppress: false,
@@ -113,6 +114,7 @@ var self = this,
 
 	dump: function(){},
 
+/*
 	windowAdd: function(win, t)
 	{
 		t = t || "Window";
@@ -127,13 +129,26 @@ log.debug(t + " added id: " + this.windowID[t])
 		return this.windowID[t];
 	},
 
+*/	windowAdd: function(win, t)
+	{
+		t = t || "Window";
+		if (!(t in this.window))
+		{
+			this.window[t] = [];
+		}
+		this.windowID++;
+		this.window[t][this.windowID] = win;
+log.debug(t + " added id: " + this.windowID)
+		return this.windowID;
+	},
+
 	windowRemove: function(id, t)
 	{
 		t = t || "Window";
 		if (t in this.window)
 		{
 			this.window[t][id] = null;
-//			this.dump(t + " removed: " + id)
+log.debug(t + " removed: " + id);
 		}
 	},
 
@@ -524,8 +539,16 @@ log.debug();
 			});
 			this.lockPrefBackup = null;
 		}
+//initiate sync
+		if (this.pref("unlockSync"))
+		{
+			let win = this.windowFirst();
+			if (win !== null && this.window["Window"][win].window.gSync)
+			{
+				this.window["Window"][win].window.gSync.doSync();
+			}
+		}
 /*
-initiate sync
 this.async(function()
 {
 	Services.obs.notifyObservers(null, "cloudsync:user-sync", null);
@@ -834,8 +857,11 @@ this.async(function()
 
 				on: function(mapaPlus)
 				{
-					var w = mapaPlusCore.window["Window"];
-					let l = 0;
+					let 	w = mapaPlusCore.window["Window"],
+								l = 0;
+					if (!w)
+						return;
+
 					for(let i = 1; i < w.length; i++)
 						if (w[i] != null && w[i].locked)
 							l++;
@@ -956,7 +982,7 @@ log.debug();
 				if (noAsync)
 					callback();
 				else
-					pref.timers[key] = mapaPlusCore.async(callback, 0, pref.timers[key]);
+					pref.timers[key] = mapaPlusCore.async(callback, 0, pref.timers[key] || undefined);
 			}
 		}
 		catch(e)
@@ -1167,7 +1193,7 @@ log.debug()
 		if ("hasAttribute" in e.target && e.target.hasAttribute("hotkey"))
 			return true;
 
-		if ("mapaPlus" in e.currentTarget && e.currentTarget.mapaPlus.windowType == "window" && "hotkeyDown" in e.currentTarget.mapaPlus)
+		if ("mapaPlus" in e.currentTarget && e.currentTarget.mapaPlus.windowType.indexOf("Window") != -1 && "hotkeyDown" in e.currentTarget.mapaPlus)
 			return e.currentTarget.mapaPlus.hotkeyDown(e);
 
 		return true;
@@ -1213,9 +1239,9 @@ log.debug()
 */
 	},
 
-	hotkeyPress: function(e)
+	hotkeyPress: function hotkeyPress(e)
 	{
-		if ("mapaPlus" in e.currentTarget && e.currentTarget.mapaPlus.windowType == "window" && "hotkeyPress" in e.currentTarget.mapaPlus)
+		if ("mapaPlus" in e.currentTarget && e.currentTarget.mapaPlus.windowType.indexOf("Window") != -1 && "hotkeyPress" in e.currentTarget.mapaPlus)
 			return e.currentTarget.mapaPlus.hotkeyPress(e);
 
 	//	mpc.dump("down: " + keys[0] + "\n" + mapaPlus.lastKeyDown);
@@ -1226,7 +1252,7 @@ log.debug()
 //		var keys = mapaPlusCore.getKeys(e);
 		mapaPlusCore.lastKeyDown = [];
 
-		if ("mapaPlus" in e.currentTarget && e.currentTarget.mapaPlus.windowType == "window" && "hotkeyUp" in e.currentTarget.mapaPlus)
+		if ("mapaPlus" in e.currentTarget && e.currentTarget.mapaPlus.windowType.indexOf("Window") != -1 && "hotkeyUp" in e.currentTarget.mapaPlus)
 			return e.currentTarget.mapaPlus.hotkeyUp(e);
 
 		return true;
@@ -1334,7 +1360,7 @@ timer.init({observe: function(e)
 									try
 									{
 										window.mapaPlus.load();
-									}catch(e){};
+									}catch(e){log.error(e);};
 									if ("mapaPlus" in window && (!("mapaPlusEventsAdded" in window) || !window.mapaPlusEventsAdded))
 									{
 										if (window.mapaPlus.close)
@@ -1558,7 +1584,7 @@ timer.init({observe: function(e)
 
 	openConsole: function openConsole()
 	{
-log.debug();
+log.debug("disable debug mode (MasterPassword+ options -> Help -> Debug level) to stop error console from opening on startup");
 		AddonManager.getAllAddons(function(addons)
 		{
 			let win = null;
@@ -1677,52 +1703,52 @@ AddonManager.getAddonByID(mapaPlusCore.GUID, function(addon)
 	mapaPlusCore.ISSUESSITE = ISSUESSITE;
 	mapaPlusCore.ADDONDOMAIN = ADDONDOMAIN;
 //	mapaPlusCore.isTB = (mapaPlusCore.appInfo.ID == "{3550f703-e582-4d05-9a08-453d09bdfdc6}");
-	mapaPlusCore.isTB = (mapaPlusCore.appInfo.ID == "{3550f703-e582-4d05-9a08-453d09bdfdc6}" || mapaPlusCore.appInfo.ID == "postbox@postbox-inc.com");
-	mapaPlusCore.isGecko2 = Cc["@mozilla.org/xpcom/version-comparator;1"]
-													.getService(Ci.nsIVersionComparator)
-													.compare(mapaPlusCore.appInfo.version, (mapaPlusCore.isTB ? "3.3" : "4.0")) >= 0
-	
-	mapaPlusCore.isFF4 = (!mapaPlusCore.isTB && mapaPlusCore.isGecko2);
-	
-	mapaPlusCore.KB = null;
-	let a = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
-	if (a.OS == "WINNT" && mapaPlusCore.isGecko2)
-	{
-		//keyboard language code borrowed from TabLang addon: https://addons.mozilla.org/addon/tablang/
-		(mapaPlusCore.KB = {
-			GetKeyboardLayout: null,
-			GetLocaleInfoW: null,
-			init: function()
-			{
-				Components.utils.import("resource://gre/modules/ctypes.jsm", this);
-				let ctypes = this.ctypes;
-				let abi = a.XPCOMABI.indexOf("x86_64") == -1 ? ctypes.winapi_abi : ctypes.default_abi;
-				this.GetKeyboardLayout = ctypes.open("user32.dll").declare("GetKeyboardLayout", abi, ctypes.uintptr_t, ctypes.uint32_t);
-				this.GetLocaleInfoW = ctypes.open("kernel32.dll").declare("GetLocaleInfoW", abi, ctypes.int32_t, ctypes.uint32_t, ctypes.uint32_t, ctypes.jschar.ptr, ctypes.int32_t);
-			},
-			getLangNameAbr: function()
-			{
-				try
-				{
-					let ctypes = this.ctypes;
-					let lcid = ctypes.UInt64.lo(ctypes.UInt64("0x" + this.GetKeyboardLayout(0).toString(16))) & 0xFFFF;
-					let bufferLength = this.GetLocaleInfoW(lcid, 89, ctypes.jschar.ptr(0), 0);
-					if (bufferLength == 0)
-						return;
-	
-					let buffer = ctypes.jschar.array(bufferLength)();
-					if (this.GetLocaleInfoW(lcid, 89, ctypes.cast(buffer.address(), ctypes.jschar.ptr), bufferLength) != 0)
-						return buffer.readString();
-				}
-				catch(e){};
-			}
-		}).init();
-	}
-	else
-	{
-		mapaPlusCore.prefs.setIntPref("showlang", 0);
-	}
 });
+mapaPlusCore.isTB = (mapaPlusCore.appInfo.ID == "{3550f703-e582-4d05-9a08-453d09bdfdc6}" || mapaPlusCore.appInfo.ID == "postbox@postbox-inc.com");
+mapaPlusCore.isGecko2 = Cc["@mozilla.org/xpcom/version-comparator;1"]
+												.getService(Ci.nsIVersionComparator)
+												.compare(mapaPlusCore.appInfo.version, (mapaPlusCore.isTB ? "3.3" : "4.0")) >= 0
+
+mapaPlusCore.isFF4 = (!mapaPlusCore.isTB && mapaPlusCore.isGecko2);
+
+mapaPlusCore.KB = null;
+let a = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
+if (a.OS == "WINNT" && mapaPlusCore.isGecko2)
+{
+	//keyboard language code borrowed from TabLang addon: https://addons.mozilla.org/addon/tablang/
+	(mapaPlusCore.KB = {
+		GetKeyboardLayout: null,
+		GetLocaleInfoW: null,
+		init: function()
+		{
+			Cu.import("resource://gre/modules/ctypes.jsm", this);
+			let ctypes = this.ctypes;
+			let abi = a.XPCOMABI.indexOf("x86_64") == -1 ? ctypes.winapi_abi : ctypes.default_abi;
+			this.GetKeyboardLayout = ctypes.open("user32.dll").declare("GetKeyboardLayout", abi, ctypes.uintptr_t, ctypes.uint32_t);
+			this.GetLocaleInfoW = ctypes.open("kernel32.dll").declare("GetLocaleInfoW", abi, ctypes.int32_t, ctypes.uint32_t, ctypes.uint32_t, ctypes.jschar.ptr, ctypes.int32_t);
+		},
+		getLangNameAbr: function()
+		{
+			try
+			{
+				let ctypes = this.ctypes;
+				let lcid = ctypes.UInt64.lo(ctypes.UInt64("0x" + this.GetKeyboardLayout(0).toString(16))) & 0xFFFF;
+				let bufferLength = this.GetLocaleInfoW(lcid, 89, ctypes.jschar.ptr(0), 0);
+				if (bufferLength == 0)
+					return;
+
+				let buffer = ctypes.jschar.array(bufferLength)();
+				if (this.GetLocaleInfoW(lcid, 89, ctypes.cast(buffer.address(), ctypes.jschar.ptr), bufferLength) != 0)
+					return buffer.readString();
+			}
+			catch(e){};
+		}
+	}).init();
+}
+else
+{
+	mapaPlusCore.pref("showlang", 0);
+}
 let idleService = Cc["@mozilla.org/widget/idleservice;1"].getService(Ci.nsIIdleService),
 		observerService = Cc["@mozilla.org/observer-service;1"].getService(Ci.nsIObserverService),
 		sleep_notification = {
@@ -1747,10 +1773,12 @@ mapaPlusCore.idleService = idleService;
 {
 
 //open console window on startup
+/*
 	if (mapaPlusCore.pref("debug") & 4)
 	{
-//		mapaPlusCore.openConsole();
+		mapaPlusCore.openConsole();
 	}
+*/
 	mapaPlusCore.status = mapaPlusCore.tokenDB.needsLogin() ? 1 : 0;
 	if (mapaPlusCore.pref("startup"))
 	{

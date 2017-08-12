@@ -7,6 +7,19 @@ Legend:
 * = Changed
 - = Removed
 
+v1.26 (2017-08-12)
+Firefox 57+ is no longer supported and probably never will.
+https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
+	+ sync after unlock (FF56+, controlled via extensions.masterPasswordPlus.unlockSync hidden option) (issue #122)
+	+ language indicator and non-latin warning now available on lock screen (see changes in v1.15.1 for more info)
+	* when debug mode enabled and browser console opened on startup, it shows message in browser console explaining how to disable it
+	! Missing title at MP prompt (issue #127)
+	! some icons in url bar simulation in option shown too big
+	! errors when debug is enabled and console automatically opens on startup
+	! blocked prompts counter introduced in v1.18 not shown
+	! enter key doesn't work in locked non-browser windows
+	! global hotkeys no longer worked
+
 v1.24 (2017-07-30)
 	+ Ukrainian language. Thanks to Artem Polivanchuk (issue #108)
 	+ Window identification string shows in locked window (issue #109)
@@ -203,7 +216,6 @@ v1.15.2 (2011-03-30)
 	! hotkey would not work in additional windows
 
 v1.15.1 (2011-03-28)
-
 	! FF4 - mouse wheel scrolling not working on some sites after MP prompt was blocked. In some cases there could be a side effect with this fix: window will loose focus for a brief moment. You can disable this fix by adding "FF4" (without quotes) to the comma separated list in "extensions.masterPasswordPlus.noworkaround" setting via about:config page. Thanks to Infocatcher for providing this fix!
 	! settings not saved in "Change Master Password" window
 	* warning icon will display at MP prompt window when entered non-latin characters (above 127 charcode). It's controlled by "extensions.masterPasswordPlus.nonlatinwarning" setting: 0=never show, 1=always show, 2=show only in fullscreen

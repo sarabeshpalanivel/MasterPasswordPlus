@@ -16,7 +16,7 @@ if (!mapaPlus.core.isTB)
 mapaPlus.last = null;
 mapaPlus.initialized = false;
 mapaPlus.windowID = 0;
-mapaPlus.windowType = "window";
+mapaPlus.windowType = "Window";
 mapaPlus.window = window;
 mapaPlus.blocked = 'masterPasswordPlusBlocked';
 mapaPlus.locked = false;
@@ -55,8 +55,9 @@ mapaPlus.minimizeXY = -32000;
 		window.addEventListener("unload", function() { mapaPlus.observer.uninit(); }, false);
 	},
 
-	uninit: function()
+	uninit: function observer_window_uninit()
 	{
+log.debug();
 		this._observerService.removeObserver(this, this._name);
 	},
 
@@ -66,7 +67,6 @@ mapaPlus.minimizeXY = -32000;
 //	log("observe: " + aSubject.data, true);
 		if (aTopic != this._name || !mapaPlus[aSubject.data])
 			return;
-
 		mapaPlus[aSubject.data](aData);
 	},
 }).init();
@@ -285,7 +285,7 @@ mapaPlus.blink = function(cancel)
 /*
 	if (typeof(this.core) == "undefined")
 	{
-		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
+		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at https://github.com/vanowm/MasterPasswordPlus/issues");
 		this.loadCore();
 	}
 */
@@ -293,7 +293,7 @@ mapaPlus.blink = function(cancel)
 	this.setAttr("mapa_menu_tools",						"suppressed", this.core.suppressedIcon);
 	this.setAttr("mapa_statusbar",						"suppressed", this.core.suppressedIcon);
 	this.setAttr("mapa_menu_context",					"suppressed", this.core.suppressedIcon);
-	this.setAttr("mapa_urlbar",								"suppressed", this.core.suppressedIcon);
+	this.setAttr("mapa_urlbar",							"suppressed", this.core.suppressedIcon);
 
 	if (this.core.isTB || typeof(gBrowser) == "undefined")
 		return;
@@ -308,7 +308,7 @@ mapaPlus.blinkCancel = function()
 /*
 	if (typeof(this.core) == "undefined")
 	{
-		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
+		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at https://github.com/vanowm/MasterPasswordPlus/issues");
 		this.loadCore();
 	}
 */
@@ -325,11 +325,12 @@ mapaPlus.suppressedPopupSuspend = function()
 
 mapaPlus.suppressedPopupRemove = function()
 {
-	if (typeof(gBrowser) == "undefined")
+	if (typeof(gBrowser) == "undefined" || !gBrowser.getNotificationBox)
 		return;
 
-	var box = gBrowser.getNotificationBox();
-	var boxId = box.getNotificationWithValue(this.blocked);
+	let box = gBrowser.getNotificationBox(),
+			boxId = box.getNotificationWithValue(this.blocked);
+
 	if (boxId)
 		box.removeNotification(boxId);
 }
@@ -346,8 +347,8 @@ mapaPlus.suppressedPopup = function(f, t)
 		return;
 
 	t = typeof(t) != "undefined" ? t : this.core.pref("suppresspopupremove");
-	var box = gBrowser.getNotificationBox();
-	var boxId = box.getNotificationWithValue(this.blocked);
+	let box = gBrowser.getNotificationBox(),
+			boxId = box.getNotificationWithValue(this.blocked);
 	if (f && boxId)
 	{
 		box.removeNotification(boxId);
@@ -415,7 +416,7 @@ mapaPlus.suppressed = function()
 /*
 	if (typeof(this.core) == "undefined")
 	{
-		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
+		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at https://github.com/vanowm/MasterPasswordPlus/issues");
 		this.loadCore();
 	}
 */
@@ -435,6 +436,7 @@ mapaPlus.suppressed = function()
 
 mapaPlus.command = function(manual, button)
 {
+log.debug();
 	this.core.dialogShow = false;
 	manual = (manual > 0) ? manual : false;
 	let command = button ? this.core.pref("command") : 0;
@@ -509,7 +511,6 @@ mapaPlus.minimizedLockFix = function(restore)
 
 	window.screenX = x;
 	window.screenY = y;
-log([mapaPlus.screenX, mapaPlus.screenY]);
 	window.document.documentElement.setAttribute("screenX", mapaPlus.screenX)
 	window.document.documentElement.setAttribute("screenY", mapaPlus.screenY)
 //	window.restore();
@@ -539,7 +540,6 @@ for(let i =0, w=mapaPlus.Win7Features.AeroPeek.windows; i < w.length; i++)
 		try{mapaPlus.Win7Features.AeroPeek.onOpenWindow(window)}catch(e){};
 		window.screenX = x;
 		window.screenY = y;
-log([mapaPlus.screenX, mapaPlus.screenY]);
 		window.document.documentElement.setAttribute("screenX", mapaPlus.screenX)
 		window.document.documentElement.setAttribute("screenY", mapaPlus.screenY)
 	}
@@ -603,8 +603,9 @@ log.debug();
 			&& ["chrome://devtools/content/webconsole/webconsole.xul",
 					"chrome://console2/content/console2.xul",
 					].indexOf(window.location.toString()) > -1
-		) return;
-	log("showlock " + window.location.toString());
+			)
+		return;
+
 	if (self.locked || (!self.lockedWindow && self.noLockWindow))
 		return;
 
@@ -617,7 +618,7 @@ log.debug();
 			if (!self.loadedManualy)
 				self.ss.setWindowValue(window, "lockedWindow", self.lockedWindow.toString());
 		}
-		catch(e){log(e, 1)};
+		catch(e){log.error(e)};
 
 	if (self.core.pref("lockhidetitle"))
 	{
@@ -806,7 +807,32 @@ log([val, key, map]);
 			else
 				remove();
 		}
-	}catch(e){log(e, 1)};
+	}catch(e){log.error(e)};
+
+	let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+	timer.init({observe: function()
+	{
+		if (!mapaPlus.core.pref("showlang") || (mapaPlus.core.pref("showlang") == 2 && !mapaPlus.core.windowFullScreen()))
+		{
+			$("mapaPlusLang").collapsed = true;
+			return;
+		}
+		try
+		{
+			var l = mapaPlus.core.KB.getLangNameAbr().toUpperCase();
+			if ($("mapaPlusLang").value != l || $("mapaPlusLang").collapsed)
+			{
+				$("mapaPlusLang").collapsed = false;
+				$("mapaPlusLang").value = l;
+			}
+		}
+		catch(e)
+		{
+//				mapaPlus.dump(e, 1);
+		}
+	}}, 100, timer.TYPE_REPEATING_SLACK);
+	mapaPlus.langTimer = timer;
+
 }//showLock()
 
 mapaPlus.showUnlock = function(f)
@@ -956,6 +982,12 @@ mapaPlus.showUnlock = function(f)
 		for (let [, func] in Iterator(this.showUnlockArray)) try{func && func()}catch(e){};
 		this.showUnlockArray = [];
 	}
+
+	if (mapaPlus.langTimer)
+	{
+		mapaPlus.langTimer.cancel();
+		mapaPlus.langTimer = null;
+	}
 }//showUnlock()
 
 /*
@@ -1030,21 +1062,24 @@ mapaPlus.lockLogout = function()
 	this.lock(false, true);
 }
 
-mapaPlus.lock = function(w, l)
+mapaPlus.lock = function lock(w, l)
 {
+log.debug();
 	let self = mapaPlus;
 	self.unlockIncorrectCheck();
 	if (w === true)
 	{
-		$("masterPasswordPlusUnLockType").firstChild.textContent = self.strings.buttonUnlockWindow;
 		self.lockedWindow = true;
+		$("masterPasswordPlusUnLockType").firstChild.textContent = self.strings.buttonUnlockWindow;
 		self.showLock(l);
 	}
 	else if (!w)
 	{
-
-		$("masterPasswordPlusUnLockType").firstChild.textContent = self.strings.buttonUnlock;
-		self.showLock(l);
+		if (!self.locked)
+		{
+			$("masterPasswordPlusUnLockType").firstChild.textContent = self.strings.buttonUnlock;
+			self.showLock(l);
+		}
 		self.core.lock(l ? true : false);
 	}
 	else
@@ -1148,10 +1183,11 @@ mapaPlus.login = function(temp, force, options, check)
 
 mapaPlus.update = function update(f)
 {
+log.debug();
 /*
 	if (typeof(mapaPlus.core) == "undefined")
 	{
-		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at http://code.google.com/p/masterpasswordtimeoutplus/issues/list");
+		log("Error in " + (new Error).fileName + " [line " + (new Error).lineNumber + "]\n" + e + "\nYou should never see this. If you know how to reproduce this error please post at https://github.com/vanowm/MasterPasswordPlus/issues");
 		this.loadCore();
 	}
 */
@@ -1164,6 +1200,9 @@ mapaPlus.update = function update(f)
 	if (this.last == status)
 		return;
 
+	let hidden = true,
+			list = ["mapa_menu_lock", "mapa_menu_lock_logout", "mapa_menu_lock_window", "mapa_menu_noLockWindow", "mapa_lock_separator"];
+
 	if(status)
 	{
 		if (status == 1)
@@ -1174,21 +1213,20 @@ mapaPlus.update = function update(f)
 		this.setAttr("mapa_menu_lock_logout", "disabled", status != 1);
 
 		this.setAttr("mapa_menu_changemp", "hidden", false);
-		$("mapa_menu_lock").hidden = false;
-		$("mapa_menu_lock_logout").hidden = false;
-		$("mapa_menu_lock_window").hidden = false;
-		$("mapa_menu_noLockWindow").hidden = false;
-		$("mapa_lock_separator").hidden = false;
+		hidden = false;
 	}
 	else
 	{
 		this.setTooltip("SetMasterPassword");
 		this.setAttr("mapa_menu_changemp", "hidden", true);
-		$("mapa_menu_lock").hidden = true;
-		$("mapa_menu_lock_logout").hidden = true;
-		$("mapa_menu_lock_window").hidden = true;
-		$("mapa_menu_noLockWindow").hidden = true;
-		$("mapa_lock_separator").hidden = true;
+	}
+	for(let i = 0; i < list.length; i++)
+	{
+		this.core.async(function()
+		{
+			if ($(list[i]))
+				$(list[i]).hidden = hidden;
+		})
 	}
 	this.last = status;
 	this.setStyle(status);
@@ -1320,7 +1358,7 @@ mapaPlus.unlockEnter = function()
 
 mapaPlus.hotkeyDown = function hotkeyDown(e, g)
 {
-//log.debug(e)
+//log.debug(g)
 	if (e.target.id.indexOf("masterPasswordPlus") != -1)
 		return true;
 
@@ -1402,8 +1440,12 @@ mapaPlus.hotkeyUp = function(e)
 
 mapaPlus.hotkeyInit = function()
 {
-	var keyset = $("mapaPlus_keyset");
-	var n = document.createElement("keyset");
+	let keyset = $("mapaPlus_keyset"),
+			n = document.createElement("keyset");
+
+	if (!keyset)
+		return;
+
 	n.id = "mapaPlus_keyset";
 	keyset.parentNode.replaceChild(n, keyset);
 	this.hotkeyAppend(this.core.prefLogoutHotkey, "Logout", this.core.pref("logouthotkeyenabled"));
@@ -1417,9 +1459,10 @@ mapaPlus.hotkeyAppend = function(keys, id, enabled)
 	if (keys.length < 2 || !enabled || (this.noOverlayLoaded && enabled == 1))
 		return;
 
-	var m = keys.slice()
-	var keyset = $("mapaPlus_keyset");
-	var k = document.createElement("key");
+	let m = keys.slice(),
+			keyset = $("mapaPlus_keyset"),
+			k = document.createElement("key");
+
 	k.id = "mapaPlus_key_" + id;
 	k.setAttribute("key", m[m.length-1]);
 	m.pop();
@@ -1475,7 +1518,7 @@ mapaPlus.close = function(aEvent)
 	let self = mapaPlus;
 //	self.core.countdownReset();
 //	self.core.countdownResetLock();
-	self.core.windowRemove(self.windowID);
+	self.core.windowRemove(self.windowID, self.windowType);
 	if (self.first)
 	{
 /*
@@ -1509,7 +1552,7 @@ mapaPlus.onLoadAdd = function(func)
 		if (func)
 			mapaPlus.onLoadArray.push(func);
 
-		for (let [, func] in Iterator(mapaPlus.onLoadArray)) try{func && func()}catch(e){log(e, 1)};
+		for (let [, func] in Iterator(mapaPlus.onLoadArray)) try{func && func()}catch(e){log.error(e)};
 		mapaPlus.onLoadArray = [];
 	}
 	else
@@ -1653,7 +1696,7 @@ mapaPlus.windowMinimizedForced = false;
 
 mapaPlus.isMinimized = function isMinimized()
 {
-log.debug();
+//log.debug();
 	if (mapaPlus.windowState != window.windowState)
 	{
 		if (window.windowState == window.STATE_MINIMIZED)
@@ -1799,7 +1842,10 @@ log.debug();
 	if (self.initialized)
 		return;
 
-	self.windowID = self.core.windowAdd(self, self.loadedManualy ? "WindowGeneric" : "");
+	if (self.loadedManualy)
+		self.windowType =  "WindowGeneric";
+
+	self.windowID = self.core.windowAdd(self, self.windowType);
 	self.initialized = true;
 //log([self.windowID, self.init.count, mapaPlus.core.appInfo.name, $("masterPasswordPlusUnLockInfo").value]);
 
@@ -1894,7 +1940,8 @@ log.debug();
 			mapaPlus.lock(lockedWindow, 1);
 
 	}, 100);
-	self.hotkeyInit();
+	if (self.windowType == "Window")
+		self.hotkeyInit();
 
 	self.MinTrayR = "gMinTrayR" in window;
 	if (self.MinTrayR || Cc["@mozilla.org/xpcom/version-comparator;1"]
@@ -1909,8 +1956,10 @@ log.debug();
 	{
 		window.addEventListener("sizemodechange", mapaPlus.isMinimized, true);
 	}
+	$("masterPasswordPlusUnLockInput").addEventListener("input", self.nonLatin, true);
 	self.update(true);
 }//init()
+
 
 window.addEventListener("load", mapaPlus.load, false);
 

@@ -18,7 +18,10 @@ mapaPlus.dialogTemp = mapaPlus.core.dialogTemp;
 mapaPlus.dialogBackup = {};
 mapaPlus.loaded = false;
 mapaPlus.gecko4 = false;
-mapaPlus.titleOriginal = "";
+mapaPlus.titleOriginal = function()
+{
+	return document.title.replace(mapaPlus.titleSuffix, "");
+};
 mapaPlus.titleSuffix = "";
 mapaPlus.mainWindow = Cc["@mozilla.org/appshell/window-mediator;1"]
 												.getService(Ci.nsIWindowMediator)
@@ -267,7 +270,7 @@ mapaPlus.quit = function()
 
 mapaPlus.suppressed = function()
 {
-	document.title = this.titleOriginal + this.titleSuffix + " (" + (++mapaPlus.core.dialogSuppressedCount) + ")";
+	document.title = this.titleOriginal() + this.titleSuffix + " (" + (++mapaPlus.core.dialogSuppressedCount) + ")";
 }
 
 mapaPlus.commonDialogOptions = function()
@@ -280,40 +283,25 @@ mapaPlus.commonDialogOptions = function()
 		document.documentElement.getButton("disclosure").disabled = true;
 */
 }
-mapaPlus.checkLatin = function(t)
-{
-	for(let i = 0; i < t.length; i++)
-		if (t.charCodeAt(i) > 127)
-			return true;
 
-	return false;
-}
-
-mapaPlus.nonLatin = function(e)
+mapaPlus.updateTitle = function updateTitle()
 {
-	$("mapaPlusNonLat").collapsed = !(((mapaPlus.core.pref("nonlatinwarning") == 2 && mapaPlus.core.windowFullScreen())
-																														 || mapaPlus.core.pref("nonlatinwarning") == 1)
-																													 && mapaPlus.checkLatin(e.target.value));
-}
-
-mapaPlus.updateTitle = function()
-{
+log.debug();
 	this.titleSuffix = this.core.pref("identify");
 	if (this.titleSuffix)
 		this.titleSuffix = " [" + this.titleSuffix + "]";
 
-	document.title = this.titleOriginal + this.titleSuffix;
+	document.title = this.titleOriginal() + this.titleSuffix;
 	if (this.core.dialogSuppressedCount)
 	{
 		this.core.dialogSuppressedCount--;
 		this.suppressed();
 	}
 }
-mapaPlus.commonDialogOnLoad = function()
+mapaPlus.commonDialogOnLoad = function commonDialogOnLoad()
 {
-//	log(window, 1)
+log.debug();
 	this.loaded = true;
-	this.titleOriginal = document.title;
 	if (this.pass)
 	{
 		$("password1Label").parentNode.insertBefore($("mapaPlusWarning"), $("password1Label"));
@@ -521,8 +509,9 @@ mapaPlus.observer = {
 		window.addEventListener("unload", function() { mapaPlus.observer.uninit();}, false);
 	},
 
-	uninit: function()
+	uninit: function observer_dialog_uninit()
 	{
+log.debug();
 		this._observerService.removeObserver(this, this._name);
 	},
 

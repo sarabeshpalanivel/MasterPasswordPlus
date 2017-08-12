@@ -1,10 +1,15 @@
-var mapaPlus, mapaPlusCore;
+var mapaPlus, mapaPlusCore, log;
 (function()
 {
 let {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+function $ (id)
+{
+	return document.getElementById(id);
+}
+
 mapaPlus = {
 	locked: false,
-	windowType: "window",
+	windowType: "Window",
 	loadCore: function()
 	{
 		Cu.import("resource://mapaplus/masterpasswordplusCore.jsm");
@@ -105,7 +110,7 @@ log("openContentTab");
 			}
 			catch(e)
 			{
-log.error(e);
+				log.error(e);
 				win = mapaPlus._openDialog(url, url);
 			}
 /*
@@ -278,9 +283,26 @@ log.error(e);
 																											null,
 																											notifListener,
 																											addon.name + " " + mapaPlus._("updated"));
-			}catch(e){log(e, 1);}
+			}catch(e){log.error(e);}
 	
-	}//openChanges()
+	},//openChanges()
+
+	checkLatin: function(t)
+	{
+		for(let i = 0; i < t.length; i++)
+			if (t.charCodeAt(i) > 127)
+				return true;
+
+		return false;
+	},//checkLatin()
+
+	nonLatin: function(e)
+	{
+		$("mapaPlusNonLat").collapsed = !(((mapaPlus.core.pref("nonlatinwarning") == 2 && mapaPlus.core.windowFullScreen())
+																															 || mapaPlus.core.pref("nonlatinwarning") == 1)
+																														 && mapaPlus.checkLatin(e.target.value));
+	},//nonLatin()
+
 }
 mapaPlus.notification = Cc['@mozilla.org/alerts-service;1'].getService(Ci.nsIAlertsService);
 mapaPlus.notificationAvailable = (mapaPlus.notification && mapaPlus.notification.showAlertNotification);

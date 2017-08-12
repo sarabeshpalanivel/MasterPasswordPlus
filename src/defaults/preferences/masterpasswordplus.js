@@ -47,6 +47,7 @@ pref("extensions.masterPasswordPlus.logoutonsleep", true); //logout on sleep
 pref("extensions.masterPasswordPlus.failedattempts", 5); //disable password field of locked windows after this many failed attempts.
 pref("extensions.masterPasswordPlus.failedattemptstime", 10); //number of seconds to disable password field after reached failed attempts number. Use negative value to exponentially increase the timeout
 pref("extensions.masterPasswordPlus.debug", 1); //type of messages shown in browser console. bitwise: 0 = off, 1 = errors, 2 = info messages, 4 = debug (this will flood with messages! it also triggers automtic open browser console)
+pref("extensions.masterPasswordPlus.idle", 3); //idle sensitivity
 
 
 //hidden settings
@@ -60,7 +61,7 @@ pref("extensions.masterPasswordPlus.hidenewmailalert", true); //hide new email a
 pref("extensions.masterPasswordPlus.hidenewmailballoon", true); //hide new email balloon popup (TB only)
 pref("extensions.masterPasswordPlus.persistnolock", true); //attempt remember the no-lock window flag between browser restart
 pref("extensions.masterPasswordPlus.minimizenoflicker", true); //a work around of "flickering" effect when locking/unlocking minimized windows on WIndows 7+. When set to false, aero preview of minimized windows will not work properly
-pref("extensions.masterPasswordPlus.idle", 3); //idle sensitivity
+pref("extensions.masterPasswordPlus.unlockSync", false); //foce sync on global unlock
 
 /*
 force MP login before listed windows opened.

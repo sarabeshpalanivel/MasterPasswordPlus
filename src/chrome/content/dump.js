@@ -602,10 +602,12 @@ if (typeof(__dumpName__) == "undefined")
 		return (new Array(tab + (tab > 0 ? 1 : 0))).join(" ");
 	}//tab()
 
-	function fileInit(file, erase)
+	function fileInit(_file, erase)
 	{
 		erase = typeof(erase) == "undefined" ? true : erase;
-		file += ".txt";
+		_file = _file + ".txt";
+
+		let file = _file;
 
 		if (!/^file:/.test(file))
 			file = "file://" + file;
@@ -620,7 +622,20 @@ if (typeof(__dumpName__) == "undefined")
 		}
 		catch(e)
 		{
-			df = null;
+			try
+			{
+				df = ios.newURI(file, null, null);
+				if (Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).OS == "WINNT")
+					_file = _file.replace(/\//g, "\\");
+
+				lf = new FileUtils.File(_file);
+				if (erase && lf.exists())
+					lf.remove(false);
+			}
+			catch(e)
+			{
+				df = null;
+			}
 		}
 		dumpFile = df;
 	}//fileInit()
@@ -685,6 +700,7 @@ if (typeof(__dumpName__) == "undefined")
 
 	function openConsole()
 	{
+		_func('openConsole');
 		AddonManager.getAllAddons(function(addons)
 		{
 			let win = null;
@@ -788,11 +804,19 @@ if (typeof(__dumpName__) == "undefined")
 	let ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService),
 			cr = Cc['@mozilla.org/chrome/chrome-registry;1'].getService(Ci.nsIChromeRegistry),
 			ph = Cc["@mozilla.org/network/protocol;1?name=file"].createInstance(Ci.nsIFileProtocolHandler),
-			lf = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile),
+			lf,
+			FileUtils,
 			files = [],
 			dumpFile = null;
 
-
+	try
+	{
+		lf = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile)
+	}catch(e){}
+	try
+	{
+		FileUtils = Cu.import("resource://gre/modules/FileUtils.jsm").FileUtils;
+	}catch(e){}
 	_func.path = Components.stack.caller.filename.replace(/.* -> |[^\/]+$/g, "");
 	_func.dir = getLocalPath(_func.path);
 	_func.folder = _func.dir.match(/([^\/]+)\/?$/)[1];
@@ -805,3 +829,5 @@ if (typeof(__dumpName__) == "undefined")
 //this[__dumpName__].fileInit("C:/debug/" + this[__dumpName__].folder + "/" + "debug");
 
 //var _dump = this[__dumpName__];
+
+//log.fileInit("D:/debug/" + log.folder + "/" + "debug");

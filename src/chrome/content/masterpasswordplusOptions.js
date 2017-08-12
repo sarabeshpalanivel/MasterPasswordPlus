@@ -33,9 +33,9 @@ log.debug();
 	this.hotkeySave("mapaPlusLockWinHotkey", "lockwinhotkey");
 	this.hotkeySave("mapaPlusLockLogoutHotkey", "locklogouthotkey");
 
-	this.timeoutSave("logouttimeout");
-	this.timeoutSave("locktimeout");
-	this.timeoutSave("startuptimeout");
+	this.timeoutSave("logouttimeout", true);
+	this.timeoutSave("locktimeout", true);
+	this.timeoutSave("startuptimeout", true);
 	this.core.prefNoObserve = false;
 	this.core.windowUpdate(true,true);
 	this.core.init(true, this);
@@ -55,8 +55,8 @@ log.debug();
 	$("mapaPlusContextmenu").hidden = this.core.isTB;
 	$("mapaPlusUrlbarBox").hidden = this.core.isTB;
 	$("mapaPlusString").value = $("mapaPlusString").value.replace("#", this.core.appInfo.name);
-	if (this.core.isFF4)
-		$("prompt-one").collapsed = $("one.info").collapsed = true;
+//	if (this.core.isFF4)
+//		$("prompt-one").collapsed = $("one.info").collapsed = true;
 
 	if (this.strings.moreinfo)
 		document.documentElement.getButton("disclosure").label = this.strings.moreinfo;

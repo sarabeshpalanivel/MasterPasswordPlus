@@ -42,6 +42,16 @@ log.debug();
 	if (!urlBarIcons)
 		return null;
 
+	try
+	{
+		let url = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService).newURI(urlBarIcons.parentNode.value, "UTF-8", null);
+		if (url.prePath == "about:")
+			url = url.spec;
+		else
+			url = url.prePath;
+		$("urlbar-url").value = url.replace(/[\?#&].*/g, "");
+	}
+	catch(e){}
 	let children = urlBarIcons.childNodes;
 	icon = document.createElement("image");
 	icon.collapsed = false;
@@ -81,32 +91,34 @@ log.debug();
 			continue;
 		}
 		
-			self.cloneClass(child, clone);
-			self.cleanClone(clone);
+		self.cloneClass(child, clone);
+		self.cleanClone(clone);
 
-			clone.className = "";
-			for (let s = 0; s < style.length; s++)
+		clone.className = "";
+		for (let s = 0; s < style.length; s++)
+		{
+			if (child.id == "urlbar-zoom-button" && style[s] == "transform")
 			{
-				if (child.id == "urlbar-zoom-button" && style[s] == "transform")
-				{
-					clone.style[style[s]] = "";
-					continue;
-				}
-				if (["width", "height"].indexOf(style[s]) != -1)
-					continue;
-
-				clone.style[style[s]] = style[style[s]];
+				clone.style[style[s]] = "";
+				continue;
 			}
+//			if (["width", "height"].indexOf(style[s]) != -1)
+//			if (child.id == "reader-mode-button" && style[s] == "width")
+			if (style[s] == "width")
+				continue;
 
-			child.label = label;
-			child.hidden = hidden;
-			child.collapsed = collapsed;
-			clone.style.display = "block";
-			clone.hidden = false;
-			clone.collapsed = false;
-			clone.setAttribute("onclick", "mapaPlus.mouseClick(this);");
-			if (["label", "description"].indexOf(clone.tagName) != -1 && clone.getAttribute("value") == "")
-				clone.setAttribute("value", "??");
+			clone.style[style[s]] = style[style[s]];
+		}
+
+		child.label = label;
+		child.hidden = hidden;
+		child.collapsed = collapsed;
+		clone.style.display = "block";
+		clone.hidden = false;
+		clone.collapsed = false;
+		clone.setAttribute("onclick", "mapaPlus.mouseClick(this);");
+		if (["label", "description"].indexOf(clone.tagName) != -1 && clone.getAttribute("value") == "")
+			clone.setAttribute("value", "??");
 
 /*
 		if (clone.style.listStyleImage == "none")
@@ -300,7 +312,7 @@ mapaPlus.cloneClass = function(orig, obj)
 
 mapaPlus.cleanClone =	function cleanClone(obj, leaveAttr)
 {
-	let skipId = ["statusbar-display", "show_location_drag_icon"],
+	let skipId = ["statusbar-display", "show_location_drag_icon", "star-button-animatable-box"],
 			skipTag = ["tooltip", "popup", "prefpane"];
 	if (!leaveAttr)
 		leaveAttr = [];
@@ -721,8 +733,9 @@ mapaPlus.observer = {
 		window.addEventListener("unload", function() { mapaPlus.observer.uninit();}, false);
 	},
 
-	uninit: function()
+	uninit: function observer_dialog_options_uninit()
 	{
+log.debug();
 		this._observerService.removeObserver(this, this._name);
 	},
 
@@ -1331,6 +1344,7 @@ log.debug();
 			};
 	if (t < 10)
 		t = 10;
+
 	if (noasync)
 		func();
 	else
