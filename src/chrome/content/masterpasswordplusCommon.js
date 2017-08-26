@@ -1,7 +1,8 @@
-var mapaPlus, mapaPlusCore, log;
+var mapaPlus, mapaPlusCore;
 (function()
 {
-let {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+let {classes: Cc, interfaces: Ci, utils: Cu} = Components,
+		log = function(){};
 function $ (id)
 {
 	return document.getElementById(id);

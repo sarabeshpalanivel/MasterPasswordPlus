@@ -92,26 +92,34 @@ log.debug();
 			let id = this.core.pref("urlbarpos"),
 					direction = id.substr(0,1) == "1";
 			id = id.substr(1, id.length);
-			if (id)
-				this.setIcon({container:"urlbar-icons", element:"mapa_urlbar", idDefault:"go-button", directionDefault:0, id:id, direction:direction});
+			(this.setIcon({container:"urlbar-icons", element:"mapa_urlbar", idDefault:"go-button", directionDefault:0, id:id, direction:direction})
+				|| this.setIcon({container:"page-action-buttons", element:"mapa_urlbar", idDefault:"go-button", directionDefault:0, id:id, direction:direction})
+			)
 
 			id = this.core.pref("statusbarpos");
 			direction = id.substr(0,1) == "1";
 			id = id.substr(1, id.length);
-			if (id)
-				this.setIcon({container:"status-bar", element:"mapa_statusbar", idDefault:"", directionDefault:1, id:id, direction:direction});
+			this.setIcon({container:"status-bar", element:"mapa_statusbar", idDefault:"", directionDefault:1, id:id, direction:direction});
 		}
 	}
 //	this.menuAddHotkeys();
 };
 
-mapaPlus.setIcon = function(o)
+mapaPlus.setIcon = function setIcon(o)
 {
-	var icons = $(o.container).childNodes;
-	var first = null;
-	var last = null
-	var sel = null;
-	for(var i = 0; i < icons.length; i++)
+log.debug();
+	let container = $(o.container);
+	if (!container)
+		return false;
+
+log.debug("next");
+
+	let icons = container.childNodes,
+			first = null,
+			last = null,
+			sel = null;
+
+	for(let i = 0; i < icons.length; i++)
 	{
 		if (o.id == icons[i].id)
 			sel = icons[i].id;
@@ -137,7 +145,7 @@ mapaPlus.setIcon = function(o)
 	{
 		o.id = sel;
 	}
-	var u = $(o.element);
+	let u = $(o.element);
 	if (o.id)
 	{
 		if (o.direction)
@@ -153,7 +161,7 @@ mapaPlus.setIcon = function(o)
 	{
 		$(o.container).appendChild(u.parentNode.removeChild(u));
 	}
-	var remove;
+	let remove;
 	if (o.direction)
 	{
 		o.direction = "insertafter";
@@ -166,6 +174,7 @@ mapaPlus.setIcon = function(o)
 	}
 	$(o.element).setAttribute(o.direction, o.id);
 	$(o.element).removeAttribute(remove);
+	return true;
 }
 
 mapaPlus.setProp = function(id, name, value)
@@ -1245,7 +1254,7 @@ mapaPlus.listKeys = function()
 
 mapaPlus.mouseDown = function(e)
 {
-	if (e.target.id == "masterPasswordPlusUnLockInput")
+	if (!e || !e.target || !e.target.id || e.target.id == "masterPasswordPlusUnLockInput")
 		return;
 
 	if (mapaPlus.locked && e.target.id.indexOf("masterPasswordPlus") == -1)

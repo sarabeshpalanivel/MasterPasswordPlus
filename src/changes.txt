@@ -7,9 +7,14 @@ Legend:
 * = Changed
 - = Removed
 
-v1.26 (2017-08-12)
-Firefox 57+ is no longer supported and probably never will.
+v1.27 (2017-08-25)
+Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's head out of it's ass, but by then it will be too late after it's aliened developers.
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
+If it works - good, if not - switch to Waterfox or Palemoon.
+	+ typing current password in "Change Master Password" window without typing new password changes "ok" button to "remove"
+	! urlbar simulation in options would not show current position when saved position ID is no longer exists
+	
+v1.26 (2017-08-12)
 	+ sync after unlock (FF56+, controlled via extensions.masterPasswordPlus.unlockSync hidden option) (issue #122)
 	+ language indicator and non-latin warning now available on lock screen (see changes in v1.15.1 for more info)
 	* when debug mode enabled and browser console opened on startup, it shows message in browser console explaining how to disable it

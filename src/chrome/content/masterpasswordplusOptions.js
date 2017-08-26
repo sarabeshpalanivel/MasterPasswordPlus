@@ -1,4 +1,5 @@
 (function(){
+let log = mapaPlus.core.log;
 function $(id)
 {
 	return document.getElementById(id);

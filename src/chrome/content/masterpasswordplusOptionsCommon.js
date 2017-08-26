@@ -2,6 +2,8 @@
 let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components,
 		log = mapaPlus.core.log;
 
+log("masterpasswordplusOptionsCommon.js loaded");
+
 function $(id)
 {
 	return document.getElementById(id);
@@ -30,18 +32,34 @@ mapaPlus.lastKeyDown = [];
 mapaPlus.hotkeyDownRepeat = false;
 
 //mapaPlus.iniIcons("urlbar-icons", "mapa_urlbar", "urlbar", "mapaPlusUrlbar")
-mapaPlus.iniIcons = function iniIcons(objId, iconId, id, checkbox)
+mapaPlus.iniIcons = function iniIcons(iconId, id, checkbox)
 {
 log.debug();
-	let	skipId = ["statusbar-display"],
+	let	skipId = ["statusbar-display", "pageActionSeparator"],
 			skipTag = ["tooltip", "popup", "prefpane"],
 			self = this,
-			urlBarIcons = self.mainWindow.document.getElementById(objId),
+			_obj = $("urlbar-icons"),
+			urlbar = $("urlbar"),
+			urlbarStyle = self.mainWindow.getComputedStyle(self.mainWindow.document.getElementById("urlbar")),
+			urlBarIcons = self.mainWindow.document.getElementById("urlbar-icons") || self.mainWindow.document.getElementById("page-action-buttons"),
 			clone, icon, vbox;
 
 	if (!urlBarIcons)
 		return null;
 
+	try
+	{
+		for(let i = 0; i < urlbarStyle.length; i++)
+		{
+//			urlbar.style[urlbarStyle[i]] = urlbarStyle[urlbarStyle[i]];
+		}
+	}
+	catch(e)
+	{
+		log.error(e);
+	}
+	urlbar.style.backgroundColor = urlbarStyle.backgroundColor;
+	urlbar.style.color = urlbarStyle.color;
 	try
 	{
 		let url = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService).newURI(urlBarIcons.parentNode.value, "UTF-8", null);
@@ -65,7 +83,7 @@ log.debug();
 	vbox.id = "mapapl-"+id+"-" + children[0].id;
 	vbox.appendChild(icon);
 	let last = document.importNode(vbox, true);
-	$(objId).appendChild(last);
+	_obj.appendChild(last);
 	for (let i = 0; i < children.length; i++)
 	{
 		let	child = children[i];
@@ -85,12 +103,16 @@ log.debug();
 		clone = document.importNode(child, true);
 		clone._id = clone.id;
 		clone.id = "_" + clone.id;
+		if (child.id == "pocket-animatable-box")
+		{
+			child.collapsed = true;
+		}
 		if (clone._id == iconId)
 		{
 			self.iconSelected[id] = clone;
 			continue;
 		}
-		
+
 		self.cloneClass(child, clone);
 		self.cleanClone(clone);
 
@@ -109,7 +131,6 @@ log.debug();
 
 			clone.style[style[s]] = style[style[s]];
 		}
-
 		child.label = label;
 		child.hidden = hidden;
 		child.collapsed = collapsed;
@@ -127,7 +148,16 @@ log.debug();
 		if (clone.children.length == 1 && clone.children[0].style.listStyleImage == "none")
 			clone.children[0].style.listStyleImage = clone.style.listStyleImage;
 */
-		$(objId).appendChild(clone);
+		if (clone.tagName == "image")
+		{
+			let c = clone;
+			clone = document.createElement("vbox");
+			clone.id = c.id;
+			clone._id = c._id;
+			c.id = "_" + c.id;
+			clone.appendChild(c);
+		}
+		_obj.appendChild(clone);
 		clone.addEventListener("mousemove", function(e)
 		{
 			if (!mapaPlus.isLocked && $(checkbox).checked)
@@ -136,7 +166,7 @@ log.debug();
 		last = document.importNode(vbox, true);
 		last.setAttribute("directionId", clone._id);
 		last.id = "mapapl-"+ id + "-" + clone._id;
-		$(objId).appendChild(last);
+		_obj.appendChild(last);
 	}// for children
 	if (self.iconSelected[id])
 	{
@@ -157,6 +187,11 @@ log.debug();
 			let obj = $("_" + elId);
 			if (obj)
 				el = obj.previousSibling;
+		}
+		if (!el)
+		{
+			el = _obj.lastChild;
+			elId = el.previousSibling.id;
 		}
 		if (el)
 		{
@@ -312,8 +347,9 @@ mapaPlus.cloneClass = function(orig, obj)
 
 mapaPlus.cleanClone =	function cleanClone(obj, leaveAttr)
 {
-	let skipId = ["statusbar-display", "show_location_drag_icon", "star-button-animatable-box"],
+	let skipId = ["statusbar-display", "show_location_drag_icon", "star-button-animatable-box", "pocket-animatable-box"],
 			skipTag = ["tooltip", "popup", "prefpane"];
+
 	if (!leaveAttr)
 		leaveAttr = [];
 
@@ -565,7 +601,9 @@ mapaPlus.initCommon = function(id)
 
 	if (!this.core.isTB)
 	{
-		if (this.iniIcons("urlbar-icons", "mapa_urlbar", "urlbar", "mapaPlusUrlbar"))
+		if (this.iniIcons("mapa_urlbar", "urlbar", "mapaPlusUrlbar"))
+			$("urlbar-container").collapsed = false;
+		else if (this.iniIcons("mapa_urlbar", "urlbar", "mapaPlusUrlbar"))
 			$("urlbar-container").collapsed = false;
 
 		$("panelDisplay").addEventListener("mousemove", this.showSelected, true);
@@ -1246,6 +1284,9 @@ mapaPlus.copy = function(txt)
 mapaPlus.enableDisable = function enableDisable(e)
 {
 log.debug();
+	if (mapaPlus._enableDisable)
+		mapaPlus._enableDisable(e);
+
 	let	status, startup, lock, disable, minimize,
 			locked = (mapaPlus.protected || mapaPlus.isLocked),
 			isOptions = mapaPlus.windowType == "options";
@@ -1338,9 +1379,10 @@ mapaPlus.timeoutSave = function timeoutSave(name, noasync)
 {
 log.debug();
 	let t = mapaPlus.timeoutGet(name),
+			that = mapaPlus,
 			func = function()
 			{
-				mapaPlus.core.pref(name, t);
+				that.core.pref(name, t);
 			};
 	if (t < 10)
 		t = 10;

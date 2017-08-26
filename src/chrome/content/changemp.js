@@ -1,5 +1,7 @@
 (function()
 {
+let log = mapaPlus.log;
+log("changemp.js loaded");
 function $(id)
 {
 	return document.getElementById(id);
@@ -37,7 +39,7 @@ log.debug();
 
 	$("mapaPlusContextmenu").hidden = this.core.isTB;
 	$("mapaPlusUrlbarBox").hidden = this.core.isTB;
-	this.okButton = document.documentElement.getButton("accept");
+	this.okButton = document.documentElement.getButton("accept") || gDialog.getButton("accept");
 	this.okButtonLabel = this.okButton.label;
 
 	setPassword = function ()
@@ -161,68 +163,14 @@ mapaPlus.suppress = function()
 	mapaPlus.setAttribute("mapaPlusSuppressPopupRemoveBox", "disabled", status, !status);
 }
 
-mapaPlus._enableDisable = function enableDisable(e)
+mapaPlus._enableDisable = function _enableDisable(e)
 {
 log.debug();
-	let	status, startup, lock, disable, display, minimize,
-			locked = (mapaPlus.protected || mapaPlus.isLocked),
-			del = ($("oldpw").value != ""
+	let	del = ($("oldpw").value != ""
 						&& $("pw1").value == ""
 						&& $("pw2").value == "");
 
-	if (del || locked)
-	{
-		status = true;
-		startup = true;
-		lock = true;
-		disable = true;
-		display = locked ? true : false;
-		minimize = true;
-		$("mapaPlusEnabled").disabled = true;
-		$("mapaPlusStartup").disabled = true;
-		if (!del)
-			document.documentElement.getButton("extra1").hidden = false;
-
-		$("mapaPlusLockTimer").disabled = true;
-	}
-	else
-	{
-		$("mapaPlusEnabled").disabled = false;
-		$("mapaPlusStartup").disabled = false;
-		document.documentElement.getButton("extra1").hidden = true;
-		$("mapaPlusLockTimer").disabled = false;
-		status = !$("mapaPlusEnabled").checked;
-		startup = !$("mapaPlusStartup").checked;
-		lock = !$("mapaPlusLockTimer").checked;
-		disable = false;
-		display = false;
-		minimize = !$("mapaPlusLockMinimize").checked || lock;
-	}
 	mapaPlus.okButton.label = del ? mapaPlus.bundle.getString("pw_remove_button") : mapaPlus.okButtonLabel;
-	$("mapaPlusSuppressLabel").disabled = disable;
-	$("mapaPlusSuppress").disabled = disable;
-	mapaPlus.setAttribute("panelGeneral", "disabled", disable, !disable);
-	mapaPlus.setAttribute("panelDisplay", "disabled", display, !display);
-
-	mapaPlus.setAttribute("mapaPlusTimeoutBox", "disabled", status, !status);
-	mapaPlus.setAttribute("mapaPlusLogoutOnMinimize", "disabled", disable, !disable);
-	mapaPlus.setAttribute("mapaPlusStartupBox", "disabled", startup, !startup);
-	mapaPlus.setAttribute("mapaPlusLockBox", "disabled", lock, !lock);
-	mapaPlus.setAttribute("mapaPlusLockBox2", "disabled", disable, !disable);
-	mapaPlus.setAttribute("mapaPlusLockBox3", "disabled", disable, !disable);
-	mapaPlus.setAttribute("mapaPlusSuppressBlinkBox", "disabled", disable, !disable);
-	mapaPlus.setAttribute("mapaPlusSuppressPopupBox", "disabled", disable, !disable);
-	mapaPlus.setAttribute("mapaPlusSuppressSoundBox", "disabled", disable, !disable);
-	let urlbar = !$("mapaPlusUrlbar").checked || locked;
-	mapaPlus.setAttribute("urlbar-container", "disabled", urlbar, !urlbar);
-	$("mapaPlusLockMinimizeBlur").disabled = minimize;
-
-/*
-	if (e !== false && !del)
-		mapaPlus.core.windowAction("lock", locked+"|"+mapaPlus.windowID, "Dialog");
-*/
-
-	mapaPlus.suppress();
 }
 
 mapaPlus.saveOptions = function()
