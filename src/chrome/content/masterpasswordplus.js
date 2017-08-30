@@ -988,7 +988,15 @@ mapaPlus.showUnlock = function(f)
 	}
 	if (this.showUnlockArray.length)
 	{
-		for (let [, func] in Iterator(this.showUnlockArray)) try{func && func()}catch(e){};
+		for (let i = 0; i < this.showUnlockArray.length; i++)
+		{
+			let func = this.showUnlockArray[i];
+			try
+			{
+				typeof(func) == "function" && func()
+			}
+			catch(e){log.error(e)};
+		}
 		this.showUnlockArray = [];
 	}
 
@@ -1554,14 +1562,23 @@ mapaPlus.close = function(aEvent)
 
 }
 
-mapaPlus.onLoadAdd = function(func)
+mapaPlus.onLoadAdd = function onLoadAdd(func)
 {
+log.debug();
 	if (mapaPlus.initialized)
 	{
 		if (func)
 			mapaPlus.onLoadArray.push(func);
 
-		for (let [, func] in Iterator(mapaPlus.onLoadArray)) try{func && func()}catch(e){log.error(e)};
+		for (let i = 0; i < mapaPlus.onLoadArray.length; i++)
+		{
+			let func = mapaPlus.onLoadArray[i];
+			try
+			{
+				typeof(func) == "function" && func()
+			}
+			catch(e){log.error(e)}
+		}
 		mapaPlus.onLoadArray = [];
 	}
 	else
@@ -1570,7 +1587,7 @@ mapaPlus.onLoadAdd = function(func)
 
 mapaPlus.upgrade = function upgrade()
 {
-log.debug();
+log.debug((this.core.upgradeRun || this.core.pref("version") == "firstinstall" || (!this.core.addon.firstRun && this.core.pref("version") == this.core.addon.version)));
 	let compare = Cc["@mozilla.org/xpcom/version-comparator;1"]
 									.getService(Ci.nsIVersionComparator).compare,
 			version = this.core.pref("version");
@@ -1686,12 +1703,16 @@ return old setting, null if failed
 
 mapaPlus.lockSetTransparent = function(v)
 {
-	$("masterPasswordPlusLockBox2").setAttribute("transparent", v);
+	let lb = $("masterPasswordPlusLockBox2")
+	if(lb)
+		lb.setAttribute("transparent", v);
 }
 
 mapaPlus.lockSetBgImage = function(v)
 {
-	$("masterPasswordPlusLockBox2").setAttribute("bgimage", v);
+	let lb = $("masterPasswordPlusLockBox2")
+	if(lb)
+		lb.setAttribute("bgimage", v);
 }
 mapaPlus.screenRestored = true;
 mapaPlus.windowMinimizedForced = false;
@@ -1965,7 +1986,10 @@ log.debug();
 	{
 		window.addEventListener("sizemodechange", mapaPlus.isMinimized, true);
 	}
-	$("masterPasswordPlusUnLockInput").addEventListener("input", self.nonLatin, true);
+	let obj = $("masterPasswordPlusUnLockInput");
+	if (obj)
+		obj.addEventListener("input", self.nonLatin, true);
+
 	self.update(true);
 }//init()
 

@@ -7,23 +7,28 @@ Legend:
 * = Changed
 - = Removed
 
-v1.27 (2017-08-25)
+v1.28 (2017-08-30)
 Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's head out of it's ass, but by then it will be too late after it's aliened developers.
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - switch to Waterfox or Palemoon.
+	+ when protect options is enabled manually changes to about:config settings require enter master password (unless already logged in) (issue #131)
+	! MP dialog would not properly show counter of suppressed dialogs
+
+v1.27 (2017-08-25)
 	+ typing current password in "Change Master Password" window without typing new password changes "ok" button to "remove"
 	! urlbar simulation in options would not show current position when saved position ID is no longer exists
 	
 v1.26 (2017-08-12)
 	+ sync after unlock (FF56+, controlled via extensions.masterPasswordPlus.unlockSync hidden option) (issue #122)
 	+ language indicator and non-latin warning now available on lock screen (see changes in v1.15.1 for more info)
-	* when debug mode enabled and browser console opened on startup, it shows message in browser console explaining how to disable it
 	! Missing title at MP prompt (issue #127)
 	! some icons in url bar simulation in option shown too big
 	! errors when debug is enabled and console automatically opens on startup
 	! blocked prompts counter introduced in v1.18 not shown
 	! enter key doesn't work in locked non-browser windows
 	! global hotkeys no longer worked
+	! most timeout fields in options would not save
+	* when debug mode enabled and browser console opened on startup, it shows message in browser console explaining how to disable it
 
 v1.24 (2017-07-30)
 	+ Ukrainian language. Thanks to Artem Polivanchuk (issue #108)

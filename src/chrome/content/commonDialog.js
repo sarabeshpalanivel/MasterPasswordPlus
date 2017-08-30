@@ -8,6 +8,11 @@ function $ (id)
 {
 	return document.getElementById(id);
 }
+function escape(s)
+{
+	return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
 mapaPlus.window = window;
 mapaPlus.windowID = 0;
 mapaPlus.windowType = "Dialog";
@@ -20,7 +25,8 @@ mapaPlus.loaded = false;
 mapaPlus.gecko4 = false;
 mapaPlus.titleOriginal = function()
 {
-	return document.title.replace(mapaPlus.titleSuffix, "");
+	let regexp = RegExp(escape(mapaPlus.titleSuffix) + "( \\([0-9]*\\))?", "")
+	return document.title.replace(regexp, "");
 };
 mapaPlus.titleSuffix = "";
 mapaPlus.mainWindow = Cc["@mozilla.org/appshell/window-mediator;1"]
@@ -182,8 +188,8 @@ log.debug([this.core.locked, this.core.pref("suppress"), this.core.pref_Suppress
 							if (o && o.gURLBar)
 								window.opener.setTimeout(function(o)
 								{
-									o.gURLBar.focus();
-									o.content.focus();
+									try{o.gURLBar.focus();}catch(e){}
+									try{o.content.focus();}catch(e){}
 								}, 0, o);
 							else
 								window.focus();

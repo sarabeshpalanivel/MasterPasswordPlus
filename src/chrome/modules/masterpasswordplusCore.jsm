@@ -647,6 +647,10 @@ this.async(function()
 		}
 	},
 
+	isLoggedIn: function()
+	{
+		return !this.tokenDB.needsLogin() || (this.tokenDB.needsLogin() && this.tokenDB.isLoggedIn());
+	},
 
 	timerCheckObserver: function()
 	{
@@ -1064,6 +1068,7 @@ log.debug();
 	},
 */
 	onPrefChange: {
+		queue: {},
 		observe: function onPrefChange_observe(aSubject, aTopic, aKey, init)
 		{
 			let self = mapaPlusCore;
@@ -1071,6 +1076,7 @@ if (!init)
 	log.debug();
 			if(aTopic != "nsPref:changed" || self.prefNoObserve)
 				return;
+
 			let t = aSubject.getPrefType(aKey),
 					v;
 
@@ -1080,6 +1086,45 @@ if (!init)
 				v = aSubject.getBoolPref(aKey);
 			else if (t == Ci.nsIPrefBranch.PREF_STRING)
 				v = aSubject.getComplexValue(aKey, Ci.nsISupportsString).data;
+
+			if (self.initialized && self.pref("protect") && !self.isLoggedIn())
+			{
+				let inQueue = aKey in this.queue;
+				this.queue[aKey] = v;
+				if (!inQueue && !self.windowFirst("Dialog"))
+				{
+					let ok = false;
+					try
+					{
+						self.dialogBackup = {
+							dialogShow: self.dialogShow,
+							dialogTemp: self.dialogTemp,
+							dialogForce: self.dialogForce,
+						};
+
+						self.dialogShow = true;
+						self.dialogTemp = false;
+						self.dialogForce = true;
+						self.tokenDB.login(false);
+						ok = true;
+					}
+					catch(e){}
+					let queue = this.queue;
+					for(let p in queue)
+					{
+						if (ok)
+							this.observe(aSubject, aTopic, queue[p]);
+						else
+							self.pref(p, self.pref(p))
+
+						self.async(function()
+						{
+							delete queue[p];
+						}, 100)
+					}
+				}
+				return;
+			}//if protect
 
 			self.pref.prefs[aKey] = v;
 			if (aKey == "debug")
@@ -1463,10 +1508,10 @@ timer.init({observe: function(e)
 		this.prepareHotkey();
 		if (f || !this.initialized)
 		{
-			this.initialized = true;
 			this.timerCheck.init();
 			this.suppressTemp.stop();
 			this.dialogTemp = true;
+			this.initialized = true;
 		}
 	},
 
@@ -1688,7 +1733,6 @@ log.showCaller = 3;
 log.logLevel = 1;
 
 let l = mapaPlusCore.prefs.getChildList("");
-
 for(let i in l)
 	mapaPlusCore.onPrefChange.observe(mapaPlusCore.prefs, "nsPref:changed", l[i], true);
 
