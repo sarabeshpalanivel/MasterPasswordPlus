@@ -191,6 +191,7 @@ log("openContentTab");
 	
 		let addon = this.core.addon;
 		if (type & mapaPlus.CHANGESLOG_NOTIFICATION)
+		{
 			try
 			{
 				let str = "",
@@ -215,11 +216,9 @@ log("openContentTab");
 							aURL = addon.getResourceURI("changes.txt").spec,
 							channel,
 							input
+
+					Cu.import("resource://gre/modules/Services.jsm");
 					try
-					{
-						channel = ioService.newChannel(aURL,null,null);
-					}
-					catch(e) //FF48 WHAT THE FUCK, MOZILLA?! HOW ABOUT YOU UPDATE THE DAMN DOCUMENTATION BEFORE YOU REMOVE SHIT WITHOUT BACKWARDS COMPATIBILITY?
 					{
 						channel = ioService.newChannel2(aURL,null,null,
 																						null,      // aLoadingNode
@@ -228,6 +227,11 @@ log("openContentTab");
 																						Ci.nsILoadInfo.SEC_NORMAL,
 																						Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE
 						);
+					}
+					catch(e)
+					{
+log.error(e);
+						channel = ioService.newChannel(aURL,null,null); //FF48 WHAT THE FUCK, MOZILLA?! HOW ABOUT YOU UPDATE THE DAMN DOCUMENTATION BEFORE YOU REMOVE SHIT WITHOUT BACKWARDS COMPATIBILITY?
 					}
 					input = channel.open();
 		
@@ -285,7 +289,7 @@ log("openContentTab");
 																											notifListener,
 																											addon.name + " " + mapaPlus._("updated"));
 			}catch(e){log.error(e);}
-	
+		}
 	},//openChanges()
 
 	checkLatin: function(t)

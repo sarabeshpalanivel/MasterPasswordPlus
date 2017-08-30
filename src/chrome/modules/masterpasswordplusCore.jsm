@@ -155,7 +155,7 @@ log.debug(t + " removed: " + id);
 	windowUpdate: function(u, f, t)
 	{
 		t = t || "Window";
-		var name = null;
+		let name = null;
 		if (u)
 			name = "update";
 		else if (this.dialogSuppress)
@@ -191,7 +191,7 @@ log.debug(t + " removed: " + id);
 		if (!(t in this.window))
 			return null;
 
-		var w = this.window[t]
+		let w = this.window[t]
 		for(var i = 1; i < w.length; i++)
 		{
 			if (w[i] != null)
@@ -202,21 +202,21 @@ log.debug(t + " removed: " + id);
 		return null;
 	},
 
-	windowFocus: function(t, first)
+	windowFocus: function(t, id)
 	{
 		t = t || "Window";
 		if (!(t in this.window))
 			return false;
 
 		if (typeof(first) == "undefined")
-			var first = this.windowFirst(t);
+			id = this.windowFirst(t);
 
-		if (first !== null)
+		if (id !== null)
 		{
-			if ("window" in this.window[t][first])
-				this.window[t][first].window.focus();
+			if ("window" in this.window[t][id])
+				this.window[t][id].window.focus();
 			else
-				this.window[t][first].focus();
+				this.window[t][id].focus();
 		}
 	},
 
@@ -225,7 +225,7 @@ log.debug(t + " removed: " + id);
 		if (!(["Window"] in this.window))
 			return false;
 
-		var w = this.window["Window"];
+		let w = this.window["Window"];
 		for(var i = 1; i < w.length; i++)
 		{
 			if (w[i] != null && w[i].window.fullScreen)
@@ -1087,40 +1087,49 @@ if (!init)
 			else if (t == Ci.nsIPrefBranch.PREF_STRING)
 				v = aSubject.getComplexValue(aKey, Ci.nsISupportsString).data;
 
-			if (self.initialized && self.pref("protect") && !self.isLoggedIn())
+			if (aKey != "version" && self.initialized && self.pref("protect") && !self.isLoggedIn())
 			{
-				let inQueue = aKey in this.queue;
+				let inQueue = aKey in this.queue,
+						dialog = self.windowFirst("Dialog");
 				this.queue[aKey] = v;
-				if (!inQueue && !self.windowFirst("Dialog"))
+				if (!inQueue)
 				{
-					let ok = false;
-					try
+log("MP prompt for pref. " + aKey +" = " + v + " (prev: " + self.pref(aKey) + ")");
+					if (!dialog)
 					{
-						self.dialogBackup = {
-							dialogShow: self.dialogShow,
-							dialogTemp: self.dialogTemp,
-							dialogForce: self.dialogForce,
-						};
-
-						self.dialogShow = true;
-						self.dialogTemp = false;
-						self.dialogForce = true;
-						self.tokenDB.login(false);
-						ok = true;
-					}
-					catch(e){}
-					let queue = this.queue;
-					for(let p in queue)
-					{
-						if (ok)
-							this.observe(aSubject, aTopic, queue[p]);
-						else
-							self.pref(p, self.pref(p))
-
-						self.async(function()
+						let ok = false;
+						try
 						{
-							delete queue[p];
-						}, 100)
+							self.dialogBackup = {
+								dialogShow: self.dialogShow,
+								dialogTemp: self.dialogTemp,
+								dialogForce: self.dialogForce,
+							};
+
+							self.dialogShow = true;
+							self.dialogTemp = false;
+							self.dialogForce = true;
+							self.tokenDB.login(false);
+							ok = true;
+						}
+						catch(e){}
+						let queue = this.queue;
+						for(let p in queue)
+						{
+							if (ok)
+								this.observe(aSubject, aTopic, queue[p]);
+							else
+								self.pref(p, self.pref(p))
+
+							self.async(function()
+							{
+								delete queue[p];
+							}, 100)
+						}
+					}
+					else if (dialog)
+					{
+						self.windowFocus("Dialog");
 					}
 				}
 				return;
