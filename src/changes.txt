@@ -7,11 +7,17 @@ Legend:
 * = Changed
 - = Removed
 
-v1.28.1 (2017-08-30)
-Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's head out of it's ass, but by then it will be too late after it's aliened developers.
+Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's head out of it's ass, but even then it will be too late after it's aliened developers.
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - switch to Waterfox or Palemoon.
-	! errors in console when notificaiton changes log shown after update
+
+v1.28.2 (2017-08-31)
+	! in some cases overlay not properly initialized on non-browser windows, giving error in console.
+	! if addon was first installed as v1.22 and newer, after addon update changes log notification settings was ignored
+	* after update changes log expands all versions between current and last updated from version (if viewed during first session after update)
+
+v1.28.1 (2017-08-30)
+	! errors in console when notification changes log shown after update
 
 v1.28 (2017-08-30)
 	+ when protect options is enabled manually changes to about:config settings require enter master password (unless already logged in) (issue #131)

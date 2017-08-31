@@ -387,10 +387,15 @@ if (typeof(__dumpName__) == "undefined")
 		}
 		catch(e){}
 
-		let caller = _func.debug.caller,
+		let caller,
 				args,
 				_caller = "",
 				_arguments = "";
+		try
+		{
+			caller = _func.debug.caller;
+		}
+		catch(e){}
 		if (caller)
 		{
 			_caller = "N/A";

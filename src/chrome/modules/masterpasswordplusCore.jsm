@@ -1359,8 +1359,9 @@ timer.init({observe: function(e)
 				window.addEventListener("DOMMouseScroll", mapaPlusCore.resetTimer, false);
 */
 				window.addEventListener("focus", mapaPlusCore.windowFocused, true);
-				window.addEventListener("load", function(event)
+				let onload = function(event)
 				{
+					window.removeEventListener("load", onload, true);
 					if (!("mapaPlus" in window) || window.mapaPlus.noOverlayLoaded)
 					{
 						let list = mapaPlusCore.prefForcePrompt;
@@ -1408,13 +1409,22 @@ timer.init({observe: function(e)
 							{
 								window.mapaPlus = window.mapaPlus || {};
 								window.mapaPlus.noOverlayLoaded = true;
-								mapaPlusCore.async(function()
+								let waitingCount = 0;
+								(function waiting()
 								{
+									if (waitingCount++ < 30)
+									{
+										if (!("load" in window.mapaPlus))
+										{
+											mapaPlusCore.async(waiting, 100);
+											return;
+										}
+									}
 									window.mapaPlus.loadedManualy = true;
 									try
 									{
 										window.mapaPlus.load();
-									}catch(e){log.error(e);};
+									}catch(e){log.error(e)}
 									if ("mapaPlus" in window && (!("mapaPlusEventsAdded" in window) || !window.mapaPlusEventsAdded))
 									{
 										if (window.mapaPlus.close)
@@ -1424,7 +1434,7 @@ timer.init({observe: function(e)
 											window.addEventListener("mousedown", window.mapaPlus.mouseDown, true);
 										window.mapaPlusEventsAdded = true;
 									}
-								}, 100);
+								})();
 							}});
 						}
 					}
@@ -1436,11 +1446,11 @@ timer.init({observe: function(e)
 						if (window.mapaPlus.mouseDown)
 							window.addEventListener("mousedown", window.mapaPlus.mouseDown, true);
 					}
-					window.removeEventListener("load", arguments.callee, true);
 					if (windowClose)
 						window.close();
 
-				}, true); //addEventListener("load")
+				}//onload()
+				window.addEventListener("load", onload, true); //addEventListener("load")
 			}
 			else if (aTopic == "domwindowclosed")
 			{

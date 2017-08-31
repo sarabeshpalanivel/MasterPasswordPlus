@@ -635,6 +635,7 @@ log.debug();
 		let prevhbox = null,
 				prevhboxTitle = null,
 				isLegend = true,
+				legendBlockFound = false,
 				legendBox = null,
 				stats = {},
 				typeString = {"-": "removed", "+": "added", "*": "changed", "!": "fixed"};
@@ -684,8 +685,11 @@ log.debug();
 		}
 
 		let oddEven = 1,
-				verBox = changesLogObj;
-
+				verBox = changesLogObj,
+				prevVhash = window.location.hash.replace("#", ""),
+				prevV = prevVhash || mapaPlusCore.prevVersion.replace("-signed", ""),
+				compare = Cc["@mozilla.org/xpcom/version-comparator;1"].getService(Ci.nsIVersionComparator).compare;
+log(prevV)
 		for(let i = 0; i < array.length; i++)
 		{
 			let t = /^(\s*)([+\-*!])/.exec(array[i]),
@@ -753,12 +757,15 @@ log.debug();
 					tab.className += " border";
 					label.className += " border";
 				}
+				if (!changesLog.firstBox)
+					legendBlockFound = 1;
 			}
 			else if (array[i].match(/^v[0-9]+/))
 			{
 				verBox = document.createElement("vbox");
 				let image = document.createElement("image"),
-						imageBox = document.createElement("vbox");
+						imageBox = document.createElement("vbox"),
+						lastBox = changesLogObj.lastChild;
 				imageBox.setAttribute("pack", "center");
 				imageBox.appendChild(image);
 				hbox.id = array[i].match(/^([^\s]+)/)[1];
@@ -784,15 +791,33 @@ log.debug();
 				changesLogObj.appendChild(verBox);
 				vbox.removeAttribute("flex");
 				isTitle = true;
-				if (isLegend)
+				if (isLegend || legendBlockFound > 1)
 				{
 					hbox.setAttribute("latest", true);
 					hbox.setAttribute("hide", 0);
 					changesLog.firstBox = hbox;
+					if (legendBlockFound > 2)
+						lastBox.previousSibling.className += " border";
+
 					if (legendBox)
 						legendBox.className += " border";
 				}
-
+				else
+				{
+					let version = (new RegExp("^v([0-9\\.a-z]+)" , "")).exec(array[i]);
+					if (version)
+					{
+						version = version[1];
+						if (prevV && compare(version, prevV) > 0)
+						{
+							if (!(hbox.id in mapaPlusCore.changesLog.versions[changesLog.windowId]))
+{
+log([version, prevV, compare(version, prevV), mapaPlusCore.changesLog.versions[changesLog.windowId][hbox.id]])
+								hbox.setAttribute("hide", 0);
+}
+						}
+					}
+				}
 				isLegend = false;
 				if (prevhboxTitle)
 					prevhboxTitle.insertBefore(showStats(stats), prevhboxTitle.lastChild);
@@ -808,11 +833,16 @@ log.debug();
 					prevhbox = true;
 					hbox.className = "titlelog";
 				}
+				legendBlockFound = false;
 				stats = {};
 			}
 			else
 			{
-				label.className = "comment";
+				if (legendBlockFound && legendBlockFound++ > 1)
+				{
+					isLegend = false;
+					label.className = "comment";
+				}
 			}
 			if (array[i].length > 1 && prevhbox !== null)
 				prevhbox = hbox;
@@ -1035,8 +1065,8 @@ e.preventDefault();
 	{
 		let hide = hbox.hasAttribute("hide")
 								? hbox.getAttribute("hide")
-								: hbox.id in mapaPlusCore.changesLog.versions
-									? mapaPlusCore.changesLog.versions[hbox.id].hide
+								: hbox.id in mapaPlusCore.changesLog.versions[changesLog.windowId]
+									? mapaPlusCore.changesLog.versions[changesLog.windowId][hbox.id].hide
 									: changesLog.checkboxGet("changesLogExpandAll") ^ 1;
 		if (type === false)
 			hide ^= 1;
@@ -1045,11 +1075,12 @@ e.preventDefault();
 		else if (typeof(type) != "undefined")
 			hide = type;
 
-		if (!(hbox.id in mapaPlusCore.changesLog.versions))
-			mapaPlusCore.changesLog.versions[hbox.id] = {};
+		if (!(hbox.id in mapaPlusCore.changesLog.versions[changesLog.windowId]))
+			mapaPlusCore.changesLog.versions[changesLog.windowId][hbox.id] = {};
 
-		mapaPlusCore.changesLog.versions[hbox.id].hide = hide; 
+		mapaPlusCore.changesLog.versions[changesLog.windowId][hbox.id].hide = hide; 
 		hbox.setAttribute("hide", hide);
+		return hide;
 	},//showHideVersion()
 
 	getEmailBody: function(list, noExtra)
@@ -1085,16 +1116,42 @@ e.preventDefault();
 		return r;
 	}//getEmailBody()
 };
+if (!("changesLog" in mapaPlusCore))
+{
+	mapaPlusCore.changesLog = {
+		versions: {},
+		id: 0,
+		list: [],
+		add: function()
+		{
+			this.id++;
+			this.list.push(this.id);
+			return this.id;
+		},
+		remove: function(id)
+		{
+			let i = this.list.indexOf(id);
+			if (i != -1)
+				this.list.splice(i,1);
+		}
+	}//mapaPlusCore.changesLog
+}
+
+changesLog.windowId = window.name.match(/^mapaPlusChangesLog/) ? parseInt(window.name.replace("mapaPlusChangesLog", "")) : "";
+if (!changesLog.windowId || isNaN(changesLog.windowId))
+{
+	changesLog.windowId = mapaPlusCore.changesLog.add();
+	window.name = "mapaPlusChangesLog" + changesLog.windowId;
+}
+if (!(changesLog.windowId in mapaPlusCore.changesLog.versions))
+{
+	mapaPlusCore.changesLog.versions[changesLog.windowId] = {};
+}
+
 AddonManager.getAddonByID(changesLog.GUID, function(addon)
 {
 	Services.scriptloader.loadSubScript(addon.getResourceURI("chrome/content/constants.js").spec, self);
 	changesLog.addon = addon;
-	if (!("changesLog" in mapaPlusCore))
-		mapaPlusCore.changesLog = {};
-
-	if (!("versions" in mapaPlusCore.changesLog))
-		mapaPlusCore.changesLog.versions = {};
-
 	changesLog.init();
 	changesLog.showLegendType();
 	changesLog.showHighlight();

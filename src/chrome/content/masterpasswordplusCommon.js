@@ -160,9 +160,9 @@ log("openContentTab");
 
 	AeroPeek: false,
 	notification: Cc['@mozilla.org/alerts-service;1'].getService(Ci.nsIAlertsService),
-	openChanges: function()
+	openChanges: function(update)
 	{
-		mapaPlus.showChangesLog(mapaPlus.core.pref("showchangeslog"));
+		mapaPlus.showChangesLog(mapaPlus.core.pref("showchangeslog"), false, update);
 	},
 	get getOpenURL ()
 	{
@@ -180,13 +180,15 @@ log("openContentTab");
 		}
 		return func
 	},
-	showChangesLog: function(type, demo)
+	showChangesLog: function(type, demo, update)
 	{
 //log([type, type & mapaPlus.CHANGESLOG_FULL]);
 		if (typeof(type) == "undefined" || type & mapaPlus.CHANGESLOG_FULL)
 		{
+log(mapaPlus.CHANGESLOG_URL + (update ? "?update" : ""));
 			if (mapaPlus.getOpenURL)
 				mapaPlus.getOpenURL(mapaPlus.CHANGESLOG_URL, true);
+//				mapaPlus.getOpenURL(mapaPlus.CHANGESLOG_URL + (update ? "#" + update : ""), true);
 		}
 	
 		let addon = this.core.addon;

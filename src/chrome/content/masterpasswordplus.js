@@ -1587,13 +1587,19 @@ log.debug();
 
 mapaPlus.upgrade = function upgrade()
 {
-log.debug((this.core.upgradeRun || this.core.pref("version") == "firstinstall" || (!this.core.addon.firstRun && this.core.pref("version") == this.core.addon.version)));
-	let compare = Cc["@mozilla.org/xpcom/version-comparator;1"]
+log.debug();
+	let _compare = Cc["@mozilla.org/xpcom/version-comparator;1"]
 									.getService(Ci.nsIVersionComparator).compare,
 			version = this.core.pref("version");
 
+	function compare(a, b)
+	{
+		if (a == "firstinstall")
+			return 0;
 
-	if (this.core.upgradeRun || version == "firstinstall" || (!this.core.addon.firstRun && version == this.core.addon.version))
+		return _compare(a, b);
+	}
+	if (this.core.upgradeRun || (!this.core.addon.firstRun && version == this.core.addon.version))
 		return;
 
 	this.core.prevVersion = version;
@@ -1694,10 +1700,11 @@ return old setting, null if failed
 	if (!this.core.changeLogShown)
 	{
 		this.core.changeLogShown = true;
-		this.onLoadAdd(function()
-		{
-			mapaPlusCore.openChangesTimer = mapaPlusCore.async(function(){mapaPlus.openChanges()}, 1000, mapaPlusCore.openChangesTimer);
-		});
+		if (compare(version, this.core.addon.version)) //check if not first install
+			this.onLoadAdd(function()
+			{
+				mapaPlusCore.openChangesTimer = mapaPlusCore.async(function(){mapaPlus.openChanges(version)}, 1000, mapaPlusCore.openChangesTimer);
+			});
 	}
 }
 
