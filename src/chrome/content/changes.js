@@ -3,7 +3,8 @@ var changesLog;
 {
 let {classes: Cc, interfaces: Ci, utils: Cu} = Components,
 		self = this,
-		log = mapaPlusCore.log;
+		core = mapaPlusCore,
+		log = core.log;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://mapaplus/masterpasswordplusCore.jsm");
@@ -14,8 +15,8 @@ function $(id)
 }
 changesLog = {
 	addon: null,
-	PREF_BRANCH: mapaPlusCore.PREF_BRANCH,
-	GUID: mapaPlusCore.GUID,
+	PREF_BRANCH: core.PREF_BRANCH,
+	GUID: core.GUID,
 	pref: null,
 	firstBox: null,
 	decode: function(t)
@@ -347,20 +348,20 @@ log.debug();
 		}
 		if ($("changesLogBox"))
 		{
-			if ("scrollTop" in mapaPlusCore.changesLog)
+			if ("scrollTop" in core.changesLog)
 			{
-				$("changesLogBox").scrollTo(mapaPlusCore.changesLog.scrollLeft, mapaPlusCore.changesLog.scrollTop);
+				$("changesLogBox").scrollTo(core.changesLog.scrollLeft, core.changesLog.scrollTop);
 			}
 			window.addEventListener("unload", function()
 			{
-				mapaPlusCore.changesLog.scrollTop = $("changesLogBox").scrollTop;
-				mapaPlusCore.changesLog.scrollLeft = $("changesLogBox").scrollLeft;
+				core.changesLog.scrollTop = $("changesLogBox").scrollTop;
+				core.changesLog.scrollLeft = $("changesLogBox").scrollLeft;
 				changesLog.async(function()
 				{
 					try
 					{
-						delete mapaPlusCore.changesLog.scrollTop;
-						delete mapaPlusCore.changesLog.scrollLeft;
+						delete core.changesLog.scrollTop;
+						delete core.changesLog.scrollLeft;
 					}catch(e){}
 				}, 1000)
 			}, false)
@@ -400,7 +401,7 @@ log.debug();
 					break;
 			}
 		}
-		r.windows = mapaPlusCore.storage.persist;
+		r.windows = core.storage.persist;
 
 		return r;
 	},
@@ -562,7 +563,7 @@ log.debug();
 
 
 						if (Cc["@mozilla.org/xpcom/version-comparator;1"].getService(Ci.nsIVersionComparator)
-								.compare(mapaPlusCore.appInfo.version, "8.0") < 0)
+								.compare(core.appInfo.version, "8.0") < 0)
 						{
 							let aURI = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService)
 											.newURI(href, null, null);
@@ -638,7 +639,7 @@ log.debug();
 				legendBlockFound = false,
 				legendBox = null,
 				stats = {},
-				typeString = {"-": "removed", "+": "added", "*": "changed", "!": "fixed"};
+				typeString = {"-": "removed", "+": "added", "*": "changed", "!": "fixed", "#": "comment"};
 		function showStats(stats)
 		{
 			let first = true,
@@ -687,12 +688,11 @@ log.debug();
 		let oddEven = 1,
 				verBox = changesLogObj,
 				prevVhash = window.location.hash.replace("#", ""),
-				prevV = prevVhash || mapaPlusCore.prevVersion.replace("-signed", ""),
+				prevV = prevVhash || core.prevVersion.replace("-signed", ""),
 				compare = Cc["@mozilla.org/xpcom/version-comparator;1"].getService(Ci.nsIVersionComparator).compare;
-log(prevV)
 		for(let i = 0; i < array.length; i++)
 		{
-			let t = /^(\s*)([+\-*!])/.exec(array[i]),
+			let t = /^(\s*)([+\-*!#])/.exec(array[i]),
 					tab = document.createElement("description"),
 					type = document.createElement("description"),
 					type2 = document.createElement("description"),
@@ -714,41 +714,34 @@ log(prevV)
 			space.textContent = " ";
 			if (t)
 			{
-				tab.textContent = t[1];
-				let s = "";
-				switch(t[2])
+				let s = typeString[t[2]] || "";
+				if (t[2] != "#")
 				{
-					case "+":
-						s = "added";
-						break;
-					case "-":
-						s = "removed";
-						break;
-					case "!":
-						s = "fixed";
-						break;
-					case "*":
-						s = "changed";
-						break;
+					tab.textContent = t[1];
+					type.textContent = t[2];
 				}
-				type.textContent = t[2];
 				if (s)
 				{
-					type2.textContent = _(s);
-					if (typeof(stats[s]) == "undefined")
-						stats[s] = [t[2], 0];
+					if (t[2] != "#")
+					{
+						type2.textContent = _(s);
+						if (typeof(stats[s]) == "undefined")
+							stats[s] = [t[2], 0];
 
-					stats[s][1]++;
+						stats[s][1]++;
+					}
+					hbox.setAttribute("oddeven", oddEven++ % 2); 
 //						tab.className = s;
 					type.className += " " + s;
 					type2.className += " " + s;
 					hbox.className = s;
-					hbox.setAttribute("oddeven", oddEven++ % 2); 
 				}
 				hbox.appendChild(tab);
 				hbox.appendChild(type);
 				hbox.appendChild(type2);
-				hbox.appendChild(space);
+				if (t[2] != "#")
+					hbox.appendChild(space);
+
 				txt = t[1].length + 1;
 				if (t[1])
 				{
@@ -810,11 +803,8 @@ log(prevV)
 						version = version[1];
 						if (prevV && compare(version, prevV) > 0)
 						{
-							if (!(hbox.id in mapaPlusCore.changesLog.versions[changesLog.windowId]))
-{
-log([version, prevV, compare(version, prevV), mapaPlusCore.changesLog.versions[changesLog.windowId][hbox.id]])
+							if (!(hbox.id in core.changesLog.versions[changesLog.windowId]))
 								hbox.setAttribute("hide", 0);
-}
 						}
 					}
 				}
@@ -1015,7 +1005,8 @@ e.preventDefault();
 									if (url.substr(-1, 1) == ")")
 									{
 										url = url.substr(0, url.length - 1);
-										urlText = urlText.substr(0, urlText.length - 1);
+										if (urlText.substr(-1, 1) == ")")
+											urlText = urlText.substr(0, urlText.length - 1);
 									}
 									link = url;
 									text = line.substring(start, end);
@@ -1065,8 +1056,8 @@ e.preventDefault();
 	{
 		let hide = hbox.hasAttribute("hide")
 								? hbox.getAttribute("hide")
-								: hbox.id in mapaPlusCore.changesLog.versions[changesLog.windowId]
-									? mapaPlusCore.changesLog.versions[changesLog.windowId][hbox.id].hide
+								: hbox.id in core.changesLog.versions[changesLog.windowId]
+									? core.changesLog.versions[changesLog.windowId][hbox.id].hide
 									: changesLog.checkboxGet("changesLogExpandAll") ^ 1;
 		if (type === false)
 			hide ^= 1;
@@ -1075,10 +1066,10 @@ e.preventDefault();
 		else if (typeof(type) != "undefined")
 			hide = type;
 
-		if (!(hbox.id in mapaPlusCore.changesLog.versions[changesLog.windowId]))
-			mapaPlusCore.changesLog.versions[changesLog.windowId][hbox.id] = {};
+		if (!(hbox.id in core.changesLog.versions[changesLog.windowId]))
+			core.changesLog.versions[changesLog.windowId][hbox.id] = {};
 
-		mapaPlusCore.changesLog.versions[changesLog.windowId][hbox.id].hide = hide; 
+		core.changesLog.versions[changesLog.windowId][hbox.id].hide = hide; 
 		hbox.setAttribute("hide", hide);
 		return hide;
 	},//showHideVersion()
@@ -1115,10 +1106,10 @@ e.preventDefault();
 		}
 		return r;
 	}//getEmailBody()
-};
-if (!("changesLog" in mapaPlusCore))
+};//changesLog
+if (!("changesLog" in core))
 {
-	mapaPlusCore.changesLog = {
+	core.changesLog = {
 		versions: {},
 		id: 0,
 		list: [],
@@ -1134,18 +1125,18 @@ if (!("changesLog" in mapaPlusCore))
 			if (i != -1)
 				this.list.splice(i,1);
 		}
-	}//mapaPlusCore.changesLog
+	}//core.changesLog
 }
 
 changesLog.windowId = window.name.match(/^mapaPlusChangesLog/) ? parseInt(window.name.replace("mapaPlusChangesLog", "")) : "";
 if (!changesLog.windowId || isNaN(changesLog.windowId))
 {
-	changesLog.windowId = mapaPlusCore.changesLog.add();
+	changesLog.windowId = core.changesLog.add();
 	window.name = "mapaPlusChangesLog" + changesLog.windowId;
 }
-if (!(changesLog.windowId in mapaPlusCore.changesLog.versions))
+if (!(changesLog.windowId in core.changesLog.versions))
 {
-	mapaPlusCore.changesLog.versions[changesLog.windowId] = {};
+	core.changesLog.versions[changesLog.windowId] = {};
 }
 
 AddonManager.getAddonByID(changesLog.GUID, function(addon)

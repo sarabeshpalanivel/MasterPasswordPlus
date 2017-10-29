@@ -4,6 +4,8 @@ let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components,
 
 log("masterpasswordplusOptionsCommon.js loaded");
 
+Cu.import("resource://gre/modules/FileUtils.jsm");
+
 function $(id)
 {
 	return document.getElementById(id);
@@ -691,6 +693,10 @@ mapaPlus.initCommon = function(id)
 	this.timeoutSet("locktimeout");
 	this.timeoutSet("startuptimeout");
 	$("mapaPlusIdle").value = this.core.pref("idle");
+
+	let tools = $("toolsBox");
+	document.documentElement._buttons.accept.parentNode.insertBefore(tools, document.documentElement._buttons.accept.parentNode.firstChild);
+
 	if (this.core.locked)
 		this.lock(true);
 	else
@@ -1339,6 +1345,7 @@ log.debug();
 	mapaPlus.setAttribute("mapaPlusSuppressBlinkBox", "disabled", disable, !disable);
 	mapaPlus.setAttribute("mapaPlusSuppressPopupBox", "disabled", disable, !disable);
 	mapaPlus.setAttribute("mapaPlusSuppressSoundBox", "disabled", disable, !disable);
+	mapaPlus.setAttribute("toolsBox", "disabled", disable, !disable);
 
 	$("mapaPlusLockMinimizeBlur").disabled = minimize;
 	let urlbar = !$("mapaPlusUrlbar").checked || locked;
@@ -1533,7 +1540,276 @@ mapaPlus.onFocus = function onFocus(e)
 	mapaPlus.focused = e.target;
 }
 
+mapaPlus.command = function command(com)
+{
+	switch(com)
+	{
+		case "backup":
+			this.settingsBackup();
+			break;
+		case "restore":
+			this.settingsRestore();
+			break;
+		case "reset":
+			this.settingsReset();
+			break;
+	}
+}//command()
 
+mapaPlus.right = function(str, n)
+{
+	if (n <= 0)
+		return "";
+
+	else if (n > String(str).length)
+		return str;
+
+	else
+	{
+		var iLen = String(str).length;
+		return String(str).substring(iLen, iLen - n);
+	}
+}
+
+mapaPlus.saveFile = function(fp, content)
+{
+//save file block taken from chrome://pippki/content/pippki.js
+	let bundle = Cc["@mozilla.org/intl/stringbundle;1"]
+										.getService(Ci.nsIStringBundleService)
+										.createBundle("chrome://pippki/locale/pippki.properties"),
+//			localFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile),
+			localFile = new FileUtils.File(fp.file.path),
+			msg,
+			written = 0;
+
+	try
+	{
+		localFile.initWithPath(fp.file.path);
+		if (localFile.exists())
+			localFile.remove(true);
+
+		localFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0600);
+		let fos = Cc["@mozilla.org/network/file-output-stream;1"].
+							createInstance(Ci.nsIFileOutputStream);
+		// flags: PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
+		fos.init(localFile, 0x04 | 0x08 | 0x20, 0600, 0);
+		written = fos.write(content, content.length);
+		if (fos instanceof Ci.nsISafeOutputStream)
+			fos.finish();
+		else
+			fos.close();
+	}
+	catch(e) {
+		switch (e.result) {
+			case Components.results.NS_ERROR_FILE_ACCESS_DENIED:
+				msg = bundle.GetStringFromName("writeFileAccessDenied");
+				break;
+			case Components.results.NS_ERROR_FILE_IS_LOCKED:
+				msg = bundle.GetStringFromName("writeFileIsLocked");
+				break;
+			case Components.results.NS_ERROR_FILE_NO_DEVICE_SPACE:
+			case Components.results.NS_ERROR_FILE_DISK_FULL:
+				msg = bundle.GetStringFromName("writeFileNoDeviceSpace");
+				break;
+			default:
+				msg = e.message;
+				break;
+		}
+	}
+	if (written != content.length)
+	{
+		if (!msg.length)
+			msg = bundle.GetStringFromName("writeFileUnknownError");
+
+			this.alert(bundle.formatStringFromName("writeFileFailed",[fp.file.path, msg], 2),
+									bundle.GetStringFromName("writeFileFailure"));
+		return false;
+	}
+	return true;
+}//saveFile();
+
+mapaPlus._openDialog = function(url, b, c, arg)
+{
+
+	let wm = Cc['@mozilla.org/appshell/window-mediator;1'].getService(Ci.nsIWindowMediator),
+			wins = wm.getZOrderDOMWindowEnumerator('', false),
+			win;
+	if (!url.match("/"))
+		url = "chrome://mapaplus/content/" + url;
+
+	if (typeof(arg) == "undefined")
+		arg = {};
+
+	arg.window = window;
+	arg.document = document;
+	arg.wrappedJSObject = arg;
+	while (win = wins.getNext())
+	{
+		if (win.location.href.toString() == url)
+		{
+			if (!arg.multiple)
+			{
+				win.focus();
+				if (win.mapaPlus && win.mapaPlus.focus)
+					win.mapaPlus.focus(arg)
+
+				return;
+			}
+		}
+	}
+/*
+	Cc["@mozilla.org/embedcomp/window-watcher;1"]
+		.getService(Ci.nsIWindowWatcher)
+		.openWindow(null, a, b, c, arg);
+*/
+	window.openDialog(url, b, c, arg);
+}
+
+mapaPlus.settingsSkip = ["version", "locked"];
+mapaPlus.settingsBackup = function settingsBackup()
+{
+	let prefs = null;
+	mapaPlus.core.async(function()
+	{
+		prefs = mapaPlus.settingsGet();
+	}, 500);
+
+	let	nsIFilePicker = Ci.nsIFilePicker,
+			fp = Cc["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker),
+			t = new Date(),
+			date = t.getFullYear()
+							+ this.right("00" + (t.getMonth() + 1), 2)
+							+ this.right("00" + t.getDate(), 2)
+							+ this.right("00" + t.getHours(), 2)
+							+ this.right("00" + t.getMinutes(), 2)
+							+ this.right("00" + t.getSeconds(), 2),
+			filename = "MasterPassword+_settings_" + date + ".mpps";
+
+	fp.init(window, this.strings["backupSettingsSave"], nsIFilePicker.modeSave);
+	fp.defaultString = filename.replace(/\s*/g, '');
+	fp.defaultExtension = "mpps";
+	fp.appendFilter(this.strings["settingsFile"].replace("#", mapaPlusCore.addon.name), "*.mpps");
+
+	fp.open(function(rv)
+	{
+		if (rv != nsIFilePicker.returnOK && rv != nsIFilePicker.returnReplace)
+			fp = false;
+
+		if (!fp)
+			return;
+
+		try
+		{
+			prefs = JSON.stringify(prefs);
+		}catch(e){};
+		mapaPlus.saveFile(fp, prefs)
+	});
+}//settingsBackup()
+
+
+mapaPlus.settingsGet = function settingsGet()
+{
+	let list = this.core.pref.prefs,
+			prefs = {};
+
+	for(let i in list)
+	{
+//		if (mapaPlus.settingsSkip.indexOf(i) != -1)
+		if (i == "locked")
+			continue;
+
+		prefs[i] = this.core.pref(i, undefined, true);
+	}
+	return prefs
+}//settingsGet()
+
+mapaPlus.settingsRestore = function settingsRestore()
+{
+	let nsIFilePicker = Ci.nsIFilePicker,
+			that = this;
+	fp = Cc["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+	fp.init(window, this.strings["restoreSettingsOpen"], nsIFilePicker.modeOpen);
+	fp.appendFilter(this.strings["settingsFile"].replace("#", mapaPlus.core.addon.name), "*.mpps");
+	fp.defaultExtension = "mpps";
+	fp.open(function(rv)
+	{
+		if (rv != nsIFilePicker.returnOK)
+			return false;
+
+		let istream = Cc["@mozilla.org/network/file-input-stream;1"].
+									createInstance(Ci.nsIFileInputStream);
+		istream.init(fp.file, -1, -1, false);
+
+		let bstream = Cc["@mozilla.org/binaryinputstream;1"].
+									createInstance(Ci.nsIBinaryInputStream);
+		bstream.setInputStream(istream);
+
+		let fileData = bstream.readBytes(bstream.available());
+		bstream.close();
+		istream.close();
+		let data;
+		try
+		{
+			data = JSON.parse(fileData);
+		}catch(e){log.error(e)}
+		if (!data)
+		{
+			that.alert(that.strings["restoreSettingsError"]);
+			return false;
+		}
+/*
+		let params = {
+			data: data,
+			button: 0,
+		}
+		that._openDialog("optionsRestore.xul", "_blank", "chrome,resizable,centerscreen,dialog" + (that.isMac ? "" : "=no") + ",modal", params);
+
+		if (!params.button)
+			return;
+*/
+		for(let i in data)
+		{
+			if (that.settingsSkip.indexOf(i) != -1)
+				continue;
+
+			try
+			{
+				if (i in that.core.pref.prefs)
+					that.core.pref(i, data[i]);
+			}catch(e){log.error(e)};
+		}
+		that.changesLogMenu();
+		that.debugMenu();
+//		that.alert(that.strings["restoreSettingsSuccess"]);
+	});
+}//settingsRestore()
+
+mapaPlus.alert = function(msg, title)
+{
+	let promptService = Cc["@mozilla.org/embedcomp/prompt-service;1"]
+											.getService(Ci.nsIPromptService);
+	promptService.alert(window, title || msg, msg);
+}
+
+mapaPlus.settingsReset = function settingsRreset()
+{
+	let list = this.core.prefs.getChildList(""),
+			i = -1,
+			e = ["version"];
+//				e = ["version","debug"];
+	while(++i < list.length)
+	{
+		if (e.indexOf(list[i]) != -1)
+			continue;
+		try
+		{
+			this.core.prefs.clearUserPref(list[i]);
+		}
+		catch(e){log.error(e)};
+	}
+	this.changesLogMenu();
+	this.debugMenu();
+}//settingsRreset()
 
 mapaPlus.loadArgs();
 

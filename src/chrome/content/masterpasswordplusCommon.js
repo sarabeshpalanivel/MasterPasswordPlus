@@ -185,7 +185,6 @@ log("openContentTab");
 //log([type, type & mapaPlus.CHANGESLOG_FULL]);
 		if (typeof(type) == "undefined" || type & mapaPlus.CHANGESLOG_FULL)
 		{
-log(mapaPlus.CHANGESLOG_URL + (update ? "?update" : ""));
 			if (mapaPlus.getOpenURL)
 				mapaPlus.getOpenURL(mapaPlus.CHANGESLOG_URL, true);
 //				mapaPlus.getOpenURL(mapaPlus.CHANGESLOG_URL + (update ? "#" + update : ""), true);

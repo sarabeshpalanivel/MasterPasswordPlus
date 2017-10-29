@@ -129,7 +129,8 @@ log.debug(t + " added id: " + this.windowID[t])
 		return this.windowID[t];
 	},
 
-*/	windowAdd: function(win, t)
+*/
+	windowAdd: function(win, t)
 	{
 		t = t || "Window";
 		if (!(t in this.window))
@@ -996,77 +997,6 @@ log.debug();
 		return null;
 	},
 
-/*
-	onPrefChange: {
-		observe: function(subject, topic, key)
-		{
-			this.do();
-		},
-		do: function(mapaPlus)
-		{
-			var mpc = mapaPlusCore;
-			if (mpc.prefNoObserve)
-				return;
-
-			mapaPlus = mapaPlus || null;
-
-			mpc.pref("logouttimeout") = mpc.prefs.getIntPref("logouttimeout");
-			mpc.pref("logoutinactivity") = mpc.prefs.getBoolPref("logoutinactivity");
-			mpc.pref("logoutonminimize") = mpc.prefs.getBoolPref("logoutonminimize");
-			mpc.pref("logoutonsleep") = mpc.prefs.getBoolPref("logoutonsleep");
-
-			mpc.pref("suppress") = mpc.prefs.getIntPref("suppress");
-			mpc.pref("suppresstimer") = mpc.prefs.getIntPref("suppresstimer");
-			mpc.pref("suppressblink") = mpc.prefs.getBoolPref("suppressblink");
-			mpc.pref("suppresssound") = mpc.prefs.getBoolPref("suppresssound");
-			mpc.pref("suppresspopup") = mpc.prefs.getBoolPref("suppresspopup");
-			mpc.pref("suppressfocus") = mpc.prefs.getBoolPref("suppressfocus");
-			mpc.pref("suppresspopupremove") = mpc.prefs.getIntPref("suppresspopupremove");
-
-			mpc.pref("lockinactivity") = mpc.prefs.getBoolPref("lockinactivity");
-			mpc.pref("lockhidetitle") = mpc.prefs.getBoolPref("lockhidetitle");
-			mpc.pref("lockminimize") = mpc.prefs.getBoolPref("lockminimize");
-			mpc.pref("lockminimizeblur") = mpc.prefs.getBoolPref("lockminimizeblur");
-			mpc.pref("locktimeout") = mpc.prefs.getIntPref("locktimeout");
-			mpc.pref("lockonminimize") = mpc.prefs.getIntPref("lockonminimize");
-			mpc.pref("lockonsleep") = mpc.prefs.getBoolPref("lockonsleep");
-			if (mpc.pref("locktimeout") < 10)
-				mpc.prefs.setIntPref("locktimeout", 10);
-
-			mpc.timerCheck.init();
-
-			mpc.pref("logouttimer") = mpc.prefs.getBoolPref("logouttimer");
-			mpc.pref("locktimer") = mpc.prefs.getBoolPref("locktimer");
-			mpc.pref("lockincorrect") = mpc.prefs.getIntPref("lockincorrect");
-
-			mpc.pref("nonlatinwarning") = mpc.prefs.getIntPref("nonlatinwarning");
-			mpc.pref("showlang") = mpc.KB ? mpc.prefs.getIntPref("showlang") : 0;
-			mpc.prefNoWorkAround = mpc.prefs.getCharPref("noworkaround").split(",");
-
-			mpc.pref("showchangeslog") = mpc.prefs.getIntPref("showchangeslog");
-
-			mpc.pref("command") = mpc.prefs.getIntPref("command");
-			mpc.pref("commandloggedin") = mpc.prefs.getBoolPref("commandloggedin");
-
-			mpc.prepareHotkey();
-			mpc.windowAction("lockSetTransparent", mpc.prefs.getBoolPref("locktransparent"));
-			mpc.windowAction("lockSetBgImage", mpc.prefs.getBoolPref("lockbgimage"));
-
-			try
-			{
-				mpc.prefForcePrompt = JSON.parse(mpc.prefs.getComplexValue("forceprompt", Components.interfaces.nsISupportsString).data);
-			}
-			catch(e)
-			{
-				mpc.prefForcePrompt = [];
-			}
-			let id = mapaPlus && mapaPlus.windowID ? mapaPlus.windowID : 0;
-			mpc.windowAction("hotkeyInit", id, "Dialog");
-			mpc.windowAction("show", "", "Window");
-
-		}
-	},
-*/
 	onPrefChange: {
 		queue: {},
 		observe: function onPrefChange_observe(aSubject, aTopic, aKey, init)
@@ -1087,7 +1017,7 @@ if (!init)
 			else if (t == Ci.nsIPrefBranch.PREF_STRING)
 				v = aSubject.getComplexValue(aKey, Ci.nsISupportsString).data;
 
-			if (aKey != "version" && self.initialized && self.pref("protect") && !self.isLoggedIn())
+			if (["version", "locked"].indexOf(aKey) == -1 && self.initialized && self.pref("protect") && !self.isLoggedIn())
 			{
 				let inQueue = aKey in this.queue,
 						dialog = self.windowFirst("Dialog");

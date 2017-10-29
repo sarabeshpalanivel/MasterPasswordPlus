@@ -608,7 +608,7 @@ log.debug();
 	$("masterPasswordPlusUnLockInfo").value = title;
 
 //if (mapaPlus.core.pref("debug") & 4 && window.location.toString().match("chrome://inspector/")) return;
-	if (mapaPlus.core.pref("debug") & 4
+	if (window.location && mapaPlus.core.pref("debug") & 4
 			&& ["chrome://devtools/content/webconsole/webconsole.xul",
 					"chrome://console2/content/console2.xul",
 					].indexOf(window.location.toString()) > -1

@@ -7,14 +7,22 @@ Legend:
 * = Changed
 - = Removed
 
-Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's head out of it's ass, but even then it will be too late after it's aliened developers.
+Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's head out of it's ass...but even then it will be too late after it's aliened developers.
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
-If it works - good, if not - switch to Waterfox or Palemoon.
+If it works - good, if not - try Waterfox or Palemoon.
+
+v1.29 (2017-10-29)
+	+ MP+ settings backup/restore
+	! MP dialog shown when browser locked and sync activated.
+	! block master passowrd prompts didn't work
+this is probably the last update for Firefox, because mozilla is planning to prohibit submitting addons that are not compatible with FF57
+it might still work in FF57 if you enable lagacy addons support with extensions.legacy.enabled in about:config
+or switch to Waterfox (http://waterfoxproject.org) or Palemoon (http://www.palemoon.org)
 
 v1.28.2 (2017-08-31)
 	! in some cases overlay not properly initialized on non-browser windows, giving error in console.
-	! if addon was first installed as v1.22 and newer, after addon update changes log notification settings was ignored
-	* after update changes log expands all versions between current and last updated from version (if viewed during first session after update)
+	! if addon was first installed as v1.22 and newer, after addon update changes log notification setting was ignored
+	* after addon update, changes log expands all versions between current and version before the update (if viewed during session of addon update)
 
 v1.28.1 (2017-08-30)
 	! errors in console when notification changes log shown after update

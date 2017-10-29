@@ -32,5 +32,6 @@ overlay	chrome://mapaplus/content/masterpasswordplusOverlay.xul						chrome://ma
 overlay	chrome://mapaplus/content/masterpasswordplusOptions.xul						chrome://mapaplus/content/masterpasswordplusOptionsOverlay.xul
 overlay	chrome://mapaplus/content/changempOverlay.xul											chrome://mapaplus/content/masterpasswordplusOptionsOverlay.xul
 overlay	chrome://mapaplus/content/changepasswordOverlay.xul								chrome://mapaplus/content/masterpasswordplusOptionsOverlay.xul
+overlay	chrome://mapaplus/content/optionsRestore.xul											chrome://mapaplus/content/masterpasswordplusOverlay.xul
 
 overlay	chrome://sessionmanager/content/session_prompt.xul								chrome://mapaplus/content/masterpasswordplusForcePromptOverlay.xul

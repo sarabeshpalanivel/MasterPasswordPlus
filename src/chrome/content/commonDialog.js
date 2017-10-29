@@ -72,10 +72,19 @@ mapaPlus.check = function check()
 									.getService(Ci.nsIPKCS11ModuleDB).listModules(),
 				slotnames = [],
 				match = false,
-				text = Cc["@mozilla.org/intl/stringbundle;1"].getService()
+				bundle = Cc["@mozilla.org/intl/stringbundle;1"].getService()
 								.QueryInterface(Ci.nsIStringBundleService)
-								.createBundle("chrome://pipnss/locale/pipnss.properties")
-								.GetStringFromName("CertPassPrompt");
+								.createBundle("chrome://pipnss/locale/pipnss.properties"),
+				text = [];
+
+		try
+		{
+			text.push(bundle.GetStringFromName("CertPassPrompt"));
+		}catch(e){}
+		try
+		{
+			text.push(bundle.GetStringFromName("CertPassPromptDefault"));
+		}catch(e){}
 		try
 		{
 			let slotsMore = true;
@@ -92,6 +101,7 @@ mapaPlus.check = function check()
 		}
 		catch(e)
 		{
+//log.error(e);
 			let modulesMore = true,
 					slotsMore = true;
 			while(modulesMore)
@@ -139,12 +149,16 @@ mapaPlus.check = function check()
 		}
 		if (text)
 		{
+			search:
 			for(let i = 0; i < slotnames.length; i++)
 			{
-				if (string == text.replace("%S", slotnames[i]))
+				for(let n = 0; n < text.length; n++)
 				{
-					match = true;
-					break;
+					if (string == text[n].replace("%S", slotnames[i]))
+					{
+						match = true;
+						break search;
+					}
 				}
 			}
 		}
@@ -152,19 +166,21 @@ mapaPlus.check = function check()
 			this.pass = false;
 	}
 	this.accept();
+log.debug([(this.pass && (this.core.status != 1 || this.core.locked || !this.core.startupPassed)), this.pass, this.core.status != 1, this.core.locked, !this.core.startupPassed, this.core.dialogForce]);
 	if (this.pass && (this.core.status != 1 || this.core.locked || !this.core.startupPassed))
 	{
 		let first = this.core.windowFirst(this.windowType);
 		this.windowID = this.core.windowAdd(mapaPlus, this.windowType);
 		if (!this.core.dialogForce)
 		{
-log.debug([this.core.locked, this.core.pref("suppress"), this.core.pref_SuppressTemp, this.core.dialogShow, (this.core.isFF4 && this.core.pref("suppress") && !this.core.pref_SuppressTemp), (this.core.locked || this.core.pref("suppress") || this.core.pref_SuppressTemp || this.core.dialogShow || (this.core.isFF4 && this.core.pref("suppress") && !this.core.pref_SuppressTemp))]);
+log.debug([this.core.locked, this.core.pref("suppress"), this.core.pref_SuppressTemp, (this.core.isFF4 && this.core.pref("suppress") && !this.core.pref_SuppressTemp), this.core.dialogShow, (this.core.locked || this.core.pref("suppress") || this.core.pref_SuppressTemp || this.core.dialogShow || (this.core.isFF4 && this.core.pref("suppress") && !this.core.pref_SuppressTemp))]);
 //			if (this.core.locked || this.core.pref("suppress") || this.core.pref_SuppressTemp || this.core.dialogShow || (this.core.isFF4 && !this.core.pref("suppress") && !this.core.pref_SuppressTemp))
-			if (!this.core.dialogShow && (this.core.locked || this.core.pref("suppress") || this.core.pref_SuppressTemp || (this.core.isFF4 && this.core.pref("suppress") && !this.core.pref_SuppressTemp)))
+			if ((!this.core.dialogShow || this.core.locked) && (this.core.pref("suppress") || this.core.pref_SuppressTemp || (this.core.isFF4 && this.core.pref("suppress") && !this.core.pref_SuppressTemp)))
 			{
-				if (first)
+log.debug((first || this.core.locked));
+				if (first || this.core.locked)
 				{
-//log(this.core.window[this.windowType]);
+log.debug(this.core.window[this.windowType]);
 					if (this.core.startupPassed)
 					{
 						if ("mapaPlus" in this.mainWindow && this.mainWindow.mapaPlus && this.mainWindow.mapaPlus.suppressed)

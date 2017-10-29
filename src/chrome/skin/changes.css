@@ -145,6 +145,23 @@ hbox.border,
 {
 	background-color: #FFFFD2;
 }
+#changesLog .comment
+{
+	font-style: italic;
+	opacity: 0.5;
+}
+#changesLog > vbox > hbox:not([class]),
+#changesLog > vbox > hbox[class=" last"]
+{
+	font-style: italic;
+	opacity: 0.5;
+}
+#changesLog[highlight="2"][altbg="1"] > vbox > hbox[oddeven="1"]:not([class]),
+#changesLog[highlight="2"][altbg="1"] > vbox > hbox[oddeven="1"][class=" last"],
+#changesLog[highlight="2"][altbg="1"] > vbox > hbox[oddeven="1"].comment,
+{
+	background-color: #FF0000;
+}
 
 #changesLogMenu
 {
