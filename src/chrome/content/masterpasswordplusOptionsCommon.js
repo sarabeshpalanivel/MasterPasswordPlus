@@ -702,9 +702,6 @@ mapaPlus.initCommon = function(id)
 	else
 		this.enableDisable();
 
-	if (this.core.isTB)
-		return;
-
 /*
 	let w = $("urlbar").inputField.parentNode.boxObject.width;
 	$("urlbar").inputField.parentNode.style.minWidth = "140px";

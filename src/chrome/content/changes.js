@@ -393,7 +393,14 @@ log.debug();
 					r[s] = this.pref.getIntPref(s);
 					break;
 				case Ci.nsIPrefBranch.PREF_STRING:
-					r[s] = this.pref.getComplexValue(s, Ci.nsISupportsString).data;
+					try
+					{
+						r[s] = this.pref.getComplexValue(s, Ci.nsISupportsString).data;
+					}
+					catch(e)
+					{
+						r[s] = this.pref.getCharPref(s);
+					}
 /*
 					if (/^template/.test(s))
 						r[s] = r[s].replace(/\s{2,}/g, " ");
@@ -1076,6 +1083,7 @@ e.preventDefault();
 
 	getEmailBody: function(list, noExtra)
 	{
+log.debug();
 		let r = {
 					Addon: changesLog.fixUrl("{NAMERAW} v{VERRAW}"),
 					Program: changesLog.fixUrl("{APPRAW} ({LOCALERAW})"),
@@ -1083,7 +1091,6 @@ e.preventDefault();
 					Preferences: changesLog.getPrefs(true)
 				},
 				extra = {};
-
 		if (list.length && !noExtra)
 		{
 			for(let i in list)

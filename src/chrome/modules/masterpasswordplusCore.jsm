@@ -2,6 +2,7 @@ const EXPORTED_SYMBOLS = ["mapaPlusCore"],
 			{classes: Cc, interfaces: Ci, utils: Cu} = Components,
 			nsIPKCS11Slot = Ci.nsIPKCS11Slot,
 			PREF_BRANCH = "extensions.masterPasswordPlus.";
+
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 
@@ -953,7 +954,7 @@ log.debug();
 				if (type)
 					val = mapaPlusCore.prefs["get" + type + "Pref"](key);
 				else
-					val = mapaPlusCore.prefs.getComplexValue(key, Ci.nsISupportsString).data;
+					val = mapaPlusCore.prefs.getComplexValue(key, Ci.nsIPrefLocalizedString).data;
 
 				if (typeof(val) != "undefined")
 				pref.prefs[key] = val;
@@ -979,9 +980,9 @@ log.debug();
 						mapaPlusCore.prefs["set" + type + "Pref"](key, val);
 					else
 					{
-						let str = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
+						let str = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(Ci.nsIPrefLocalizedString)
 						str.data = val;
-						mapaPlusCore.prefs.setComplexValue(key, Ci.nsISupportsString, str);
+						mapaPlusCore.prefs.setComplexValue(key, Ci.nsIPrefLocalizedString, str);
 					}
 				}
 				if (noAsync)
@@ -1006,7 +1007,6 @@ if (!init)
 	log.debug();
 			if(aTopic != "nsPref:changed" || self.prefNoObserve)
 				return;
-
 			let t = aSubject.getPrefType(aKey),
 					v;
 
@@ -1015,7 +1015,16 @@ if (!init)
 			else if (t == Ci.nsIPrefBranch.PREF_BOOL)
 				v = aSubject.getBoolPref(aKey);
 			else if (t == Ci.nsIPrefBranch.PREF_STRING)
-				v = aSubject.getComplexValue(aKey, Ci.nsISupportsString).data;
+			{
+				try
+				{
+					v = aSubject.getComplexValue(aKey, Ci.nsIPrefLocalizedString).data;
+				}
+				catch(e)
+				{
+					v = aSubject.getCharPref(aKey);
+				}
+			}
 
 			if (["version", "locked"].indexOf(aKey) == -1 && self.initialized && self.pref("protect") && !self.isLoggedIn())
 			{
@@ -1616,6 +1625,7 @@ log.debug("disable debug mode (MasterPassword+ options -> Help -> Debug level) t
 			if (win)
 				return;
 
+			let _HUDService;
 			try
 			{
 				Object.defineProperty(self, "HUDService", {
@@ -1626,34 +1636,60 @@ log.debug("disable debug mode (MasterPassword+ options -> Help -> Debug level) t
 					configurable: true,
 					enumerable: true
 				});
-			}
-			catch(e){};
-			try
-			{
-				win = HUDService.getBrowserConsole();
-	//				HUDService.openBrowserConsoleOrFocus();
-				if (!win)
-					win = HUDService.toggleBrowserConsole();
+				_HUDService = (HUDService.HUDService) ? HUDService.HUDService : HUDService;
 			}
 			catch(e)
 			{
-	//			log.error(e)
+				log.error(e);
+			}
+			try
+			{
+				win = _HUDService.getBrowserConsole();
+	//				HUDService.openBrowserConsoleOrFocus();
+				if (win)
+					return;
+			}
+			catch(e)
+			{
+				log.error(e)
 			}
 
-			if (win)
-				return;
+			try
+			{
+				win = _HUDService.openBrowserConsoleOrFocus();
+				if (win)
+					return;
+			}
+			catch(e)
+			{
+				log.error(e)
+			}
+
+			try
+			{
+				win = _HUDService.toggleBrowserConsole();
+				if (win)
+					return;
+			}
+			catch(e)
+			{
+				log.error(e);
+			}
 
 			try
 			{
 				win = toOpenWindowByType("global:console", "chrome://global/content/console.xul")
+				if (win)
+					return;
 			}
 			catch(e)
 			{
-	//			log.error(e)
+				log.error(e)
 			}
 		});
 	},//openConsole()
 }//mapaPlusCore
+
 
 function include(path)
 {
@@ -1665,6 +1701,38 @@ mapaPlusCore.pref.types = {
 	boolean: "Bool",
 	number: "Int",
 //	string: "Char"
+}
+
+//work around for a bug in FF/TB58 where default settings are not initialized
+//https://bugzilla.mozilla.org/show_bug.cgi?id=1414398
+//https://bugzilla.mozilla.org/show_bug.cgi?id=1423243
+try
+{
+	mapaPlusCore.prefsDefault.getCharPref("version");
+}
+catch(e)
+{
+	let obj = {
+		pd: Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService).getDefaultBranch(""),
+		types: {
+			boolean: "Bool",
+			number: "Int",
+//			string: "Char"
+		},
+		pref: function pref(key, val)
+		{
+			let type = this.types[typeof(val)];
+			if (type)
+				this.pd["set" + type + "Pref"](key, val);
+			else
+			{
+				let str = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(Ci.nsIPrefLocalizedString);
+				str.data = val;
+				this.pd.setComplexValue(key, Ci.nsIPrefLocalizedString, str);
+			}
+		}
+	};
+	Services.scriptloader.loadSubScript(Components.stack.caller.filename.replace("/components/masterPasswordPlusComponents.js", "/defaults/preferences/masterpasswordplus.js"), obj);
 }
 
 var __dumpName__ = "log";

@@ -1357,7 +1357,7 @@ mapaPlus.hotkeyPress = function(e)
 
 mapaPlus.unlockEnter = function()
 {
-	if ($("masterPasswordPlusUnLockInput").value === "")
+	if ($("masterPasswordPlusUnLockInput").value === "" && mapaPlusCore.tokenDB.needsLogin())
 		return;
 
 	if (mapaPlusCore.tokenDB.checkPassword($("masterPasswordPlusUnLockInput").value))
