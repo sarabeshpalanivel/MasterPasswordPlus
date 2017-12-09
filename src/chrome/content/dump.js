@@ -705,7 +705,7 @@ if (typeof(__dumpName__) == "undefined")
 
 	function openConsole()
 	{
-		_func('openConsole');
+		_func.debug('openConsole');
 		AddonManager.getAllAddons(function(addons)
 		{
 			let win = null;

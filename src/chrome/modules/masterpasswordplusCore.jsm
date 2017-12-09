@@ -954,7 +954,16 @@ log.debug();
 				if (type)
 					val = mapaPlusCore.prefs["get" + type + "Pref"](key);
 				else
-					val = mapaPlusCore.prefs.getComplexValue(key, Ci.nsIPrefLocalizedString).data;
+				{
+					try
+					{
+						val = mapaPlusCore.prefs.getComplexValue(key, Ci.nsISupportsString).data;
+					}
+					catch(e)
+					{
+						val = mapaPlusCore.prefs.getComplexValue(key, Ci.nsIPrefLocalizedString).data;
+					}
+				}
 
 				if (typeof(val) != "undefined")
 				pref.prefs[key] = val;
@@ -980,9 +989,18 @@ log.debug();
 						mapaPlusCore.prefs["set" + type + "Pref"](key, val);
 					else
 					{
-						let str = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(Ci.nsIPrefLocalizedString)
-						str.data = val;
-						mapaPlusCore.prefs.setComplexValue(key, Ci.nsIPrefLocalizedString, str);
+						try
+						{
+							let str = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
+							str.data = val;
+							mapaPlusCore.prefs.setComplexValue(key, Ci.nsISupportsString, str);
+						}
+						catch(e)
+						{
+							let str = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(Ci.nsIPrefLocalizedString)
+							str.data = val;
+							mapaPlusCore.prefs.setComplexValue(key, Ci.nsIPrefLocalizedString, str);
+						}
 					}
 				}
 				if (noAsync)
@@ -1018,11 +1036,18 @@ if (!init)
 			{
 				try
 				{
-					v = aSubject.getComplexValue(aKey, Ci.nsIPrefLocalizedString).data;
+					v = aSubject.getComplexValue(aKey, Ci.nsISupportsString).data;
 				}
 				catch(e)
 				{
-					v = aSubject.getCharPref(aKey);
+					try
+					{
+						v = aSubject.getComplexValue(aKey, Ci.nsIPrefLocalizedString).data;
+					}
+					catch(e)
+					{
+						v = aSubject.getCharPref(aKey);
+					}
 				}
 			}
 
@@ -1082,7 +1107,7 @@ log("MP prompt for pref. " + aKey +" = " + v + " (prev: " + self.pref(aKey) + ")
 					self.openConsole();
 			}
 
-			if (self.pref("locktimeout") < 10)
+			if (aKey == "locktimeout" && self.pref("locktimeout") < 10)
 				self.prefs.setIntPref("locktimeout", 10);
 
 			if (aKey == "forceprompt")
@@ -1726,9 +1751,25 @@ catch(e)
 				this.pd["set" + type + "Pref"](key, val);
 			else
 			{
-				let str = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(Ci.nsIPrefLocalizedString);
-				str.data = val;
-				this.pd.setComplexValue(key, Ci.nsIPrefLocalizedString, str);
+				try
+				{
+					let str = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
+					str.data = val;
+					this.pd.setComplexValue(key, Ci.nsISupportsString, str);
+				}
+				catch(e)
+				{
+					try
+					{
+						let str = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(Ci.nsIPrefLocalizedString);
+						str.data = val;
+						this.pd.setComplexValue(key, Ci.nsIPrefLocalizedString, str);
+					}
+					catch(e)
+					{
+						this.pd.setCharPref(key, val);
+					}
+				}
 			}
 		}
 	};
