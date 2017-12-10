@@ -38,7 +38,7 @@ pref("extensions.masterPasswordPlus.lockincorrect", 3); //lock after NN incorrec
 pref("extensions.masterPasswordPlus.identify", ""); //MP prompt identification string
 pref("extensions.masterPasswordPlus.lockminimize", false); //minimize on lock
 pref("extensions.masterPasswordPlus.lockminimizeblur", true); //minimize on lock only when not in focus
-pref("extensions.masterPasswordPlus.command", 0); //0=loging/logout; 1=lock window; 2=lock all windows; 3=lock all windows and logout
+pref("extensions.masterPasswordPlus.command", 0); //default command for toolbar button. 0=loging/logout; 1=lock window; 2=lock all windows; 3=lock all windows and logout
 pref("extensions.masterPasswordPlus.commandloggedin", true); //use command only when logged in
 pref("extensions.masterPasswordPlus.logoutonminimize", false); //logout on minimize
 pref("extensions.masterPasswordPlus.lockonminimize", 0); //lock on minimize

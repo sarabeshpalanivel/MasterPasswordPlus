@@ -7,7 +7,35 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 
 var self = this,
-		log = function(){},
+		log = function(msg)
+		{
+			let	scriptError = Cc["@mozilla.org/scripterror;1"].createInstance(Ci.nsIScriptError),
+					aFlags = scriptError.infoFlag,
+					aMessage = "MP+: " + msg,
+					aSourceName = Components.stack.caller.filename;
+					aSourceLine = null,
+					aLineNumber = Components.stack.caller.lineNumber.match(/:([0-9]+):([0-9]+)?$/),
+					aColumnNumber = Components.stack.caller.lineNumber.match(/:([0-9]+):([0-9]+)?$/),
+					aCategory = null;
+			aLineNumber = aLineNumber ? aLineNumber[1] : null;
+			aColumnNumber = aColumnNumber ? aColumnNumber[2] : null;
+			scriptError.init(aMessage, aSourceName, aSourceLine, aLineNumber, aColumnNumber, aFlags, aCategory);
+			Services.console.logMessage(scriptError);
+		},
+		setTimeout = function(func, timeout)
+		{
+			let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+			timer.init({observe: func}, timeout, timer.TYPE_ONE_SHOT);
+			return timer;
+		},
+		clearTimeout = function(timer)
+		{
+			try
+			{
+				timer.cancel();
+			}
+			catch(e){};
+		},
 		mapaPlusCore = {
 	GUID: 'masterpasswordtimeoutplus@vano',
 	app: null,
@@ -954,19 +982,11 @@ log.debug();
 				if (type)
 					val = mapaPlusCore.prefs["get" + type + "Pref"](key);
 				else
-				{
-					try
-					{
-						val = mapaPlusCore.prefs.getComplexValue(key, Ci.nsISupportsString).data;
-					}
-					catch(e)
-					{
-						val = mapaPlusCore.prefs.getComplexValue(key, Ci.nsIPrefLocalizedString).data;
-					}
-				}
+					val = mapaPlusCore.prefStringGet(mapaPlusCore.prefs, key);
 
 				if (typeof(val) != "undefined")
-				pref.prefs[key] = val;
+					pref.prefs[key] = val;
+
 				return val
 			}
 			else
@@ -988,20 +1008,7 @@ log.debug();
 					if (type)
 						mapaPlusCore.prefs["set" + type + "Pref"](key, val);
 					else
-					{
-						try
-						{
-							let str = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
-							str.data = val;
-							mapaPlusCore.prefs.setComplexValue(key, Ci.nsISupportsString, str);
-						}
-						catch(e)
-						{
-							let str = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(Ci.nsIPrefLocalizedString)
-							str.data = val;
-							mapaPlusCore.prefs.setComplexValue(key, Ci.nsIPrefLocalizedString, str);
-						}
-					}
+						mapaPlusCore.prefStringSet(mapaPlusCore.prefs, key, val);
 				}
 				if (noAsync)
 					callback();
@@ -1014,7 +1021,73 @@ log.debug();
 			log.error(e);
 		}
 		return null;
-	},
+	},//pref()
+
+	prefStringSet: function(pref, key, val)
+	{
+		let r;
+		try
+		{
+			let str = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
+			str.data = val;
+			r = pref.setComplexValue(key, Ci.nsISupportsString, str);
+		}
+		catch(e)
+		{
+//log.error(e,{callerIndex: 0});
+			try
+			{
+				r = pref.setStringPref(key,val);
+			}
+			catch(e)
+			{
+//log.error(e,{callerIndex: 0});
+				try
+				{
+					let str = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(Ci.nsIPrefLocalizedString);
+					str.data = val;
+					r = pref.setComplexValue(key, Ci.nsIPrefLocalizedString, str);
+				}
+				catch(e)
+				{
+//log.error(e,{callerIndex: 0});
+					r = pref.setCharPref(key, val);
+				}
+			}
+		}
+		return r;
+	},//prefStringSet()
+
+	prefStringGet: function(pref, key)
+	{
+		let r;
+		try
+		{
+			r = pref.getComplexValue(key, Ci.nsISupportsString).data;
+		}
+		catch(e)
+		{
+//log.error(e,{callerIndex: 0});
+			try
+			{
+				r = pref.getStringPref(key);
+			}
+			catch(e)
+			{
+//log.error(e,{callerIndex: 0});
+				try
+				{
+					r = pref.getComplexValue(key, Ci.nsIPrefLocalizedString).data;
+				}
+				catch(e)
+				{
+//log.error(e,{callerIndex: 0});
+					r = pref.getCharPref(key);
+				}
+			}
+		}
+		return r;
+	},//prefStringGet()
 
 	onPrefChange: {
 		queue: {},
@@ -1025,6 +1098,7 @@ if (!init)
 	log.debug();
 			if(aTopic != "nsPref:changed" || self.prefNoObserve)
 				return;
+
 			let t = aSubject.getPrefType(aKey),
 					v;
 
@@ -1033,28 +1107,13 @@ if (!init)
 			else if (t == Ci.nsIPrefBranch.PREF_BOOL)
 				v = aSubject.getBoolPref(aKey);
 			else if (t == Ci.nsIPrefBranch.PREF_STRING)
-			{
-				try
-				{
-					v = aSubject.getComplexValue(aKey, Ci.nsISupportsString).data;
-				}
-				catch(e)
-				{
-					try
-					{
-						v = aSubject.getComplexValue(aKey, Ci.nsIPrefLocalizedString).data;
-					}
-					catch(e)
-					{
-						v = aSubject.getCharPref(aKey);
-					}
-				}
-			}
+				v = self.prefStringGet(aSubject, aKey);
 
 			if (["version", "locked"].indexOf(aKey) == -1 && self.initialized && self.pref("protect") && !self.isLoggedIn())
 			{
 				let inQueue = aKey in this.queue,
 						dialog = self.windowFirst("Dialog");
+
 				this.queue[aKey] = v;
 				if (!inQueue)
 				{
@@ -1612,7 +1671,7 @@ timer.init({observe: function(e)
 
 	openConsole: function openConsole()
 	{
-log.debug("disable debug mode (MasterPassword+ options -> Help -> Debug level) to stop error console from opening on startup");
+log.debug("to stop error console from opening on startup disable debug mode in MasterPassword+ options -> Help -> Debug level");
 		AddonManager.getAllAddons(function(addons)
 		{
 			let win = null;
@@ -1733,7 +1792,7 @@ mapaPlusCore.pref.types = {
 //https://bugzilla.mozilla.org/show_bug.cgi?id=1423243
 try
 {
-	mapaPlusCore.prefsDefault.getCharPref("version");
+	mapaPlusCore.prefsDefault.getBoolPref("logouttimer");
 }
 catch(e)
 {
@@ -1741,8 +1800,7 @@ catch(e)
 		pd: Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService).getDefaultBranch(""),
 		types: {
 			boolean: "Bool",
-			number: "Int",
-//			string: "Char"
+			number: "Int"
 		},
 		pref: function pref(key, val)
 		{
@@ -1750,29 +1808,15 @@ catch(e)
 			if (type)
 				this.pd["set" + type + "Pref"](key, val);
 			else
-			{
-				try
-				{
-					let str = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
-					str.data = val;
-					this.pd.setComplexValue(key, Ci.nsISupportsString, str);
-				}
-				catch(e)
-				{
-					try
-					{
-						let str = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(Ci.nsIPrefLocalizedString);
-						str.data = val;
-						this.pd.setComplexValue(key, Ci.nsIPrefLocalizedString, str);
-					}
-					catch(e)
-					{
-						this.pd.setCharPref(key, val);
-					}
-				}
-			}
+				mapaPlusCore.prefStringSet(this.pd, key, val);
 		}
 	};
+	let file = Components.stack.caller.filename;
+setTimeout(function()
+{
+	Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService).logStringMessage("MP+ filename:" + file);
+	Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService).logStringMessage("MP+ filename2:" + file.replace("/components/masterPasswordPlusComponents.js", "/defaults/preferences/masterpasswordplus.js"));
+}, 100)
 	Services.scriptloader.loadSubScript(Components.stack.caller.filename.replace("/components/masterPasswordPlusComponents.js", "/defaults/preferences/masterpasswordplus.js"), obj);
 }
 

@@ -1651,18 +1651,21 @@ return old setting, null if failed
 		upgradeMS("masterPasswordTimeoutPlus.contextmenu",	"contextmenu");
 		upgradeMS("masterPasswordTimeoutPlus.inactivity",		"logoutinactivity");
 	}
+
 	if (compare(version, "1.14") < 0)
 	{
 		let startupFail = upgradeMS("extensions.masterPasswordPlus.startupfail");
 		startupFail = startupFail ? this.core.STARTUP_QUIT : this.core.STARTUP_DONOTHING;
 		this.core.prefs.setIntPref("startupfail", startupFail);
 	}
+
 	if (compare(version, "1.16") < 0)
 	{
 		upgradeMS("extensions.masterPasswordPlus.enabled",			"logouttimer");
 		upgradeMS("extensions.masterPasswordPlus.timeout",			"logoutimeout");
 		upgradeMS("extensions.masterPasswordPlus.inactivity",		"logoutinactivity");
 	}
+
 	if (compare(version, "1.21") < 0)
 	{
 		upgradeMS("extensions.masterPasswordPlus.lockhotkeywin",	"lockwinhotkey", true, "Char");
@@ -1670,17 +1673,19 @@ return old setting, null if failed
 		{
 			return val ? 2 : 1;
 		}
-		upgradeMS("extensions.masterPasswordPlus.logouthotkeyglobal",	"logouthotkeyenabled", true, "Bool", "Int", convert);
-		upgradeMS("extensions.masterPasswordPlus.lockhotkeyglobal",	"lockhotkeyenabled", true, "Bool", "Int", convert);
+		upgradeMS("extensions.masterPasswordPlus.logouthotkeyglobal",			"logouthotkeyenabled", true, "Bool", "Int", convert);
+		upgradeMS("extensions.masterPasswordPlus.lockhotkeyglobal",				"lockhotkeyenabled", true, "Bool", "Int", convert);
 		upgradeMS("extensions.masterPasswordPlus.locklogouthotkeyglobal",	"locklogouthotkeyenabled", true, "Bool", "Int", convert);
+		upgradeMS("extensions.masterPasswordPlus.lockwinhotkeyglobal",		"lockwinhotkeyenabled", true, "Bool", "Int", convert);
 	}
 
 	if (compare(version, "1.21.2") < 0)
 	{
 		let p = Cc["@mozilla.org/preferences-service;1"]
 						.getService(Ci.nsIPrefService).getDefaultBranch(mapaPlusCore.PREF_BRANCH);
-		this.core.pref("forceprompt", p.getComplexValue("forceprompt", Ci.nsISupportsString).data);
+		this.core.pref("forceprompt", this.core.prefStringGet(p, "forceprompt"));
 	}
+
 	if (compare(version, "1.21.4") < 0)
 	{
 		upgradeMS(mapaPlusCore.PREF_BRANCH + "showchangeslog", "showchangeslog", false, "Bool", "Int", function(val)
@@ -1688,6 +1693,7 @@ return old setting, null if failed
 			return val ? mapaPlus.CHANGESLOG_FULL : 0;
 		});
 	}
+
 	if (compare(version, "1.24") < 0)
 	{
 		try{p.deleteBranch(o)}catch(e){};
@@ -1696,6 +1702,18 @@ return old setting, null if failed
 			return val ? mapaPlus.CHANGESLOG_FULL : 0;
 		});
 	}
+
+	if (compare(version, "1.29.3b1") < 0)
+	{
+		let convert = function(val)
+		{
+			return val ? 2 : 1;
+		}
+		//left over from v1.21 upgrade
+		upgradeMS("extensions.masterPasswordPlus.lockwinhotkeyglobal", null, true);
+		upgradeMS("extensions.masterPasswordPlus.prefurlbar", null, true);
+	}
+
 	this.core.pref("version", this.core.addon.version);
 	if (!this.core.changeLogShown)
 	{

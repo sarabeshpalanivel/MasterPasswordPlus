@@ -11,6 +11,9 @@ Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's 
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - try Waterfox or Palemoon.
 
+v1.29.3b1 (2017-12-10)
+still working on issue #135, #136
+
 v1.29.2 (2017-12-09)
 	! previous attempt support for FF58a1 and TB58a1 broke the addon for some users on older versions. (issue #135)
 

@@ -393,14 +393,7 @@ log.debug();
 					r[s] = this.pref.getIntPref(s);
 					break;
 				case Ci.nsIPrefBranch.PREF_STRING:
-					try
-					{
-						r[s] = this.pref.getComplexValue(s, Ci.nsISupportsString).data;
-					}
-					catch(e)
-					{
-						r[s] = this.pref.getCharPref(s);
-					}
+					r[s] = core.prefStringGet(this.pref, s);
 /*
 					if (/^template/.test(s))
 						r[s] = r[s].replace(/\s{2,}/g, " ");

@@ -2,6 +2,9 @@ if (typeof(__dumpName__) == "undefined")
 	var __dumpName__ = "log";
 
 
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/AddonManager.jsm");
+
 (function (_func)
 {
 	this[_func] = function (aMessage, obj, param)
@@ -313,15 +316,31 @@ if (typeof(__dumpName__) == "undefined")
 					aSourceLine = null,
 					aLineNumber = caller_file.match(/:([0-9]+):([0-9]+)?$/),
 					aColumnNumber = caller_file.match(/:([0-9]+):([0-9]+)?$/),
-					aCategory = null;//"CM+";
+					aCategory = null;
 			aLineNumber = aLineNumber ? aLineNumber[1] : null;
 			aColumnNumber = aColumnNumber ? aColumnNumber[2] : null;
 			scriptError.init(aMessage, aSourceName, aSourceLine, aLineNumber, aColumnNumber, aFlags, aCategory);
-			Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService).logMessage(scriptError);
+			Services.console.logMessage(scriptError);
 		}
 		else
+		{
+			let	scriptError = Cc["@mozilla.org/scripterror;1"].createInstance(Ci.nsIScriptError),
+					aFlags = scriptError.infoFlag,
+					aMessage = title + ": " + output,
+					aSourceName = caller_file_full;
+					aSourceLine = null,
+					aLineNumber = caller_file.match(/:([0-9]+):([0-9]+)?$/),
+					aColumnNumber = caller_file.match(/:([0-9]+):([0-9]+)?$/),
+					aCategory = null;
+			aLineNumber = aLineNumber ? aLineNumber[1] : null;
+			aColumnNumber = aColumnNumber ? aColumnNumber[2] : null;
+			scriptError.init(aMessage, aSourceName, aSourceLine, aLineNumber, aColumnNumber, aFlags, aCategory);
+			Services.console.logMessage(scriptError);
+/*
 			Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService)
 				.logStringMessage(title + caller_line + ": " + output);
+*/
+		}
 
 		for (let o = 0; o < objectId.cacheObj.length; o++)
 			delete objectId.cacheObj[o].___obj_id;
