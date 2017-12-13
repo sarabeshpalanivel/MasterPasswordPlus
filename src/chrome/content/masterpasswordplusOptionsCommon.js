@@ -11,8 +11,8 @@ function $(id)
 	return document.getElementById(id);
 }
 mapaPlus.mainWindow = Cc["@mozilla.org/appshell/window-mediator;1"]
-                   .getService(Ci.nsIWindowMediator)
-                   .getMostRecentWindow((mapaPlus.core.isTB ? "mail:3pane" : "navigator:browser"));
+									 .getService(Ci.nsIWindowMediator)
+									 .getMostRecentWindow((mapaPlus.core.isTB ? "mail:3pane" : "navigator:browser"));
 
 mapaPlus.iconSelected = {};
 Object.defineProperty(mapaPlus, "instantApply", {
@@ -485,6 +485,7 @@ mapaPlus.close = function()
 	window.removeEventListener("mousemove", mapaPlus.showSelected, true);
 	$("masterPasswordPlusOptions").removeEventListener("DOMMouseScroll", mapaPlus.mouseScroll, true);
 	window.removeEventListener("focus", this.onFocus, true);
+	mapaPlus.core.windowRemove(mapaPlus.windowID, mapaPlus.windowType);
 }
 
 mapaPlus.confirmPasswordDone = {};
@@ -925,7 +926,7 @@ mapaPlus.hotkeyShow = function(keys, obj, type)
 	var r = this.hotkeyGet(keys[0]);
 	var fKeys = r[1];
 	r = r[0];
-	
+
 //log(type + "\n-\n" + keys[0] + "\n-\n" + keys[1] + "\n-\n" + obj.keys)
 	if ((type != "down" && keys[0].length < 2))
 	{
@@ -1003,7 +1004,7 @@ mapaPlus.hotkeyGet = function(keys)
 				k = this.hotkeyFormat(keys[i]);
 			}
 		}
-		
+
 		if (k === null || typeof k == "undefined")
 			continue;
 
@@ -1051,23 +1052,29 @@ mapaPlus.hotkeyCheckDup = function(id, keys, skip, type)
 	return false;
 }
 
-mapaPlus.hotkeyInit = function(id)
+mapaPlus.hotkeyInit = function hotkeyInit(id)
 {
+log.debug();
 	if (this.windowID == id)
 		return;
 
+	if (this.core.prefHotkeysPref2Var[id])
+	{
+		this.hotkeyShow([this.core[this.core.prefHotkeysPref2Var[id]], this.core.prefHotkeysPref2Var[id].replace(/^pref/, "mapaPlus"), "init"]);
+		return;
+	}
 	this.hotkeyTaken = {mapa:[], all:[]};
 	var keys = this.mainWindow.document.getElementsByTagName("key");
-	for(var i = 0, l = keys.length; i < l; i++)
+	for(let i = 0, l = keys.length; i < l; i++)
 	{
 		if (keys[i].id.indexOf("mapaPlus_key") != -1 || !keys[i].hasAttribute("modifiers") || (!keys[i].hasAttribute("key") && !keys[i].hasAttribute("keycode") && !keys[i].hasAttribute("charcode")))
 			continue;
-		var k = keys[i].hasAttribute("keycode") ? keys[i].getAttribute("keycode").toUpperCase().replace("VK_", "") : 
+		let k = keys[i].hasAttribute("keycode") ? keys[i].getAttribute("keycode").toUpperCase().replace("VK_", "") :
 							keys[i].hasAttribute("key") ? keys[i].getAttribute("key").toUpperCase() :
 								keys[i].getAttribute("charcode").toUpperCase();
 		if (!k)
 			continue;
-		var m = keys[i].getAttribute("modifiers").toUpperCase().replace("ACCEL", this.core.accel).replace(/^\s+|\s+$/g,"").replace(/[^A-Z]/g, " ").split(" ");
+		let m = keys[i].getAttribute("modifiers").toUpperCase().replace("ACCEL", this.core.accel).replace(/^\s+|\s+$/g,"").replace(/[^A-Z]/g, " ").split(" ");
 		this.hotkeyTaken.all["mapaPlusHotkeyTaken"+i] = m;
 		this.hotkeyTaken.all["mapaPlusHotkeyTaken"+i].push(k);
 	}
@@ -1352,7 +1359,7 @@ log.debug();
 	if (e !== false)
 		mapaPlus.core.windowAction("lock", locked+"|"+mapaPlus.windowID, "Dialog");
 */
-	
+
 	let n = document.getElementsByClassName("note");
 	for(let i = 0; i < n.length; i++)
 		n[i].collapsed = mapaPlus.core.status;
@@ -1365,7 +1372,7 @@ mapaPlus.timeoutSet = function (name)
 {
 	let t = mapaPlus.core.pref(name),
 			time = mapaPlus.core.timeSplit(t*1000);
-	
+
 	$("mapaPlus_" + name + "_d").value = time.d;
 	$("mapaPlus_" + name + "_h").value = time.h;
 	$("mapaPlus_" + name + "_m").value = time.m;
@@ -1403,7 +1410,7 @@ log.debug();
 	this.changeValue(obj, parseInt(val), step);
 	mapaPlus.numbersOnly({target: obj});
 	obj.select();
-	
+
 }
 mapaPlus.numbersOnly = function numbersOnly(e)
 {
@@ -1576,8 +1583,8 @@ mapaPlus.saveFile = function(fp, content)
 										.createBundle("chrome://pippki/locale/pippki.properties"),
 //			localFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile),
 			localFile = new FileUtils.File(fp.file.path),
-			msg,
-			written = 0;
+			msg = "",
+			written = false;
 
 	try
 	{
@@ -1586,15 +1593,22 @@ mapaPlus.saveFile = function(fp, content)
 			localFile.remove(true);
 
 		localFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0600);
-		let fos = Cc["@mozilla.org/network/file-output-stream;1"].
-							createInstance(Ci.nsIFileOutputStream);
+		let fos = Cc["@mozilla.org/network/file-output-stream;1"]
+								.createInstance(Ci.nsIFileOutputStream),
+				coStream = Cc["@mozilla.org/intl/converter-output-stream;1"]
+										.createInstance(Ci.nsIConverterOutputStream);
 		// flags: PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
 		fos.init(localFile, 0x04 | 0x08 | 0x20, 0600, 0);
-		written = fos.write(content, content.length);
+
+		coStream.init(fos, "utf-8", null, null);
+
+		written = coStream.writeString(content);
+		coStream.close();
 		if (fos instanceof Ci.nsISafeOutputStream)
 			fos.finish();
 		else
 			fos.close();
+
 	}
 	catch(e) {
 		switch (e.result) {
@@ -1613,7 +1627,7 @@ mapaPlus.saveFile = function(fp, content)
 				break;
 		}
 	}
-	if (written != content.length)
+	if (!written)
 	{
 		if (!msg.length)
 			msg = bundle.GetStringFromName("writeFileUnknownError");
@@ -1686,8 +1700,7 @@ mapaPlus.settingsBackup = function settingsBackup()
 	fp.defaultString = filename.replace(/\s*/g, '');
 	fp.defaultExtension = "mpps";
 	fp.appendFilter(this.strings["settingsFile"].replace("#", mapaPlusCore.addon.name), "*.mpps");
-
-	fp.open(function(rv)
+	let callback = function(rv)
 	{
 		if (rv != nsIFilePicker.returnOK && rv != nsIFilePicker.returnReplace)
 			fp = false;
@@ -1700,7 +1713,11 @@ mapaPlus.settingsBackup = function settingsBackup()
 			prefs = JSON.stringify(prefs);
 		}catch(e){};
 		mapaPlus.saveFile(fp, prefs)
-	});
+	}
+	if (fp.open)
+		fp.open(callback);
+	else
+		callback(fp.show());
 }//settingsBackup()
 
 
@@ -1728,7 +1745,7 @@ mapaPlus.settingsRestore = function settingsRestore()
 	fp.init(window, this.strings["restoreSettingsOpen"], nsIFilePicker.modeOpen);
 	fp.appendFilter(this.strings["settingsFile"].replace("#", mapaPlus.core.addon.name), "*.mpps");
 	fp.defaultExtension = "mpps";
-	fp.open(function(rv)
+	let callback = function(rv)
 	{
 		if (rv != nsIFilePicker.returnOK)
 			return false;
@@ -1736,13 +1753,28 @@ mapaPlus.settingsRestore = function settingsRestore()
 		let istream = Cc["@mozilla.org/network/file-input-stream;1"].
 									createInstance(Ci.nsIFileInputStream);
 		istream.init(fp.file, -1, -1, false);
-
+  let is = Cc["@mozilla.org/intl/converter-input-stream;1"].
+           createInstance(Ci.nsIConverterInputStream);
+  is.init(istream, "UTF-8", 1024, Ci.nsIConverterInputStream.DEFAULT_REPLACEMENT_CHARACTER);
+  let str = {};
+  let fileData = "";
+  while (is.readString(4096, str) != 0) {
+    fileData += str.value;
+  }
+  is.close();
+log(fileData);
+/*
 		let bstream = Cc["@mozilla.org/binaryinputstream;1"].
 									createInstance(Ci.nsIBinaryInputStream);
 		bstream.setInputStream(istream);
 
 		let fileData = bstream.readBytes(bstream.available());
+
+  
+
+
 		bstream.close();
+*/
 		istream.close();
 		let data;
 		try
@@ -1778,7 +1810,11 @@ mapaPlus.settingsRestore = function settingsRestore()
 		that.changesLogMenu();
 		that.debugMenu();
 //		that.alert(that.strings["restoreSettingsSuccess"]);
-	});
+	};
+	if (fp.open)
+		fp.open(callback);
+	else
+		callback(fp.show());
 }//settingsRestore()
 
 mapaPlus.alert = function(msg, title)

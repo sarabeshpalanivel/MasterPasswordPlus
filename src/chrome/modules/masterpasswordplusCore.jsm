@@ -7,21 +7,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 
 var self = this,
-		log = function(msg)
-		{
-			let	scriptError = Cc["@mozilla.org/scripterror;1"].createInstance(Ci.nsIScriptError),
-					aFlags = scriptError.infoFlag,
-					aMessage = "MP+: " + msg,
-					aSourceName = Components.stack.caller.filename;
-					aSourceLine = null,
-					aLineNumber = Components.stack.caller.lineNumber.match(/:([0-9]+):([0-9]+)?$/),
-					aColumnNumber = Components.stack.caller.lineNumber.match(/:([0-9]+):([0-9]+)?$/),
-					aCategory = null;
-			aLineNumber = aLineNumber ? aLineNumber[1] : null;
-			aColumnNumber = aColumnNumber ? aColumnNumber[2] : null;
-			scriptError.init(aMessage, aSourceName, aSourceLine, aLineNumber, aColumnNumber, aFlags, aCategory);
-			Services.console.logMessage(scriptError);
-		},
+		log = function(){},
 		setTimeout = function(func, timeout)
 		{
 			let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -60,6 +46,14 @@ var self = this,
 	prefLockWinHotkey: "",
 	prefLogoutHotkey: "",
 	prefLockLogoutHotkey: "",
+
+	prefHotkeysPref2Var: {
+		lockhotkey: "prefLockHotkey",
+		lockwinhotkey: "prefLockWinHotkey",
+		logouthotkey: "prefLogoutHotkey",
+		locklogouthotkey: "prefLockLogoutHotkey"
+	},
+
 	prefNoObserve: false,
 	prefForcePrompt: [],
 	prefNoWorkAround: [],
@@ -959,11 +953,18 @@ this.async(function()
 	prepareHotkey: function prepareHotkey()
 	{
 log.debug();
-		this.prefLogoutHotkey = this.pref("logouthotkey").split(" ");
-		this.prefLockHotkey = this.pref("lockhotkey").split(" ");
-		this.prefLockWinHotkey = this.pref("lockwinhotkey").split(" ");
-		this.prefLockLogoutHotkey = this.pref("locklogouthotkey").split(" ");
-		this.windowAction("hotkeyInit");
+		let that = mapaPlusCore,
+				pref = that.pref;
+
+		for (let i in that.prefHotkeysPref2Var)
+		{
+			let val = pref(i);
+			if (val)
+			{
+				that[that.prefHotkeysPref2Var[i]] = val.split(" ");
+			}
+		}
+		that.windowAction("hotkeyInit");
 	},
 	pref: function (key, val, noCache, noAsync)
 	{
@@ -1055,6 +1056,7 @@ log.debug();
 				}
 			}
 		}
+//log([key, val, r]);
 		return r;
 	},//prefStringSet()
 
@@ -1086,6 +1088,7 @@ log.debug();
 				}
 			}
 		}
+//log([key, r]);
 		return r;
 	},//prefStringGet()
 
@@ -1186,9 +1189,14 @@ log("MP prompt for pref. " + aKey +" = " + v + " (prev: " + self.pref(aKey) + ")
 					self.prefForcePrompt = [];
 				}
 			}
-			if (!init && ["logouthotkeyenabled", "lockhotkeyenabled", "lockwinhotkeyenabled", "locklogouthotkeyenabled",
+			if (["logouthotkeyenabled", "lockhotkeyenabled", "lockwinhotkeyenabled", "locklogouthotkeyenabled",
 										"logouthotkey", "lockhotkey", "lockwinhotkey", "locklogouthotkey"].indexOf(aKey) != -1)
-				self.prepareHotkey();
+			{
+//				if (!init)
+					self.prepareHotkey();
+
+				self.windowAction("hotkeyInit", aKey, "options");
+			}
 
 			if (!init)
 				this.do();
@@ -1805,22 +1813,25 @@ catch(e)
 		pref: function pref(key, val)
 		{
 			let type = this.types[typeof(val)];
-			if (type)
-				this.pd["set" + type + "Pref"](key, val);
-			else
-				mapaPlusCore.prefStringSet(this.pd, key, val);
+			try
+			{
+				if (type)
+					this.pd["set" + type + "Pref"](key, val);
+				else
+					mapaPlusCore.prefStringSet(this.pd, key, val);
+			}
+			catch(e)
+			{
+				log([key, val]);
+				log(e);
+			}
 		}
 	};
-	let file = Components.stack.caller.filename;
-setTimeout(function()
-{
-	Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService).logStringMessage("MP+ filename:" + file);
-	Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService).logStringMessage("MP+ filename2:" + file.replace("/components/masterPasswordPlusComponents.js", "/defaults/preferences/masterpasswordplus.js"));
-}, 100)
 	Services.scriptloader.loadSubScript(Components.stack.caller.filename.replace("/components/masterPasswordPlusComponents.js", "/defaults/preferences/masterpasswordplus.js"), obj);
 }
 
 var __dumpName__ = "log";
+log = {};
 Services.scriptloader.loadSubScript("chrome://mapaplus/content/dump.js", log);
 /*
 var mozIJSSubScriptLoader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
@@ -1914,6 +1925,8 @@ let idleService = Cc["@mozilla.org/widget/idleservice;1"].getService(Ci.nsIIdleS
 		};
 mapaPlusCore.idleService = idleService;
 
+var p = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+                              .getService(Components.interfaces.nsIPromptService);
 //ask for master password on startup
 (mapaPlusCore.startupPass = function()
 {
@@ -1936,12 +1949,21 @@ mapaPlusCore.idleService = idleService;
 			mapaPlusCore.dialogForce = false;
 //			mapaPlusCore.pref("nonlatinwarning") = mapaPlusCore.pref("nonlatinwarning");
 			mapaPlusCore.pref("showlang", mapaPlusCore.KB ? mapaPlusCore.pref("showlang") : 0);
+
+//workaround for issue https://github.com/vanowm/MasterPasswordPlus/issues/136
+			let anticrash;
+			try{anticrash = Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher).openWindow(null, null, null, null, null);}catch(e){}
+
 			mapaPlusCore.tokenDB.login(false);
+
+			if (anticrash)
+				anticrash.close();
+
 			mapaPlusCore.locked = false;
 			mapaPlusCore.startupPassed = true;
 			if (mapaPlusCore.pref("startupshort"))
 			{
-				var timeout = mapaPlusCore.pref("startuptimeout");
+				let timeout = mapaPlusCore.pref("startuptimeout");
 				if (timeout)
 					mapaPlusCore.forced = timeout;
 				else
@@ -1982,7 +2004,7 @@ let listener = {
 	{
 		if (addon.id == "masterpasswordtimeoutplus@vano")
 		{
-			if (!mapaPlusCore.prompt(true))
+			if (mapaPlusCore.tokenDB.needsLogin() && !mapaPlusCore.prompt(true))
 				addon.cancelUninstall();
 			else
 				mapaPlusCore.deleteSettings();
@@ -1990,7 +2012,7 @@ let listener = {
 	},
 	onDisabling: function(addon, restart)
 	{
-		if (addon.id == "masterpasswordtimeoutplus@vano")
+		if (mapaPlusCore.tokenDB.needsLogin() && addon.id == "masterpasswordtimeoutplus@vano")
 		{
 			if (!mapaPlusCore.prompt(true))
 				addon.userDisabled = false;

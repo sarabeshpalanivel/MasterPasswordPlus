@@ -1,5 +1,5 @@
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://mapaplus/masterpasswordplusCore.jsm");
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 function MasterPasswordPlus(){}
 

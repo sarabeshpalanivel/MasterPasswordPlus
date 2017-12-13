@@ -10,7 +10,7 @@ mapaPlus.protected = false;//mapaPlus.core.prefs.getBoolPref("protect");
 mapaPlus.protectedBegin = true;
 mapaPlus.pass = false;
 mapaPlus.windowType = "options";
-mapaPlus.windowID = 0;
+mapaPlus.windowID = mapaPlus.core.windowAdd(mapaPlus, mapaPlus.windowType);
 
 mapaPlus.saveOptions = function saveOptions()
 {

@@ -11,6 +11,12 @@ Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's 
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - try Waterfox or Palemoon.
 
+v1.29.3b2 (2017-12-12)
+	! backup settings were saved in Latin1 charset, instead of UTF8 characters
+	! TB crash when mp showed on startup (issue #136)
+	! still works in TB59a1 (issue #135)
+	! unable reset hotkeys to default on Linux
+
 v1.29.3b1 (2017-12-10)
 still working on issue #135, #136
 
