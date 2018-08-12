@@ -55,7 +55,7 @@ mapaPlus.init = function init()
 log.debug();
 	$("mapaPlusContextmenu").hidden = this.core.isTB;
 	$("mapaPlusUrlbarBox").hidden = this.core.isTB;
-	$("mapaPlusString").value = $("mapaPlusString").value.replace("#", this.core.appInfo.name);
+//	$("mapaPlusString_logouttimeout").value = $("mapaPlusString_logouttimeout").value.replace("#", this.core.appInfo.name);
 //	if (this.core.isFF4)
 //		$("prompt-one").collapsed = $("one.info").collapsed = true;
 

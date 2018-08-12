@@ -31,7 +31,6 @@ log.debug();
 	$("masterPasswordPlusOptions").setAttribute("changepassword", true);
 	$("set_password").setAttribute("ondialogaccept", "return setPassword();");
 	$("oldpw").setAttribute("oninput", "checkPasswords();");
-	$("mapaPlusString").setAttribute("tooltiptext", $("mapaPlusString").getAttribute("tooltiptext").replace("#", this.core.appInfo.name));
 
 	if (this.core.isFF4)
 		$("prompt-one").collapsed = $("one.info").collapsed = true;

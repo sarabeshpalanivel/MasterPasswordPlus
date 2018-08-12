@@ -141,6 +141,7 @@ log("openContentTab");
 		if (typeof(obj) == "string")
 			obj = document.getElementById(obj);
 
+log.debug();
 		let	c = obj.childNodes,
 				command = remove ? "removeAttribute" : "setAttribute";
 

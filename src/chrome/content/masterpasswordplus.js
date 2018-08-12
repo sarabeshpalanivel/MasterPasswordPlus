@@ -1505,10 +1505,13 @@ mapaPlus.load = function()
 	window.addEventListener("unload", timer.timer.cancel, false);
 }
 
-mapaPlus.showMenu = function(e)
+mapaPlus.showMenu = function(e, pos)
 {
 	e.stopPropagation();
-	$("mapa_menu").openPopup(e.target.parentNode, "after_start");
+	if (!pos)
+		pos = "after_start";
+
+	$("mapa_menu").openPopup(e.target.parentNode, pos);
 /*
 	$("mapa_menu").firstChild.focus();
 	let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -1891,7 +1894,6 @@ log.debug();
 		self.core.init(false, self);
 		self.listKeys();
 		self.core.windowListener.observe(window, "domwindowopened", true);
-		self.core.lockOverlay = $("masterPasswordPlusLock").parentNode.cloneNode(true);
 		self.first = true;
 	}
 	if (self.initialized)

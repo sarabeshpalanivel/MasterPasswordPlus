@@ -158,7 +158,7 @@ hbox.border,
 }
 #changesLog[highlight="2"][altbg="1"] > vbox > hbox[oddeven="1"]:not([class]),
 #changesLog[highlight="2"][altbg="1"] > vbox > hbox[oddeven="1"][class=" last"],
-#changesLog[highlight="2"][altbg="1"] > vbox > hbox[oddeven="1"].comment,
+#changesLog[highlight="2"][altbg="1"] > vbox > hbox[oddeven="1"].comment
 {
 	background-color: #FF0000;
 }
@@ -228,13 +228,6 @@ hbox.border,
 #changesLog[highlight="0"] .stats
 {
 	font-style: italic;
-}
-.stats
-{
-}
-#changesLog .stats
-{
-	margin-left: 1em;
 }
 
 hbox:not(.legend) > vbox > description.comment

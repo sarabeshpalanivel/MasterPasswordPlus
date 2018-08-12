@@ -570,8 +570,8 @@ mapaPlus.setListeners = function()
 	$("mapaPlusContextmenu").addEventListener("CheckboxStateChange", this.viewTogle, false);
 	$("mapaPlusStatusbar").addEventListener("CheckboxStateChange", this.viewTogle, false);
 	$("mapaPlusUrlbar").addEventListener("CheckboxStateChange", this.enableDisable, false);
-	$("mapaPlusLockTimer").addEventListener("CheckboxStateChange", this.enableDisable, false);
-	$("mapaPlusLockMinimize").addEventListener("CheckboxStateChange", this.enableDisable, false);
+	$("mapaPlus_locktimer").addEventListener("CheckboxStateChange", this.enableDisable, false);
+	$("mapaPlus_lockminimize").addEventListener("CheckboxStateChange", this.enableDisable, false);
 	try
 	{
 		this.addEventListener("mapaPlusSuppress", this.suppress, {attributes: true, attributeFilter: ["value"]});
@@ -637,11 +637,11 @@ mapaPlus.initCommon = function(id)
 	this.hotkeyInit();
 	this.protectedBegin = this.core.pref("protect");
 
-	$("mapaPlusLockTimerBox").setAttribute("tooltiptext", $("mapaPlusLockTimerBox").getAttribute("tooltiptext").replace("#", this.core.appInfo.name));
+	$("mapaPlus_locktimer_box").setAttribute("tooltiptext", $("mapaPlus_locktimer_box").getAttribute("tooltiptext").replace("#", this.core.appInfo.name));
 /*
-	this.setAttribute("mapaPlusLockTimerBox",
+	this.setAttribute("mapaPlus_locktimer_box",
 										"tooltiptext",
-										$("mapaPlusLockTimerBox").getAttribute("tooltiptext").replace("#", this.core.appInfo.name),
+										$("mapaPlus_locktimer_box").getAttribute("tooltiptext").replace("#", this.core.appInfo.name),
 										false,
 										["mapaPlus_locktimeout_d", "mapaPlus_locktimeout_h", "mapaPlus_locktimeout_m", "mapaPlus_locktimeout_s"]
 	);
@@ -712,6 +712,11 @@ mapaPlus.initCommon = function(id)
 		$("urlbar").width = $("urlbar").boxObject.width + (w2-w);
 	}
 */
+	if (this.core.isWsLocked === null)
+	{
+		$("mapaPlus_logoutonwslock").collapsed = true;
+		$("mapaPlus_lockonwslock").collapsed = true;
+	}
 	AddonManager.getAllAddons(function(list)
 	{
 		$("supportCopyInfoBox").value = JSON.stringify(changesLog.getEmailBody(list), null, 2);
@@ -1309,7 +1314,7 @@ log.debug();
 		minimize = true;
 		$("mapaPlusEnabled").disabled = true;
 		$("mapaPlusStartup").disabled = true;
-		$("mapaPlusLockTimer").disabled = true;
+		$("mapaPlus_locktimer").disabled = true;
 		if (isOptions)
 			document.documentElement.getButton("accept").disabled = true;
 
@@ -1321,7 +1326,7 @@ log.debug();
 	{
 		$("mapaPlusEnabled").disabled = false;
 		$("mapaPlusStartup").disabled = false;
-		$("mapaPlusLockTimer").disabled = false;
+		$("mapaPlus_locktimer").disabled = false;
 		if (isOptions)
 			document.documentElement.getButton("accept").disabled = false;
 
@@ -1329,9 +1334,9 @@ log.debug();
 		document.documentElement.getButton("extra1").hidden = true;
 		status = !$("mapaPlusEnabled").checked;
 		startup = !$("mapaPlusStartup").checked;
-		lock = !$("mapaPlusLockTimer").checked;
+		lock = !$("mapaPlus_locktimer").checked;
 		disable = false;
-		minimize = !$("mapaPlusLockMinimize").checked || lock;
+		minimize = !$("mapaPlus_lockminimize").checked || lock;
 	}
 	mapaPlus.setAttribute($("panelTimeout").firstChild, "disabled", locked, !locked);
 	mapaPlus.setAttribute($("panelLock").firstChild, "disabled", locked, !locked);
@@ -1341,7 +1346,7 @@ log.debug();
 	mapaPlus.setAttribute($("panelGeneral").firstChild, "disabled", locked, !locked);
 	mapaPlus.setAttribute($("panelHelp").firstChild, "disabled", locked, !locked);
 	mapaPlus.setAttribute("mapaPlusTimeoutBox", "disabled", status, !status);
-	mapaPlus.setAttribute("mapaPlusLogoutOnMinimize", "disabled", disable, !disable);
+	mapaPlus.setAttribute("mapaPlus_logoutonminimize", "disabled", disable, !disable);
 	mapaPlus.setAttribute("mapaPlusStartupBox", "disabled", startup, !startup);
 	mapaPlus.setAttribute("mapaPlusLockBox", "disabled", lock, !lock);
 	mapaPlus.setAttribute("mapaPlusLockBox2", "disabled", disable, !disable);
@@ -1351,7 +1356,7 @@ log.debug();
 	mapaPlus.setAttribute("mapaPlusSuppressSoundBox", "disabled", disable, !disable);
 	mapaPlus.setAttribute("toolsBox", "disabled", disable, !disable);
 
-	$("mapaPlusLockMinimizeBlur").disabled = minimize;
+	$("mapaPlus_lockminimizeblur").disabled = minimize;
 	let urlbar = !$("mapaPlusUrlbar").checked || locked;
 	mapaPlus.setAttribute("urlbar-container", "disabled", urlbar, !urlbar);
 
@@ -1849,5 +1854,26 @@ mapaPlus.loadArgs();
 mapaPlus.timer.init();
 
 window.addEventListener("load", mapaPlus.onLoadCommon , false);
+/*
+
+
+Here is another useful function.
+
+Global Const $DESKTOP_SWITCHDESKTOP = 0x0100
+
+Func _IsWorkstationLocked()
+
+    Local $Result = False
+
+    $hDesktop = DllCall('user32.dll', 'hwnd', 'OpenDesktop', 'str', 'Default', 'int', 0, 'int', 0, 'int', $DESKTOP_SWITCHDESKTOP)
+    If Not @error Then
+        $Result = DllCall('user32.dll', 'int', 'SwitchDesktop', 'hwnd', $hDesktop[0])
+        $Result = Not $Result[0]
+        DllCall('user32.dll', 'int', 'CloseDesktop', 'hwnd', $hDesktop[0])
+    EndIf
+    Return $Result
+EndFunc   ;==>_IsWorkstationLocked
+
+*/
 
 })();

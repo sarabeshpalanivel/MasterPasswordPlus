@@ -15,14 +15,13 @@ style	chrome://global/content/customizeToolbar.xul												chrome://mapaplus/
 style	chrome://browser/content/browser.xul																chrome://mapaplus/skin/masterpasswordplus.css
 style	chrome://messenger/content/messenger.xul														chrome://mapaplus/skin/masterpasswordplus.css
 style	chrome://mapaplus/content/masterpasswordplusOptionsOverlay.xul			chrome://global/skin/menu.css
-style	chrome://mapaplus/content/masterpasswordplusLockOverlay.xul					chrome://mapaplus/skin/masterpasswordplusLockFF4.css appversion>=4
 
 overlay	chrome://browser/content/browser.xul															chrome://mapaplus/content/masterpasswordplusOverlay.xul
 overlay	chrome://passwordmgr/content/passwordManager.xul									chrome://mapaplus/content/passwordManagerOverlay.xul
 overlay	chrome://global/content/commonDialog.xul													chrome://mapaplus/content/commonDialogOverlay.xul
-overlay	chrome://mozapps/content/preferences/changemp.xul									chrome://mapaplus/content/changempOverlay.xul
-overlay	chrome://pippki/content/changepassword.xul												chrome://mapaplus/content/changepasswordOverlay.xul
-overlay	chrome://mozapps/content/preferences/removemp.xul									chrome://mapaplus/content/removempOverlay.xul
+#overlay	chrome://mozapps/content/preferences/changemp.xul									chrome://mapaplus/content/changempOverlay.xul
+#overlay	chrome://pippki/content/changepassword.xul												chrome://mapaplus/content/changepasswordOverlay.xul
+#overlay	chrome://mozapps/content/preferences/removemp.xul									chrome://mapaplus/content/removempOverlay.xul
 overlay	chrome://messenger/content/messenger.xul													chrome://mapaplus/content/masterpasswordplusOverlay.xul
 overlay	chrome://messenger/content/messengercompose/messengercompose.xul	chrome://mapaplus/content/masterpasswordplusOverlay.xul
 overlay	chrome://messenger/content/addressbook/addressbook.xul						chrome://mapaplus/content/masterpasswordplusOverlay.xul

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE overlay SYSTEM "chrome://mapaplus/locale/masterpasswordplusCommonDialog.dtd">
+<?xml-stylesheet href="chrome://messenger/content/bindings.css" type="text/css"?>
 <overlay id="masterPasswordPlusCommonDialogOverlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	<dialog id="commonDialog"
 					onload="mapaPlus.commonDialogOnLoad();"

@@ -2,12 +2,14 @@ var changesLog;
 (function()
 {
 let {classes: Cc, interfaces: Ci, utils: Cu} = Components,
-		self = this,
-		core = mapaPlusCore,
-		log = core.log;
+		self = this;
+
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://mapaplus/masterpasswordplusCore.jsm");
+
+let core = mapaPlusCore,
+		log = core.log;
 
 function $(id)
 {
@@ -647,6 +649,7 @@ log.debug();
 					legendType = $("changesLog").getAttribute("type") == "2";
 
 			hboxStats.className = "stats";
+			hboxStats.appendChild(document.createTextNode("\u00A0")); //add space
 			let list = [];
 			for(let i in stats)
 			{

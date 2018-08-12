@@ -61,7 +61,6 @@ var self = this,
 	locked: false,
 	lockDo: true,
 	lockIncorrect: 0,
-	lockOverlay: null,
 	unlockIncorrect: 0,
 
 	startupPassed: false,
@@ -387,7 +386,7 @@ log.debug(t + " removed: " + id);
 						|| (this.pref("lockminimizeblur")
 								&& !Cc["@mozilla.org/embedcomp/window-watcher;1"].getService(Ci.nsIWindowWatcher).activeWindow))
 				{
-					let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+					let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 					timer.init({observe:function()
 					{
 						let enumerator = Cc["@mozilla.org/appshell/window-mediator;1"]
@@ -401,7 +400,7 @@ log.debug(t + " removed: " + id);
 							{
 								win.minimize();
 /*
-								let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+								let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 								timer.init({observe:function()
 								{
 									win.minimize();
@@ -703,6 +702,25 @@ this.async(function()
 					this.timeLockString = this.timerToString(this.timerLockTime, time);
 				}
 			}
+			if (mapaPlusCore.isWsLocked && (this.pref("lockonwslock") || this.pref("logoutonwslock")))
+			{
+				mapaPlusCore.wsLocked = true;
+			}
+			else if (mapaPlusCore.wsLocked && !mapaPlusCore.isWsLocked)
+			{
+				mapaPlusCore.wsLocked = false;
+				if (this.pref("lockonwslock"))
+				{
+					this.lock();
+				}
+				if (this.pref("logoutonwslock"))
+				{
+					this.logout();
+					this.status = 2;
+	
+				}
+			}
+
 			if (this.tokenDB.isLoggedIn())
 			{
 				if (this.last != 1)
@@ -929,6 +947,21 @@ this.async(function()
 //this.dump("\n" + k + "\n" + l + "\n-----");
 		return true;
 	},
+getCaller: function getCaller ()
+{
+	var callerName;
+	try
+	{
+		throw new Error();
+	}
+	catch (e)
+	{
+		var re = /(\w+)@|at (\w+) \(/g, st = e.stack, m;
+		re.exec(st), m = re.exec(st);
+		callerName = m[1] || m[2];
+		return String(e.stack);
+	}
+},
 
 	getKeys: function(e)
 	{
@@ -958,7 +991,7 @@ log.debug();
 
 		for (let i in that.prefHotkeysPref2Var)
 		{
-			let val = pref(i);
+			let val = pref(i, undefined, 1, 1);
 			if (val)
 			{
 				that[that.prefHotkeysPref2Var[i]] = val.split(" ");
@@ -969,7 +1002,6 @@ log.debug();
 	pref: function (key, val, noCache, noAsync)
 	{
 		let pref = mapaPlusCore.pref;
-
 		try
 		{
 			if (!noCache && typeof(val) == "undefined")
@@ -1347,12 +1379,12 @@ log.debug()
 	windowListener: {
 		observe: function(aSubject, aTopic, aData)
 		{
-			let window = aSubject.QueryInterface(Components.interfaces.nsIDOMWindow),
+			let window = aSubject.QueryInterface(Ci.nsIDOMWindow),
 					windowClose = false;
 			if (aTopic == "domwindowopened")
 			{
 /*
-let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
+let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 timer.init({observe: function(e)
 {
 	mapaPlusCore.dump(window.location);
@@ -1780,6 +1812,9 @@ log.debug("to stop error console from opening on startup disable debug mode in M
 			}
 		});
 	},//openConsole()
+
+	
+	isWsLocked: null,
 }//mapaPlusCore
 
 
@@ -1834,8 +1869,8 @@ var __dumpName__ = "log";
 log = {};
 Services.scriptloader.loadSubScript("chrome://mapaplus/content/dump.js", log);
 /*
-var mozIJSSubScriptLoader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
-                            .getService(Components.interfaces.mozIJSSubScriptLoader);
+var mozIJSSubScriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
+                            .getService(Ci.mozIJSSubScriptLoader);
 mozIJSSubScriptLoader.loadSubScript("chrome://mapaplus/content/dump.js", log)
 */
 mapaPlusCore.log = log;
@@ -1869,6 +1904,7 @@ mapaPlusCore.isGecko2 = Cc["@mozilla.org/xpcom/version-comparator;1"]
 mapaPlusCore.isFF4 = (!mapaPlusCore.isTB && mapaPlusCore.isGecko2);
 
 mapaPlusCore.KB = null;
+mapaPlusCore.WL = null;
 let a = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
 if (a.OS == "WINNT" && mapaPlusCore.isGecko2)
 {
@@ -1901,6 +1937,29 @@ if (a.OS == "WINNT" && mapaPlusCore.isGecko2)
 			catch(e){};
 		}
 	}).init();
+
+	// detect if workstation is locked
+	(function()
+	{
+		try
+		{
+			Cu.import("resource://gre/modules/ctypes.jsm");
+			let lib           = ctypes.open("user32.dll"),
+					openDesktop   = lib.declare("OpenDesktopA", ctypes.winapi_abi, ctypes.uint32_t, ctypes.char.ptr, ctypes.uint32_t, ctypes.bool, ctypes.uint32_t),
+					switchDesktop = lib.declare("SwitchDesktop", ctypes.winapi_abi, ctypes.bool, ctypes.uint32_t),
+					closeDesktop  = lib.declare("CloseDesktop", ctypes.winapi_abi, ctypes.bool, ctypes.uint32_t),
+					desktop       = openDesktop("Default", 0, 0, 0x0100),
+					isWsLocked    = {};
+			Object.defineProperty(mapaPlusCore, "isWsLocked", {
+				get: function() { return !switchDesktop(desktop); }
+			});
+			mapaPlusCore.unload(function()
+			{
+				closeDesktop(desktop);
+				lib.close()
+			})
+		}catch(e){log.error(e)};
+	})();
 }
 else
 {
@@ -1925,8 +1984,6 @@ let idleService = Cc["@mozilla.org/widget/idleservice;1"].getService(Ci.nsIIdleS
 		};
 mapaPlusCore.idleService = idleService;
 
-var p = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
-                              .getService(Components.interfaces.nsIPromptService);
 //ask for master password on startup
 (mapaPlusCore.startupPass = function()
 {
@@ -2038,7 +2095,7 @@ log([aSubject, aTopic, aData, aSubject.location]);
 		if (aTopic == "chrome-document-global-created")
 			window = aSubject;
 		else
-			window = aSubject.QueryInterface(Components.interfaces.nsIDOMWindow).content;
+			window = aSubject.QueryInterface(Ci.nsIDOMWindow).content;
 //		log(window,1)
 		if (!window)
 			return;

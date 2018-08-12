@@ -391,19 +391,6 @@ Cu.import("resource://gre/modules/AddonManager.jsm");
 			return;
 
 		let eT = null;
-		try
-		{
-			if (!totalTime || !(_____execDate in _func.debug.caller))
-				_func.debug.caller._____execDate = new Date();
-		}
-		catch(e){}
-		try
-		{
-			if (totalTime)
-				eT = new Date() - (typeof(totalTime) == "function" ? totalTime._____execDate : _func.debug.caller._____execDate);
-		}
-		catch(e){}
-
 		let caller,
 				args,
 				_caller = "",
@@ -413,6 +400,19 @@ Cu.import("resource://gre/modules/AddonManager.jsm");
 			caller = _func.debug.caller;
 		}
 		catch(e){}
+		try
+		{
+			if (!totalTime || !(_____execDate in caller))
+				caller._____execDate = new Date();
+		}
+		catch(e){}
+		try
+		{
+			if (totalTime)
+				eT = new Date() - (typeof(totalTime) == "function" ? totalTime._____execDate : _func.debug.caller._____execDate);
+		}
+		catch(e){}
+
 		if (caller)
 		{
 			_caller = "N/A";

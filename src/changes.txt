@@ -11,14 +11,13 @@ Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's 
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - try Waterfox or Palemoon.
 
-v1.29.3b2 (2017-12-12)
+v1.30 (2018-08-12)
+	+ logout/lock when computer is locked (Windows OS only)
+	* tools menu item is now a fly-out menu, no right click required
 	! backup settings were saved in Latin1 charset, instead of UTF8 characters
 	! TB crash when mp showed on startup (issue #136)
-	! still works in TB59a1 (issue #135)
+	! MasterPasswordPlus fails for Thunderbird 58 (issue #135, issue #140)
 	! unable reset hotkeys to default on Linux
-
-v1.29.3b1 (2017-12-10)
-still working on issue #135, #136
 
 v1.29.2 (2017-12-09)
 	! previous attempt support for FF58a1 and TB58a1 broke the addon for some users on older versions. (issue #135)
