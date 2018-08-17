@@ -702,7 +702,7 @@ this.async(function()
 					this.timeLockString = this.timerToString(this.timerLockTime, time);
 				}
 			}
-			if (mapaPlusCore.isWsLocked && (this.pref("lockonwslock") || this.pref("logoutonwslock")))
+			if ((this.pref("lockonwslock") || this.pref("logoutonwslock")) && mapaPlusCore.isWsLocked)
 			{
 				mapaPlusCore.wsLocked = true;
 			}
