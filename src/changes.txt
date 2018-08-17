@@ -11,6 +11,9 @@ Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's 
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - try Waterfox or Palemoon.
 
+v1.30.3 (2018-08-17)
+	! options window fail on non-english systems (issue #142)
+
 v1.30.2 (2018-08-17)
 	* support email has been changed
 
