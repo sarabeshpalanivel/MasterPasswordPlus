@@ -11,8 +11,11 @@ Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's 
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - try Waterfox or Palemoon.
 
+v1.30.5 (2018-08-17)
+	! KeePass secure desktop doesn't work if "logout/lock on workstation lock" enabled (issue #144)
+
 v1.30.4 (2018-08-17)
-	! KeePass Secure Desktop on Windows OS doesn't work even when both "Logout/Lock on workstation lock" are disabled (issue 143)
+	! KeePass Secure Desktop on Windows OS doesn't work even when both "Logout/Lock on workstation lock" are disabled (issue #143)
 
 v1.30.3 (2018-08-17)
 	! options window fail on non-english systems (issue #142)

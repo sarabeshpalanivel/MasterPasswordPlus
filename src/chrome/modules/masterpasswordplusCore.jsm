@@ -1944,18 +1944,21 @@ if (a.OS == "WINNT" && mapaPlusCore.isGecko2)
 		try
 		{
 			Cu.import("resource://gre/modules/ctypes.jsm");
-			let lib           = ctypes.open("user32.dll"),
-					openDesktop   = lib.declare("OpenDesktopA", ctypes.winapi_abi, ctypes.uint32_t, ctypes.char.ptr, ctypes.uint32_t, ctypes.bool, ctypes.uint32_t),
-					switchDesktop = lib.declare("SwitchDesktop", ctypes.winapi_abi, ctypes.bool, ctypes.uint32_t),
-					closeDesktop  = lib.declare("CloseDesktop", ctypes.winapi_abi, ctypes.bool, ctypes.uint32_t),
-					desktop       = openDesktop("Default", 0, 0, 0x0100),
-					isWsLocked    = {};
+			let lib              = ctypes.open("user32.dll"),
+					openInputDesktop = lib.declare("OpenInputDesktop", ctypes.winapi_abi, ctypes.uint32_t, ctypes.uint32_t, ctypes.bool, ctypes.uint32_t),
+					closeDesktop     = lib.declare("CloseDesktop", ctypes.winapi_abi, ctypes.bool, ctypes.uint32_t),
+					isWsLocked       = {};
+
 			Object.defineProperty(mapaPlusCore, "isWsLocked", {
-				get: function() { return !switchDesktop(desktop); }
+				get: function()
+				{
+					let desktop = openInputDesktop(0, false, 0x0001);
+					closeDesktop(desktop);
+					return desktop != 0;
+				}
 			});
 			mapaPlusCore.unload(function()
 			{
-				closeDesktop(desktop);
 				lib.close()
 			})
 		}catch(e){log.error(e)};
