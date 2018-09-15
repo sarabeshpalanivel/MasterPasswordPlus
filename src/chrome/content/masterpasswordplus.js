@@ -505,7 +505,7 @@ mapaPlus.logout = function()
 	this.core.lockDo = false;
 	this.core.logout();
 	this.core.timerCheck.observe();
-	if (this.core.pref("supress") != 2 && !this.core.pref_SuppressTemp)
+	if (this.core.pref("suppress") != 2 && !this.core.pref_SuppressTemp)
 		this.core.dialogShow = true;
 }
 
@@ -731,7 +731,7 @@ log.debug();
 		}
 		o._mapaVisibility = o.style.visibility;
 //		o.setAttribute("mapaVisibility", o.style.visibility);
-		o.style.visibility="hidden";
+		o.style.visibility = "hidden";
 	});
 
 	let change = function(obj)

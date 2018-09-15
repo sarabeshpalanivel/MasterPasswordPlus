@@ -719,8 +719,7 @@ mapaPlus.initCommon = function(id)
 	}
 	AddonManager.getAllAddons(function(list)
 	{
-		$("supportCopyInfoBox").value = JSON.stringify(changesLog.getEmailBody(list), null, 2);
-
+		mapaPlus.updateInfoBox(list);
 		//browser\omni\chrome\browser\content\browser\preferences\in-content\subdialogs.js
 		let box = window.parent.document.getElementById("dialogBox");
 		if (box)
@@ -744,6 +743,20 @@ mapaPlus.initCommon = function(id)
 	window.addEventListener("focus", this.onFocus, true);
 
 }//initCommon()
+
+mapaPlus.prefChanged = function()
+{
+	mapaPlus.updateInfoBox();
+}
+
+mapaPlus.updateInfoBox = function updateInfoBox(list)
+{
+	log.debug();
+	if (!list)
+		return AddonManager.getAllAddons(mapaPlus.updateInfoBox);
+
+	$("supportCopyInfoBox").value = JSON.stringify(changesLog.getEmailBody(list), null, 2);
+}
 
 mapaPlus.loadArgs = function()
 {
@@ -793,7 +806,7 @@ log.debug();
 		if (aTopic != this._name || !mapaPlus[aSubject.data])
 			return;
 
-//log("commonop "+aData);
+log("commonop "+aData);
 		mapaPlus[aSubject.data](aData);
 	},
 }

@@ -43,7 +43,7 @@ log.debug();
 	this.core.windowAction("updateTitle", null, "Dialog");
 	this.debugSave();
 	this.changesLogSave();
-
+	this.updateInfoBox();
 }
 //Initialize options
 mapaPlus.load = function ()

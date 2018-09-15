@@ -1247,6 +1247,7 @@ log.debug(self.prefNoObserve);
 //			self.prepareHotkey();
 			self.windowAction("hotkeyInit", id, "Dialog");
 			self.windowAction("show", "", "Window");
+			self.windowAction("prefChanged", "", "Dialog");
 		}
 	},
 
