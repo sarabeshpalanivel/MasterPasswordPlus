@@ -59,6 +59,8 @@ mapaPlus.minimizeXY = -32000;
 	{
 log.debug();
 		this._observerService.removeObserver(this, this._name);
+		if (mapaPlus.core.prev != mapaPlus.core.status)
+			mapaPlus.core.timerCheckObserver();
 	},
 
 	observe: function(aSubject, aTopic, aData)
@@ -1218,7 +1220,7 @@ log.debug();
 		return;
 
 	let hidden = true,
-			list = ["mapa_menu_lock", "mapa_menu_lock_logout", "mapa_menu_lock_window", "mapa_menu_noLockWindow", "mapa_lock_separator"];
+			list = ["mapa_menu_lock", "mapa_menu_lock_logout", "mapa_menu_lock_window", "mapa_menu_noLockWindow", "mapa_lock_separator", "mapa_lock_separator2"];
 
 	if(status)
 	{
@@ -1588,12 +1590,33 @@ log.debug();
 		mapaPlus.onLoadArray.push(func);
 }
 
-mapaPlus.upgrade = function upgrade()
+mapaPlus.upgrade = function upgrade(direct)
 {
-log.debug();
+log.debug(mapaPlus.windowID);
+	if (direct && mapaPlus.core.upgradeRun)
+			return
+
+	if (direct)
+		mapaPlus.core.upgradeRun = true;
+
+
+	if (!mapaPlus.core.addon)
+	{
+		if (--mapaPlus.upgrade.i > 0)
+		{
+			return mapaPlus.core.async(mapaPlus.upgrade);
+		}
+		return;
+	}
+
 	let _compare = Cc["@mozilla.org/xpcom/version-comparator;1"]
 									.getService(Ci.nsIVersionComparator).compare,
-			version = this.core.pref("version");
+			version = mapaPlus.core.pref("version");
+
+	if (!mapaPlus.core.addon.firstRun && version == mapaPlus.core.addon.version)
+		return;
+
+	mapaPlus.core.prevVersion = version;
 
 	function compare(a, b)
 	{
@@ -1602,11 +1625,6 @@ log.debug();
 
 		return _compare(a, b);
 	}
-	if (this.core.upgradeRun || (!this.core.addon.firstRun && version == this.core.addon.version))
-		return;
-
-	this.core.prevVersion = version;
-	this.core.upgradeRun = true;
 /*
 function upgradeMS(
 	full old setting name,
@@ -1617,7 +1635,7 @@ function upgradeMS(
 	callback function(old value)
 )
 return old setting, null if failed
-//		r = this.upgradeMS("masterPasswordTimeout.oldname", "newname", true, "Char", callback);
+//		r = mapaPlus.upgradeMS("masterPasswordTimeout.oldname", "newname", true, "Char", callback);
 */
 	function upgradeMS(o, n, d, g, s, c)
 	{
@@ -1658,8 +1676,8 @@ return old setting, null if failed
 	if (compare(version, "1.14") < 0)
 	{
 		let startupFail = upgradeMS("extensions.masterPasswordPlus.startupfail");
-		startupFail = startupFail ? this.core.STARTUP_QUIT : this.core.STARTUP_DONOTHING;
-		this.core.prefs.setIntPref("startupfail", startupFail);
+		startupFail = startupFail ? mapaPlus.core.STARTUP_QUIT : mapaPlus.core.STARTUP_DONOTHING;
+		mapaPlus.core.prefs.setIntPref("startupfail", startupFail);
 	}
 
 	if (compare(version, "1.16") < 0)
@@ -1686,7 +1704,7 @@ return old setting, null if failed
 	{
 		let p = Cc["@mozilla.org/preferences-service;1"]
 						.getService(Ci.nsIPrefService).getDefaultBranch(mapaPlusCore.PREF_BRANCH);
-		this.core.pref("forceprompt", this.core.prefStringGet(p, "forceprompt"));
+		mapaPlus.core.pref("forceprompt", mapaPlus.core.prefStringGet(p, "forceprompt"));
 	}
 
 	if (compare(version, "1.21.4") < 0)
@@ -1717,17 +1735,18 @@ return old setting, null if failed
 		upgradeMS("extensions.masterPasswordPlus.prefurlbar", null, true);
 	}
 
-	this.core.pref("version", this.core.addon.version);
-	if (!this.core.changeLogShown)
+	mapaPlus.core.pref("version", mapaPlus.core.addon.version);
+	if (!mapaPlus.core.changeLogShown)
 	{
-		this.core.changeLogShown = true;
-		if (compare(version, this.core.addon.version)) //check if not first install
-			this.onLoadAdd(function()
+		mapaPlus.core.changeLogShown = true;
+		if (compare(version, mapaPlus.core.addon.version)) //check if not first install
+			mapaPlus.onLoadAdd(function()
 			{
 				mapaPlusCore.openChangesTimer = mapaPlusCore.async(function(){mapaPlus.openChanges(version)}, 1000, mapaPlusCore.openChangesTimer);
 			});
 	}
 }
+mapaPlus.upgrade.i = 100;
 
 mapaPlus.lockSetTransparent = function(v)
 {
@@ -1888,7 +1907,7 @@ mapaPlus.init = function init()
 {
 log.debug();
 	let self = mapaPlus;
-	mapaPlus.upgrade();
+	mapaPlus.upgrade(true);
 	if (!self.core.initialized)
 	{
 		self.core.init(false, self);

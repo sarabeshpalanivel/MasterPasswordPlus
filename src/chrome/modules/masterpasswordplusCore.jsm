@@ -682,7 +682,10 @@ this.async(function()
 //log(idleService.idleTime);
 			mapaPlusCore.resetTimer();
 		}
-		let time = new Date();
+		let time = new Date(),
+				newStatus = null,
+				windowUpdate = null;
+
 		if(this.tokenDB.needsLogin())
 		{
 			let locked = this.locked;
@@ -747,12 +750,14 @@ this.async(function()
 				}
 				if (this.last != this.status)
 				{
-					this.windowUpdate(true);
+					windowUpdate = true;
+//					this.windowUpdate(true);
+
 					if (!locked)
 						this.windowAction("showUnlock");
 				}
 				if (l)
-					this.last = this.status;
+					newStatus = this.status;
 			}
 			else
 			{
@@ -773,14 +778,15 @@ this.async(function()
 					{
 						this.suppressedIcon = this.pref("suppressblink") ? Boolean(this.dialogSuppressTimer%2) : true;
 					}
-					this.windowUpdate(this.last != this.status);
+					windowUpdate = this.last != this.status;
+//					this.windowUpdate(this.last != this.status);
 				}
 				else if (!this.dialogSuppress && this.suppressedIcon)
 				{
 					this.windowBlinkCancel();
 				}
 
-				this.last = this.status;
+				newStatus = this.status;
 			}
 		}
 		else
@@ -790,10 +796,20 @@ this.async(function()
 			if (this.last != this.status)
 			{
 				this.windowBlinkCancel();
-				this.windowUpdate(true);
+				windowUpdate = true;
+//				this.windowUpdate(true);
 			}
-			this.last = this.status;
+			newStatus = this.status;
 		}
+		if (windowUpdate !== null)
+		{
+			this.windowUpdate(windowUpdate);
+		}
+		else if (this.last != this.status)
+			this.windowUpdate(true);
+
+		if (newStatus !== null)
+			this.last = newStatus;
 	},
 
 	suppressTemp: {

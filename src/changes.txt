@@ -11,6 +11,9 @@ Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's 
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - try Waterfox or Palemoon.
 
+v1.30.7 (2018--)
+	! an extra separator shown in MP+ menu when MP is not set
+	! MP+ icon doesn't change after MP password was first set or removed
 v1.30.6 (2018-09-14)
 	! MP prompts are not suppressed (issue #145)
 

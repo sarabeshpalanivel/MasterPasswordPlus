@@ -3,7 +3,7 @@
 
 	<Description about="urn:mozilla:install-manifest">
 		<em:id>masterpasswordtimeoutplus@vano</em:id>
-		<em:version>1.30.6</em:version>
+		<em:version>1.30.7b1</em:version>
 		<em:type>2</em:type>
 		<em:unpack>true</em:unpack>
 		<em:name>Master Password+</em:name>
