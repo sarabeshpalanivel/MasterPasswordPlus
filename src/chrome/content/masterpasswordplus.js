@@ -445,7 +445,7 @@ mapaPlus.suppressed = function()
 		this.suppressedPopup();
 }
 
-mapaPlus.command = function(manual, button)
+mapaPlus.command = function command(manual, button)
 {
 log.debug();
 	this.core.dialogShow = false;
@@ -846,8 +846,9 @@ log([val, key, map]);
 
 }//showLock()
 
-mapaPlus.showUnlock = function(f)
+mapaPlus.showUnlock = function showUnlock(f)
 {
+log.debug();
 	if (!this.locked)
 		return;
 
@@ -1125,9 +1126,12 @@ mapaPlus.noLockWindowToggle = function(type)
 
 }//noLockWindowToggle()
 
-mapaPlus.unlock = function(forceUnlock)
+mapaPlus.unlock = function unlock(forceUnlock)
 {
-//	mapaPlus.core.dump("unlock");
+log.debug();
+	if (this.core.locked && !this.lockedWindow)
+		this.core.dialogForce = true;
+
 	if (forceUnlock || this.login(false, true, false) || (!this.core.locked && !this.lockedWindow))
 	{
 		mapaPlus.unlockIncorrect(false);
@@ -1147,8 +1151,9 @@ mapaPlus.login2 = function()
 	mapaPlus.login(false);
 }
 
-mapaPlus.login = function(temp, force, options, check)
+mapaPlus.login = function login(temp, force, options, check)
 {
+log.debug();
 	var r = false;
 	if (!this.core.windowFirst("Dialog"))
 	{
