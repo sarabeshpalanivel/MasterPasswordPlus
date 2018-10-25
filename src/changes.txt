@@ -15,7 +15,7 @@ v1.30.7 (2018-10-25)
 	! an extra separator shown in MP+ menu when MP is not set
 	! MP+ icon doesn't change after MP password was first set or removed
 	! Unexpected modal dialogue, in lieu of banner 'Master password prompt was blocked' (issue #146)
-	! Can't login from window with "Disable lock of this window" enabled after lock (issue #146)
+	! Can't login from window with "Disable lock of this window" enabled after lock (issue #148)
 v1.30.6 (2018-09-14)
 	! MP prompts are not suppressed (issue #145)
 
