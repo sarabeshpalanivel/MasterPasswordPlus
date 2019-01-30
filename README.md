@@ -28,10 +28,10 @@ There is a little inconvenience if MP+ set to block master password prompts - it
 <b>Disclaimer</b>
 This addon is not a replacement for built-in master password, it's an enhancement for it. It also cannot guarantee total protection, simply because anyone can disable it even without starting the browser.
 Disabling or uninstalling this addon will NOT delete your master password!
-You can find more about master password <a href="http://kb.mozillazine.org/Master_password">http://kb.mozillazine.org/Master_password</a>
+You can find more about master password <a href="http://kb.mozillazine.org/Master_password">http://kb.mozillazine.org/Master_password</a>.
 
 
 
-<b><strong>Please report bugs and feature requests at <a href="https://github.com/vanowm/MasterPasswordPlus/issues" target="_blank">support website</a> or via email in the support section of addon page (<a href="http://goo.gl/Ipdep" target="_blank">http://goo.gl/Ipdep</a>)
+<b><strong>Please report bugs and feature requests at <a href="https://github.com/vanowm/MasterPasswordPlus/issues" target="_blank">support website</a> or via email in the support section of the <a href="https://addons.thunderbird.net/en-US/thunderbird/addon/master-password" target="_blank">addon page</a>.
 
 <i>Bug reports or feature requests posted in review sections will be ignored and may be reported as spam.<i></strong></b>
