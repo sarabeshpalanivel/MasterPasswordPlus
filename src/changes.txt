@@ -11,6 +11,8 @@ Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's 
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - try Waterfox or Palemoon.
 
+v1.30.8 (2019-04-07)
+	! incorrect home page links (issue #153)
 v1.30.7 (2018-10-25)
 	! an extra separator shown in MP+ menu when MP is not set
 	! MP+ icon doesn't change after MP password was first set or removed
@@ -449,4 +451,4 @@ v0.3.3 (2010-11-19)
 	+ icon to tools menu.
 	+ if no Master Password is set and clicked on MPT toolbar button (or menu in Tools), it shows window where you can set Master Password
 	+ options to show/hide icons and menu items
-	! timeout option now accept only numbers and have roll up/down buttons.
+	! timeout option now accepts only numbers and have roll up/down buttons.

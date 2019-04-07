@@ -979,8 +979,11 @@ getCaller: function getCaller ()
 	}
 },
 
-	getKeys: function(e)
+	getKeys: function getKeys(e)
 	{
+		if (this.keysList === null)
+			return null;
+
 		var keys = [];
 		var keycode = this.getAccel(this.keysList[e.keyCode]);
 		if(e.ctrlKey) keys.push(this.getAccel("CONTROL"));

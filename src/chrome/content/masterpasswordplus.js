@@ -1406,6 +1406,9 @@ mapaPlus.hotkeyDown = function hotkeyDown(e, g)
 */
 	}
 	var keys = mapaPlus.core.getKeys(e);
+	if (!keys)
+		return;
+
 	if (mapaPlus.core.matchKeys(mapaPlus.lastKeyDown, keys[0], 2)) //prevent repeats
 		return true;
 
