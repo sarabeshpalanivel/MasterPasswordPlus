@@ -3,14 +3,14 @@
 
 	<Description about="urn:mozilla:install-manifest">
 		<em:id>masterpasswordtimeoutplus@vano</em:id>
-		<em:version>1.30.8</em:version>
+		<em:version>1.30.8.1</em:version>
 		<em:type>2</em:type>
 		<em:unpack>true</em:unpack>
 		<em:name>Master Password+</em:name>
 		<em:description>Various enhancements for built-in "Master Password" feature</em:description>
 		<em:creator>V@no</em:creator>
 		<em:bootstrap>false</em:bootstrap>
-		<em:homepageURL>http://goo.gl/Ipdep</em:homepageURL>
+		<em:homepageURL>https://addons.thunderbird.net/addon/master-password</em:homepageURL>
 		<em:optionsURL>chrome://mapaplus/content/masterpasswordplusOptions.xul</em:optionsURL>
 		<em:iconURL>chrome://mapaplus/skin/images/masterpasswordplus.png</em:iconURL>
 		<em:aboutURL>chrome://mapaplus/content/masterpasswordplusAbout.xul</em:aboutURL>
