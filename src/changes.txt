@@ -11,13 +11,21 @@ Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's 
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - try Waterfox or Palemoon.
 
+v1.30.8.2 (2019-09-10)
+	* support for Pale Moon 28
+
+v1.30.8.1 (2019-04-07)
+	! incorrect home page link in install.rdf (issue #153)
+
 v1.30.8 (2019-04-07)
 	! incorrect home page links (issue #153)
+
 v1.30.7 (2018-10-25)
 	! an extra separator shown in MP+ menu when MP is not set
 	! MP+ icon doesn't change after MP password was first set or removed
 	! Unexpected modal dialogue, in lieu of banner 'Master password prompt was blocked' (issue #146)
 	! Can't login from window with "Disable lock of this window" enabled after lock (issue #148)
+
 v1.30.6 (2018-09-14)
 	! MP prompts are not suppressed (issue #145)
 
