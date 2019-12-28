@@ -167,7 +167,8 @@ mapaPlus.check = function check()
 	}
 	this.accept();
 log.debug([(this.pass && (this.core.status != 1 || this.core.locked || !this.core.startupPassed)), this.pass, this.core.status != 1, this.core.locked, !this.core.startupPassed, this.core.dialogForce]);
-	if (this.pass && (this.core.status != 1 || this.core.locked || !this.core.startupPassed))
+//	if (this.pass && (this.core.status != 1 || this.core.locked || !this.core.startupPassed))
+	if (this.pass && (this.core.status || this.core.locked || !this.core.startupPassed))
 	{
 		let first = this.core.windowFirst(this.windowType);
 		this.windowID = this.core.windowAdd(mapaPlus, this.windowType);
@@ -222,7 +223,7 @@ log.debug(this.core.window[this.windowType]);
 //log.debug([this.core.startupPassed, !this.core.dialogShow, (this.core.pref("suppress") == 2 || this.core.pref_SuppressTemp), this.core.pref("suppress"),this.core.pref_SuppressTemp]);
 			if (!this.core.dialogShow && (this.core.pref("suppress") == 2 || this.core.pref_SuppressTemp))
 			{
-				if ("mapaPlus" in this.mainWindow && this.mainWindow.mapaPlus && this.mainWindow.mapaPlus.suppressed)
+				if (this.mainWindow && "mapaPlus" in this.mainWindow && this.mainWindow.mapaPlus && this.mainWindow.mapaPlus.suppressed)
 					this.mainWindow.mapaPlus.suppressed();
 
 				this.core.dialogShow = false;

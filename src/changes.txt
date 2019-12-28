@@ -11,6 +11,9 @@ Firefox 57+ is no longer supported and never will be, unless mozilla pulls it's 
 https://blog.mozilla.org/addons/2016/11/23/add-ons-in-2017/comment-page-1/
 If it works - good, if not - try Waterfox or Palemoon.
 
+v1.30.9 (2019-12-27)
+	! block all prompts not block first dialog on startup
+
 v1.30.8.2 (2019-09-10)
 	* support for Pale Moon 28
 
